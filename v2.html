@@ -1,0 +1,1730 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+  <title>منصة الإيديتورز BETA</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+    html,body{height:100%;}
+    body{font-family:'Cairo','Inter',sans-serif;}
+    *{-webkit-tap-highlight-color:transparent;}
+    input,select,textarea,button{font-family:inherit;}
+    ::-webkit-scrollbar{width:4px;height:4px;}
+    ::-webkit-scrollbar-thumb{border-radius:4px;}
+    @keyframes spin{from{transform:rotate(0deg);}to{transform:rotate(360deg);}}
+    @keyframes modalIn{from{transform:translateY(100%);opacity:0;}to{transform:translateY(0);opacity:1;}}
+    @keyframes overlayIn{from{opacity:0;}to{opacity:1;}}
+    @keyframes toastSlide{from{transform:translateX(-50%) translateY(16px);opacity:0;}to{transform:translateX(-50%) translateY(0);opacity:1;}}
+    @keyframes fadeUp{from{transform:translateY(8px);opacity:0;}to{transform:translateY(0);opacity:1;}}
+    @keyframes glow{0%,100%{box-shadow:0 0 20px rgba(224,85,53,0.3);}50%{box-shadow:0 0 40px rgba(224,85,53,0.6);}}
+    .spin{animation:spin 1s linear infinite;}
+    .modal-sheet{animation:modalIn 0.32s cubic-bezier(0.32,0.72,0,1);}
+    .overlay-ani{animation:overlayIn 0.2s ease;}
+    .toast-ani{animation:toastSlide 0.3s cubic-bezier(0.34,1.56,0.64,1);}
+    .fade-up{animation:fadeUp 0.25s ease both;}
+    button{transition:opacity 0.12s,transform 0.12s,background 0.15s;}
+    button:active:not(:disabled){transform:scale(0.96);}
+  </style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const {useState,useEffect,useMemo}=React;
+
+// ─── LANG & THEME (persisted in localStorage, reload on change) ───
+let _lang=localStorage.getItem('_lang')||'ar';
+let _theme=localStorage.getItem('_theme')||'dark';
+
+// Apply dir to html element
+document.documentElement.dir=_lang==='ar'?'rtl':'ltr';
+document.documentElement.lang=_lang;
+
+function toggleLang(){
+  const nl=_lang==='ar'?'fr':'ar';
+  localStorage.setItem('_lang',nl);
+  window.location.reload();
+}
+function toggleTheme(){
+  const nt=_theme==='dark'?'light':'dark';
+  localStorage.setItem('_theme',nt);
+  window.location.reload();
+}
+
+// ─── TRANSLATIONS ─────────────────────────────────────────
+const TR={
+  ar:{
+    // App
+    app_name:'منصة الإيديتورز',
+    beta:'بيتا',
+    // Nav
+    dashboard:'لوحة التحكم',
+    my_dash:'حسابي',
+    videos:'الفيديوهات',
+    my_videos:'فيديوهاتي',
+    team:'الفريق',
+    clients:'الزبائن',
+    logout:'خروج',
+    // Auth
+    login:'تسجيل الدخول',
+    register:'إنشاء حساب',
+    agency:'وكالة',
+    worker:'عضو الفريق',
+    agency_name:'اسم الوكالة',
+    email:'البريد الإلكتروني',
+    agency_email:'إيميل الوكالة',
+    password:'كلمة السر',
+    phone:'رقم الهاتف / WhatsApp',
+    pw_hint:'4 حروف على الأقل',
+    pw_optional:'خليها فارغة باش ما تتبدلش',
+    start_free:'سجل وكالتك مجاناً',
+    have_account:'عندي حساب — دخول',
+    back:'← رجع',
+    // Roles
+    editor:'إيديتور',
+    filmmaker:'فيلميكر',
+    designer:'مصمم',
+    role:'الدور',
+    role_hint:'💡 كلمة السر تاع عضو الفريق يحطها ليه المسير',
+    worker_email_hint:'إيميل الوكالة تاوعك',
+    // Actions
+    add:'زيد',
+    save:'حفظ',
+    delete:'حذف',
+    edit:'تعديل',
+    cancel:'إلغاء',
+    confirm_delete:'متأكد من الحذف؟',
+    // Videos
+    new_video:'سجل فيديو',
+    video_title:'عنوان الفيديو',
+    video_title_ph:'مثال: إعلان منتج جديد',
+    date:'التاريخ',
+    price:'السعر (دج)',
+    mark_paid:'علم خلصت',
+    paid:'✓ خلص',
+    unpaid:'✗ ما خلصش',
+    // Stats
+    total:'المجموع الكلي',
+    total_paid:'المدفوع',
+    remaining:'الباقي خلاص',
+    this_month:'هذا الشهر',
+    my_total:'مجموع خدمتي',
+    my_remaining:'الباقي ليا',
+    video_count:'عدد الفيديوهات',
+    // Plan
+    free_plan:'مجاني',
+    days_left:'{0} يوم باقي',
+    free_warning:'⚡ مجاني: {0}/{1} عضو · {2}/{3} فيديو · تواصل معنا للترقية',
+    expiry_warning:'⚠️ الاشتراك ينتهي خلال {0} أيام — تواصل معنا للتجديد',
+    // Empty states
+    no_data:'ابدا بإضافة الفريق والزبائن',
+    no_team:'ما كاين حتى عضو',
+    no_clients:'ما كاين حتى زبون',
+    no_videos:'ما كاين حتى فيديو',
+    no_agencies:'ما كاينش وكالات بعد',
+    // Admin
+    super_admin:'Super Admin',
+    admin_panel:'لوحة تحكم المدير العام',
+    total_agencies:'إجمالي الوكالات',
+    active_agencies:'وكالات نشطة',
+    paid_subs:'مشتركات مدفوعة',
+    manage:'إدارة',
+    opened:'مفتوح',
+    view:'شوف',
+    plan:'الخطة',
+    duration:'مدة الاشتراك',
+    one_month:'شهر',
+    three_months:'3 أشهر',
+    one_year:'سنة',
+    account_active:'✅ الحساب نشط',
+    account_suspended:'🚫 الحساب موقوف',
+    notes:'ملاحظات',
+    notes_ph:'مثال: دفع بتاريخ 01/06/2025...',
+    save_changes:'حفظ التعديلات',
+    // Errors
+    err_name:'دخل اسم الوكالة',
+    err_email:'البريد الإلكتروني غير صحيح',
+    err_pw:'كلمة السر لازم تكون 4 حروف على الأقل',
+    err_duplicate:'هذا البريد الإلكتروني مسجل بالفعل',
+    err_not_found:'البريد الإلكتروني غير موجود',
+    err_wrong_pw:'كلمة السر غالطة',
+    err_no_agency:'الوكالة غير موجودة',
+    err_select:'اختار إيديتور وزبون',
+    err_price:'دخل السعر',
+    // Toast
+    toast_editor_added:'تم إضافة عضو الفريق ✅',
+    toast_client_added:'تم إضافة الزبون ✅',
+    toast_video_added:'تم تسجيل الفيديو ✅',
+    toast_deleted:'تم الحذف',
+    toast_saved:'تم التحديث ✅',
+    toast_save_failed:'فشل الحفظ — تحقق من الاتصال',
+    toast_limit:'وصلت للحد المجاني ({0}). تواصل معنا للترقية!',
+    toast_no_edit:'ما تقدرش تعدل هذا الفيديو',
+    // Expired
+    expired_title:'انتهى الاشتراك',
+    suspended_title:'الحساب موقوف',
+    expired_msg:'اشتراكك انتهى. تواصل معنا للتجديد.',
+    suspended_msg:'حسابك موقوف مؤقتاً. تواصل معنا.',
+    contact_us:'تواصل معنا على WhatsApp',
+    // Landing
+    landing_title:'منصة إدارة الإيديتورز',
+    landing_sub:'سجل خدمة الفريق، تابع المدفوعات، وادر وكالتك من مكان واحد',
+    free_now:'مجاني 100% الآن',
+    free_sub:'سجل اليوم واستعمل المنصة مجاناً',
+    feat_1:'تسجيل الفيديوهات',
+    feat_2:'حسابات الفريق',
+    feat_3:'لوحتين للمسير والفريق',
+    feat_4:'يخدم على الموبايل والكمبيوتر',
+    no_card:'لا حاجة لبطاقة بنكية',
+    // Team page info
+    pw_info:'💡 كي تزيد عضو، حط لو كلمة سر — يستعملها يدخل بإيميل الوكالة + كلمة سرو',
+  },
+  fr:{
+    app_name:'Plateforme Éditeurs',
+    beta:'Bêta',
+    dashboard:'Tableau de bord',
+    my_dash:'Mon espace',
+    videos:'Vidéos',
+    my_videos:'Mes vidéos',
+    team:'Équipe',
+    clients:'Clients',
+    logout:'Déconnexion',
+    login:'Se connecter',
+    register:'Créer un compte',
+    agency:'Agence',
+    worker:"Membre d'équipe",
+    agency_name:"Nom de l'agence",
+    email:'Email',
+    agency_email:"Email de l'agence",
+    password:'Mot de passe',
+    phone:'Téléphone / WhatsApp',
+    pw_hint:'4 caractères minimum',
+    pw_optional:'Laisser vide pour ne pas changer',
+    start_free:'Créer mon agence gratuitement',
+    have_account:'J\'ai déjà un compte — Connexion',
+    back:'← Retour',
+    editor:'Éditeur',
+    filmmaker:'Filmeur',
+    designer:'Designer',
+    role:'Rôle',
+    role_hint:'💡 Le mot de passe est défini par le gérant',
+    worker_email_hint:"Email de votre agence",
+    add:'Ajouter',
+    save:'Enregistrer',
+    delete:'Supprimer',
+    edit:'Modifier',
+    cancel:'Annuler',
+    confirm_delete:'Confirmer la suppression ?',
+    new_video:'Enregistrer une vidéo',
+    video_title:'Titre de la vidéo',
+    video_title_ph:'Ex: Publicité nouveau produit',
+    date:'Date',
+    price:'Prix (DA)',
+    mark_paid:'Marquer payé',
+    paid:'✓ Payé',
+    unpaid:'✗ Non payé',
+    total:'Total général',
+    total_paid:'Payé',
+    remaining:'Reste à payer',
+    this_month:'Ce mois',
+    my_total:'Mon total',
+    my_remaining:'Reste pour moi',
+    video_count:'Nombre de vidéos',
+    free_plan:'Gratuit',
+    days_left:'{0} jours restants',
+    free_warning:'⚡ Gratuit: {0}/{1} membres · {2}/{3} vidéos · Contactez-nous pour upgrader',
+    expiry_warning:"⚠️ Abonnement expire dans {0} jours — Contactez-nous pour renouveler",
+    no_data:'Commencez par ajouter votre équipe et vos clients',
+    no_team:'Aucun membre pour l\'instant',
+    no_clients:'Aucun client pour l\'instant',
+    no_videos:'Aucune vidéo pour l\'instant',
+    no_agencies:'Aucune agence pour l\'instant',
+    super_admin:'Super Admin',
+    admin_panel:'Tableau de bord Admin',
+    total_agencies:'Total agences',
+    active_agencies:'Agences actives',
+    paid_subs:'Abonnements payants',
+    manage:'Gérer',
+    opened:'Ouvert',
+    view:'Voir',
+    plan:'Forfait',
+    duration:"Durée de l'abonnement",
+    one_month:'1 mois',
+    three_months:'3 mois',
+    one_year:'1 an',
+    account_active:'✅ Compte actif',
+    account_suspended:'🚫 Compte suspendu',
+    notes:'Notes',
+    notes_ph:'Ex: Paiement reçu le 01/06/2025...',
+    save_changes:'Enregistrer les modifications',
+    err_name:"Entrez le nom de l'agence",
+    err_email:'Email invalide',
+    err_pw:'Le mot de passe doit contenir au moins 4 caractères',
+    err_duplicate:'Cet email est déjà utilisé',
+    err_not_found:'Email introuvable',
+    err_wrong_pw:'Mot de passe incorrect',
+    err_no_agency:'Agence introuvable',
+    err_select:'Sélectionnez un membre et un client',
+    err_price:'Entrez le prix',
+    toast_editor_added:'Membre ajouté ✅',
+    toast_client_added:'Client ajouté ✅',
+    toast_video_added:'Vidéo enregistrée ✅',
+    toast_deleted:'Supprimé',
+    toast_saved:'Mis à jour ✅',
+    toast_save_failed:'Échec de sauvegarde — Vérifiez la connexion',
+    toast_limit:'Limite gratuite atteinte ({0}). Contactez-nous pour upgrader !',
+    toast_no_edit:'Vous ne pouvez pas modifier cette vidéo',
+    expired_title:'Abonnement expiré',
+    suspended_title:'Compte suspendu',
+    expired_msg:'Votre abonnement a expiré. Contactez-nous pour renouveler.',
+    suspended_msg:'Votre compte est temporairement suspendu. Contactez-nous.',
+    contact_us:'Contactez-nous sur WhatsApp',
+    landing_title:'Plateforme de gestion des éditeurs',
+    landing_sub:'Enregistrez le travail de votre équipe, suivez les paiements et gérez votre agence en un seul endroit',
+    free_now:'100% Gratuit maintenant',
+    free_sub:"Inscrivez-vous aujourd'hui et utilisez la plateforme gratuitement",
+    feat_1:'Enregistrement des vidéos',
+    feat_2:"Comptabilité de l'équipe",
+    feat_3:'Tableau de bord gérant & membres',
+    feat_4:'Compatible mobile et ordinateur',
+    no_card:'Aucune carte bancaire requise',
+    pw_info:"💡 Définissez un mot de passe pour chaque membre afin qu'il puisse se connecter",
+  }
+};
+
+function t(key,...args){
+  let s=TR[_lang]?.[key]||TR.ar[key]||key;
+  args.forEach((a,i)=>{s=s.replace(`{${i}}`,a);});
+  return s;
+}
+
+// ─── THEME ────────────────────────────────────────────────
+const DARK={bg:'#070710',card:'#0e0e1c',card2:'#131322',border:'#1c1c30',accent:'#e0552e',accentSoft:'rgba(224,85,46,0.13)',accentBorder:'rgba(224,85,46,0.22)',text:'#eeeef5',textSub:'#8888aa',muted:'#454560',success:'#22c55e',successSoft:'rgba(34,197,94,0.12)',warning:'#f59e0b',danger:'#ef4444',dangerSoft:'rgba(239,68,68,0.1)',purple:'#a78bfa',purpleSoft:'rgba(167,139,250,0.12)',blue:'#60a5fa',blueSoft:'rgba(96,165,250,0.12)',inputBg:'#0a0a18',navBg:'rgba(7,7,16,0.95)',scrollThumb:'#25253a'};
+const LIGHT={bg:'#ecedf5',card:'#ffffff',card2:'#f5f5fc',border:'#dcdcee',accent:'#c44428',accentSoft:'rgba(196,68,40,0.08)',accentBorder:'rgba(196,68,40,0.18)',text:'#0a0a1a',textSub:'#5a5a7a',muted:'#a0a0be',success:'#16a34a',successSoft:'rgba(22,163,74,0.1)',warning:'#d97706',danger:'#dc2626',dangerSoft:'rgba(220,38,38,0.08)',purple:'#7c3aed',purpleSoft:'rgba(124,58,237,0.08)',blue:'#2563eb',blueSoft:'rgba(37,99,235,0.08)',inputBg:'#f0f0f8',navBg:'rgba(236,237,245,0.96)',scrollThumb:'#c0c0d5'};
+const B=_theme==='dark'?DARK:LIGHT;
+
+// update body bg and scrollbar
+document.body.style.background=B.bg;
+document.body.style.color=B.text;
+const styleEl=document.createElement('style');
+styleEl.textContent=`::-webkit-scrollbar-thumb{background:${B.scrollThumb};}::-webkit-scrollbar-track{background:transparent;}body{background:${B.bg};}`;
+document.head.appendChild(styleEl);
+
+// ─── CONFIG ──────────────────────────────────────────────
+const SUPABASE_URL='https://vwrxtpsgfhqocdxxprzh.supabase.co';
+const SUPABASE_KEY='sb_publishable_MEY45rbr0sAJr7mr37dpGQ_T4I1iftp';
+const SUPER_EMAIL='admin@bghplatform.com';
+const SUPER_PASS='bgh@admin2024';
+const FREE_LIMITS={editors:2,clients:5,videos:20};
+
+const ROLES=['editor','filmmaker','designer'];
+const roleLabel=r=>({editor:t('editor'),filmmaker:t('filmmaker'),designer:t('designer')}[r]||t('editor'));
+const roleColor=r=>({editor:B.accent,filmmaker:'#a78bfa',designer:'#22c55e'}[r]||B.accent);
+const roleBg=r=>({editor:B.accentSoft,filmmaker:'rgba(167,139,250,0.15)',designer:'rgba(34,197,94,0.15)'}[r]||B.accentSoft);
+
+const fmt=n=>new Intl.NumberFormat('en-US').format(Math.round(Number(n)||0));
+const fmtD=iso=>iso?new Date(iso).toLocaleDateString('fr-FR'):'';
+const today=()=>new Date().toISOString().slice(0,10);
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,8);
+const hash=s=>{let h=0;for(let i=0;i<s.length;i++){h=((h<<5)-h)+s.charCodeAt(i);h|=0;}return'h'+Math.abs(h).toString(36)+'_'+s.length;};
+const EMPTY={editors:[],clients:[],videos:[]};
+
+const isExpired=ag=>{if(!ag?.plan_expires_at)return false;return new Date(ag.plan_expires_at)<new Date();};
+const isSuspended=ag=>ag?.is_active===false;
+const daysLeft=ag=>{if(!ag?.plan_expires_at)return null;return Math.max(0,Math.ceil((new Date(ag.plan_expires_at)-new Date())/(86400000)));};
+const planLabel=plan=>{
+  if(plan==='pro')return{label:'Pro 💎',color:'#a78bfa',bg:'rgba(167,139,250,0.15)'};
+  if(plan==='basic')return{label:'Basic ⭐',color:'#fbbf24',bg:'rgba(251,191,36,0.15)'};
+  return{label:t('free_plan'),color:B.muted,bg:_theme==='dark'?'rgba(255,255,255,0.05)':'rgba(0,0,0,0.05)'};
+};
+
+const sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY,{
+  auth:{persistSession:false},
+  global:{headers:{'X-Client-Info':'bgh-platform/2.0'}}
+});
+
+// ─── DB ───────────────────────────────────────────────────
+// wrap fetch errors with friendly message
+const wrapFetch=async fn=>{
+  try{return await fn();}
+  catch(e){
+    const msg=e?.message||'';
+    if(msg.includes('Failed to fetch')||msg.includes('NetworkError')||msg.includes('fetch')){
+      throw new Error('❌ تعذّر الاتصال بالسيرفر. تحقق من الإنترنت أو حاول مجدداً.');
+    }
+    throw e;
+  }
+};
+const DB={
+  async register(name,email,password,phone=''){
+    return wrapFetch(async()=>{
+      const{data,error}=await sb.from('agencies').insert({name,email,password_hash:hash(password),phone}).select().single();
+      if(error)throw error;
+      await sb.from('app_data').insert({agency_id:data.id,data:EMPTY});
+      return data;
+    });
+  },
+  async loginAgency(email,password){
+    return wrapFetch(async()=>{
+      const{data,error}=await sb.from('agencies').select('*').eq('email',email).single();
+      if(error||!data)throw new Error(t('err_not_found'));
+      if(data.password_hash!==hash(password))throw new Error(t('err_wrong_pw'));
+      return data;
+    });
+  },
+  async loginWorker(agencyEmail,workerPassword){
+    return wrapFetch(async()=>{
+      const{data:ag,error:agErr}=await sb.from('agencies').select('*').eq('email',agencyEmail.toLowerCase().trim()).single();
+      if(agErr||!ag)throw new Error(t('err_no_agency'));
+      const{data:appData}=await sb.from('app_data').select('data').eq('agency_id',ag.id).single();
+      const d=appData?.data||EMPTY;
+      const worker=d.editors.find(e=>e.password===hash(workerPassword));
+      if(!worker)throw new Error(t('err_wrong_pw'));
+      return{agency:ag,worker,appData:d};
+    });
+  },
+  async loadData(agencyId){
+    return wrapFetch(async()=>{
+      const{data}=await sb.from('app_data').select('data').eq('agency_id',agencyId).single();
+      return data?.data||{...EMPTY};
+    });
+  },
+  async saveData(agencyId,data){
+    const{data:updated,error}=await sb.from('app_data').update({data,updated_at:new Date().toISOString()}).eq('agency_id',agencyId).select();
+    if(error)throw error;
+    if(!updated||updated.length===0){
+      await sb.from('app_data').insert({agency_id:agencyId,data});
+    }
+  },
+  async getAllAgencies(){
+    const{data}=await sb.from('agencies').select('*').order('created_at',{ascending:false});
+    return data||[];
+  },
+  async getAgencyData(agencyId){
+    const{data}=await sb.from('app_data').select('data').eq('agency_id',agencyId).single();
+    return data?.data||{...EMPTY};
+  },
+  async updateAgency(id,patch){await sb.from('agencies').update(patch).eq('id',id);},
+  async deleteAgency(id){
+    await sb.from('app_data').delete().eq('agency_id',id);
+    await sb.from('agencies').delete().eq('id',id);
+  }
+};
+
+// ─── LOGO ─────────────────────────────────────────────────
+const Logo=({size=64,showBeta=true})=>(
+  <div style={{position:'relative',display:'inline-block'}}>
+    <div style={{width:size,height:size,borderRadius:'26%',background:`linear-gradient(145deg,${B.accent} 0%,#6e1e0a 100%)`,display:'flex',alignItems:'center',justifyContent:'center',boxShadow:`0 6px 24px ${B.accent}55, 0 2px 8px rgba(0,0,0,0.3)`}}>
+      <svg viewBox="0 0 48 48" width={size*0.58} height={size*0.58} fill="none">
+        <rect x="6" y="11" width="36" height="7" rx="3.5" fill="white"/>
+        <rect x="6" y="21" width="27" height="7" rx="3.5" fill="rgba(255,255,255,0.72)"/>
+        <rect x="6" y="31" width="18" height="7" rx="3.5" fill="rgba(255,255,255,0.45)"/>
+        <circle cx="38" cy="37" r="8" fill="white"/>
+        <path d="M35 37l2.2 2.2 4.3-4.3" stroke={B.accent} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+      </svg>
+    </div>
+    {showBeta&&<div style={{position:'absolute',top:-7,left:-8,background:B.card,border:`1.5px solid ${B.accent}`,color:B.accent,fontSize:'8px',fontWeight:'900',padding:'2px 6px',borderRadius:'9999px',letterSpacing:'0.12em',boxShadow:`0 2px 8px ${B.accent}33`}}>{t('beta').toUpperCase()}</div>}
+  </div>
+);
+
+// ─── ICONS ────────────────────────────────────────────────
+const IC={
+  lock:'<path d="M7 11V7a5 5 0 0 1 10 0v4"/><rect x="3" y="11" width="18" height="11" rx="2"/>',
+  eye:'<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>',
+  eyeoff:'<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>',
+  user:'<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>',
+  shield:'<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>',
+  mail:'<path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/>',
+  building:'<rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/>',
+  plus:'<line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>',
+  pencil:'<path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>',
+  trash:'<polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>',
+  check:'<polyline points="20 6 9 11 4 16"/>',
+  x:'<line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>',
+  logout:'<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/>',
+  film:'<rect x="2" y="2" width="20" height="20" rx="2"/><line x1="7" y1="2" x2="7" y2="22"/><line x1="17" y1="2" x2="17" y2="22"/><line x1="2" y1="12" x2="22" y2="12"/>',
+  users:'<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>',
+  briefcase:'<rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>',
+  dashboard:'<rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>',
+  trending:'<polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/>',
+  wallet:'<path d="M21 12V7H5a2 2 0 0 1 0-4h14v4M3 5v14a2 2 0 0 0 2 2h16v-5M18 12a2 2 0 0 0 0 4h4v-4z"/>',
+  clock:'<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>',
+  checkCircle:'<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>',
+  alertCircle:'<circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>',
+  search:'<circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>',
+  loader:'<line x1="12" y1="2" x2="12" y2="6"/><line x1="12" y1="18" x2="12" y2="22"/><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"/><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"/><line x1="2" y1="12" x2="6" y2="12"/><line x1="18" y1="12" x2="22" y2="12"/><line x1="4.93" y1="19.07" x2="7.76" y2="16.24"/><line x1="16.24" y1="7.76" x2="19.07" y2="4.93"/>',
+  phone:'<path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.6 1h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 8.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/>',
+  crown:'<path d="M2 4l3 12h14l3-12-6 7-4-7-4 7-6-7z"/><line x1="5" y1="20" x2="19" y2="20"/>',
+  video:'<polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/>',
+  sun:'<circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>',
+  moon:'<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>',
+  globe:'<circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>',
+};
+const Ic=({n,size=18,color='currentColor'})=>(
+  <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none"
+    stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+    dangerouslySetInnerHTML={{__html:IC[n]||''}}/>
+);
+
+// ─── SETTINGS BAR (lang + theme) ──────────────────────────
+function SettingsBar(){
+  const bs={display:'flex',alignItems:'center',borderRadius:'9999px',border:`1px solid ${B.border}`,background:B.card2||B.card,cursor:'pointer',color:B.textSub||B.muted};
+  return(
+    <div style={{display:'flex',alignItems:'center',gap:'0.4rem'}}>
+      <button onClick={toggleLang} title={_lang==='ar'?'Français':'عربي'}
+        style={{...bs,gap:'0.3rem',padding:'0.3rem 0.7rem',fontSize:'0.7rem',fontWeight:'800'}}>
+        <Ic n="globe" size={12}/>{_lang==='ar'?'FR':'AR'}
+      </button>
+      <button onClick={toggleTheme} style={{...bs,padding:'0.38rem 0.5rem'}}>
+        <Ic n={_theme==='dark'?'sun':'moon'} size={14}/>
+      </button>
+    </div>
+  );
+}
+
+// ─── UI HELPERS ───────────────────────────────────────────
+const INP={width:'100%',padding:'0.8rem 0.9rem',background:B.inputBg,border:`1.5px solid ${B.border}`,borderRadius:'0.875rem',outline:'none',fontSize:'0.875rem',color:B.text,transition:'border-color 0.15s'};
+
+function PwField({value,onChange,show,setShow,placeholder,onEnter}){
+  return(
+    <div style={{position:'relative'}}>
+      <div style={{position:'absolute',right:'0.75rem',top:'50%',transform:'translateY(-50%)',pointerEvents:'none',display:'flex'}}><Ic n="lock" size={14} color={B.muted}/></div>
+      <input type={show?'text':'password'} value={value} onChange={e=>onChange(e.target.value)}
+        onKeyDown={e=>e.key==='Enter'&&onEnter&&onEnter()} placeholder={placeholder}
+        style={{...INP,paddingRight:'2.5rem',paddingLeft:'2.5rem'}}/>
+      <button type="button" onClick={()=>setShow(!show)} style={{position:'absolute',left:'0.75rem',top:'50%',transform:'translateY(-50%)',background:'none',border:'none',cursor:'pointer',color:B.muted,display:'flex'}}>
+        <Ic n={show?'eyeoff':'eye'} size={15}/>
+      </button>
+    </div>
+  );
+}
+function Field({label,children}){
+  return(
+    <div>
+      <label style={{display:'block',fontSize:'0.75rem',fontWeight:'700',color:B.muted,marginBottom:'0.375rem'}}>{label}</label>
+      {children}
+    </div>
+  );
+}
+function Modal({onClose,title,children}){
+  return(
+    <div onClick={onClose} className="overlay-ani" style={{position:'fixed',inset:0,background:_theme==='dark'?'rgba(0,0,8,0.72)':'rgba(0,0,0,0.45)',backdropFilter:'blur(6px)',zIndex:50,display:'flex',alignItems:'flex-end',justifyContent:'center'}}>
+      <div onClick={e=>e.stopPropagation()} className="modal-sheet" style={{background:B.card,border:`1px solid ${B.border}`,borderTop:`1px solid ${B.accentBorder||B.border}`,width:'100%',maxWidth:'30rem',borderRadius:'1.75rem 1.75rem 0 0',padding:'0 1.5rem 2rem',maxHeight:'92vh',overflowY:'auto'}}>
+        {/* drag handle */}
+        <div style={{display:'flex',justifyContent:'center',padding:'0.75rem 0 0.5rem'}}>
+          <div style={{width:'2.5rem',height:'4px',borderRadius:'9999px',background:B.border}}/>
+        </div>
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'1.5rem',marginTop:'0.25rem'}}>
+          <h3 style={{fontSize:'1.2rem',fontWeight:'900',color:B.text}}>{title}</h3>
+          <button onClick={onClose} style={{background:B.card2||B.inputBg,border:`1px solid ${B.border}`,borderRadius:'50%',cursor:'pointer',color:B.muted,display:'flex',padding:'0.35rem'}}><Ic n="x" size={16}/></button>
+        </div>
+        {children}
+      </div>
+    </div>
+  );
+}
+function Toast({toast}){
+  if(!toast)return null;
+  const isErr=toast.type==='error';
+  return(
+    <div key={toast.msg} className="toast-ani" style={{position:'fixed',bottom:'5.5rem',left:'50%',transform:'translateX(-50%)',padding:'0.7rem 1.4rem',borderRadius:'9999px',color:'white',fontWeight:'700',fontSize:'0.82rem',boxShadow:`0 12px 32px rgba(0,0,0,0.5)`,zIndex:60,background:isErr?B.danger:`linear-gradient(135deg,${B.accent},#8a2010)`,whiteSpace:'nowrap',maxWidth:'88vw',textAlign:'center',display:'flex',alignItems:'center',gap:'0.5rem',border:`1px solid ${isErr?'rgba(239,68,68,0.3)':'rgba(255,255,255,0.15)'}`}}>
+      <span>{isErr?'⚠️':'✓'}</span>{toast.msg}
+    </div>
+  );
+}
+function StatCard({label,value,ic,color,sub}){
+  const c=color||B.accent;
+  return(
+    <div className="fade-up" style={{background:B.card,border:`1px solid ${B.border}`,borderRadius:'1.25rem',padding:'1.1rem',position:'relative',overflow:'hidden'}}>
+      <div style={{position:'absolute',top:0,left:0,right:0,height:'2.5px',background:`linear-gradient(90deg,${c},transparent)`}}/>
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:'0.875rem'}}>
+        <div style={{width:'2.2rem',height:'2.2rem',borderRadius:'0.65rem',background:`${c}1a`,display:'grid',placeItems:'center',flexShrink:0}}>
+          <Ic n={ic} size={15} color={c}/>
+        </div>
+      </div>
+      <div style={{fontSize:'0.68rem',color:B.textSub||B.muted,fontWeight:'600',marginBottom:'0.2rem',letterSpacing:'0.02em'}}>{label}</div>
+      <div style={{fontSize:'1.4rem',fontWeight:'900',color:B.text,fontVariantNumeric:'tabular-nums',lineHeight:1.1}}>{value}</div>
+      {sub&&<div style={{fontSize:'0.65rem',color:B.muted,marginTop:'0.3rem'}}>{sub}</div>}
+    </div>
+  );
+}
+
+// ─── AUTH SHELL ───────────────────────────────────────────
+function AuthShell({children,title,sub}){
+  return(
+    <div style={{minHeight:'100vh',display:'flex',alignItems:'center',justifyContent:'center',padding:'2rem 1rem',background:B.bg,position:'relative',overflow:'hidden'}}>
+      <div style={{position:'absolute',top:'-12rem',right:'-8rem',width:'28rem',height:'28rem',borderRadius:'50%',background:`radial-gradient(circle,${B.accent}18,transparent 65%)`,pointerEvents:'none'}}/>
+      <div style={{position:'absolute',bottom:'-8rem',left:'-6rem',width:'20rem',height:'20rem',borderRadius:'50%',background:`radial-gradient(circle,${B.accent}10,transparent 65%)`,pointerEvents:'none'}}/>
+      <div style={{position:'fixed',top:'1rem',left:'1rem',zIndex:10}}>
+        <SettingsBar/>
+      </div>
+      <div style={{width:'100%',maxWidth:'24rem',position:'relative'}} className="fade-up">
+        <div style={{display:'flex',flexDirection:'column',alignItems:'center',marginBottom:'1.75rem'}}>
+          <Logo size={80}/>
+          <div style={{marginTop:'0.875rem',fontSize:'10px',letterSpacing:'0.35em',color:B.muted,textTransform:'uppercase',fontWeight:'700'}}>{t('app_name')}</div>
+        </div>
+        <div style={{background:B.card,borderRadius:'1.75rem',border:`1px solid ${B.border}`,padding:'2rem',boxShadow:_theme==='dark'?`0 24px 80px rgba(0,0,0,0.6),0 0 0 1px ${B.border}`:`0 12px 40px rgba(0,0,0,0.08)`}}>
+          {title&&<div style={{textAlign:'center',marginBottom:'1.5rem'}}>
+            <h2 style={{fontSize:'1.5rem',fontWeight:'900',color:B.text,marginBottom:'0.25rem'}}>{title}</h2>
+            {sub&&<p style={{fontSize:'0.875rem',color:B.muted}}>{sub}</p>}
+          </div>}
+          {children}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── LANDING ──────────────────────────────────────────────
+const FEAT_ICONS=['film','users','dashboard','phone'];
+function Landing({onLogin,onRegister}){
+  return(
+    <div style={{minHeight:'100vh',background:B.bg,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',padding:'2rem 1rem',position:'relative',overflow:'hidden'}}>
+      <div style={{position:'absolute',top:'-15rem',right:'-10rem',width:'40rem',height:'40rem',borderRadius:'50%',background:`radial-gradient(circle,${B.accent}18,transparent 62%)`,pointerEvents:'none'}}/>
+      <div style={{position:'absolute',bottom:'-10rem',left:'-8rem',width:'28rem',height:'28rem',borderRadius:'50%',background:`radial-gradient(circle,${B.accent}10,transparent 65%)`,pointerEvents:'none'}}/>
+      <div style={{position:'fixed',top:'1rem',left:'1rem',zIndex:10}}><SettingsBar/></div>
+      <div style={{textAlign:'center',position:'relative',maxWidth:'30rem',width:'100%'}} className="fade-up">
+        <Logo size={96}/>
+        <h1 style={{fontSize:'2.4rem',fontWeight:'900',color:B.text,margin:'1.5rem 0 0.75rem',lineHeight:1.15,letterSpacing:'-0.02em'}}>{t('landing_title')}</h1>
+        <p style={{color:B.textSub||B.muted,marginBottom:'2rem',fontSize:'0.975rem',lineHeight:1.75}}>{t('landing_sub')}</p>
+        <div style={{display:'inline-flex',alignItems:'center',gap:'0.875rem',padding:'0.875rem 1.5rem',borderRadius:'1.25rem',background:B.card,border:`1px solid ${B.successSoft||'rgba(34,197,94,0.2)'}`,marginBottom:'2rem',boxShadow:`0 4px 20px rgba(34,197,94,0.1)`}}>
+          <div style={{width:'2.5rem',height:'2.5rem',borderRadius:'50%',background:'rgba(34,197,94,0.15)',display:'grid',placeItems:'center',fontSize:'1.2rem'}}>🎉</div>
+          <div style={{textAlign:_lang==='ar'?'right':'left'}}>
+            <div style={{fontWeight:'800',color:B.success,fontSize:'0.95rem'}}>{t('free_now')}</div>
+            <div style={{fontSize:'0.72rem',color:B.muted,marginTop:'1px'}}>{t('free_sub')}</div>
+          </div>
+        </div>
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0.6rem',marginBottom:'2rem'}}>
+          {['feat_1','feat_2','feat_3','feat_4'].map((f,i)=>(
+            <div key={f} style={{padding:'0.75rem 1rem',background:B.card,border:`1px solid ${B.border}`,borderRadius:'1rem',fontSize:'0.8rem',color:B.text,display:'flex',alignItems:'center',gap:'0.6rem',textAlign:'right'}}>
+              <div style={{width:'1.75rem',height:'1.75rem',borderRadius:'0.5rem',background:B.accentSoft,display:'grid',placeItems:'center',flexShrink:0}}>
+                <Ic n={FEAT_ICONS[i]} size={13} color={B.accent}/>
+              </div>
+              <span style={{fontWeight:'600'}}>{t(f)}</span>
+            </div>
+          ))}
+        </div>
+        <div style={{display:'flex',flexDirection:'column',gap:'0.75rem'}}>
+          <button onClick={onRegister} style={{width:'100%',padding:'1.05rem',borderRadius:'1rem',background:`linear-gradient(135deg,${B.accent},#8a2010)`,color:'white',fontWeight:'800',border:'none',cursor:'pointer',fontSize:'1rem',display:'flex',alignItems:'center',justifyContent:'center',gap:'0.6rem',boxShadow:`0 8px 24px ${B.accent}44`}}>
+            <Ic n="building" size={19} color="white"/>{t('start_free')}
+          </button>
+          <button onClick={onLogin} style={{width:'100%',padding:'1rem',borderRadius:'1rem',background:B.card,color:B.textSub||B.muted,fontWeight:'700',border:`1px solid ${B.border}`,cursor:'pointer',fontSize:'0.9rem'}}>
+            {t('have_account')}
+          </button>
+        </div>
+        <div style={{marginTop:'1.5rem',fontSize:'0.7rem',color:B.muted}}>{t('no_card')}</div>
+      </div>
+    </div>
+  );
+}
+
+// ─── REGISTER ─────────────────────────────────────────────
+function Register({onBack,onSuccess}){
+  const[name,setName]=useState('');const[email,setEmail]=useState('');
+  const[phone,setPhone]=useState('');const[pw,setPw]=useState('');
+  const[show,setShow]=useState(false);const[err,setErr]=useState('');const[loading,setLoading]=useState(false);
+  const[connErr,setConnErr]=useState(false);
+  if(connErr)return<ConnError onRetry={()=>setConnErr(false)}/>;
+  const submit=async()=>{
+    if(!name.trim())return setErr(t('err_name'));
+    if(!email.includes('@'))return setErr(t('err_email'));
+    if(pw.length<4)return setErr(t('err_pw'));
+    setLoading(true);setErr('');
+    try{const ag=await DB.register(name.trim(),email.toLowerCase().trim(),pw,phone.trim());onSuccess(ag);}
+    catch(e){
+      const msg=e.message||'';
+      if(msg.includes('تعذّر')||msg.includes('fetch'))setConnErr(true);
+      else setErr(msg.includes('duplicate')||msg.includes('unique')?t('err_duplicate'):msg);
+    }
+    finally{setLoading(false);}
+  };
+  return(
+    <AuthShell title={t('register')}>
+      <div style={{display:'flex',flexDirection:'column',gap:'1rem'}}>
+        <Field label={t('agency_name')}>
+          <div style={{position:'relative'}}>
+            <div style={{position:'absolute',right:'0.75rem',top:'50%',transform:'translateY(-50%)',display:'flex',pointerEvents:'none'}}><Ic n="building" size={14} color={B.muted}/></div>
+            <input value={name} onChange={e=>setName(e.target.value)} placeholder="BGH Marketing" style={{...INP,paddingRight:'2.5rem'}}/>
+          </div>
+        </Field>
+        <Field label={t('email')}>
+          <div style={{position:'relative'}}>
+            <div style={{position:'absolute',right:'0.75rem',top:'50%',transform:'translateY(-50%)',display:'flex',pointerEvents:'none'}}><Ic n="mail" size={14} color={B.muted}/></div>
+            <input type="email" value={email} onChange={e=>setEmail(e.target.value)} placeholder="agency@email.com" style={{...INP,paddingRight:'2.5rem'}}/>
+          </div>
+        </Field>
+        <Field label={t('phone')}>
+          <div style={{position:'relative'}}>
+            <div style={{position:'absolute',right:'0.75rem',top:'50%',transform:'translateY(-50%)',display:'flex',pointerEvents:'none'}}><Ic n="phone" size={14} color={B.muted}/></div>
+            <input value={phone} onChange={e=>setPhone(e.target.value)} placeholder="0555 123 456" style={{...INP,paddingRight:'2.5rem'}}/>
+          </div>
+        </Field>
+        <Field label={t('password')}>
+          <PwField value={pw} onChange={setPw} show={show} setShow={setShow} placeholder={t('pw_hint')} onEnter={submit}/>
+        </Field>
+        {err&&<div style={{fontSize:'0.75rem',color:B.danger,fontWeight:'700',padding:'0.5rem 0.75rem',background:`rgba(239,68,68,0.1)`,borderRadius:'0.5rem',border:`1px solid rgba(239,68,68,0.2)`}}>{err}</div>}
+        <button onClick={submit} disabled={loading} style={{width:'100%',padding:'0.9rem',borderRadius:'0.875rem',background:`linear-gradient(135deg,${B.accent},#8a2010)`,color:'white',fontWeight:'800',border:'none',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',gap:'0.5rem',opacity:loading?0.7:1,boxShadow:`0 6px 20px ${B.accent}44`,fontSize:'0.92rem'}}>
+          {loading?<><span className="spin" style={{display:'inline-block'}}><Ic n="loader" size={16} color="white"/></span>{t('register')}...</>:t('start_free')}
+        </button>
+        <button onClick={onBack} style={{background:'none',border:'none',cursor:'pointer',color:B.muted,fontSize:'0.85rem',textAlign:'center',padding:'0.25rem'}}>{t('back')}</button>
+      </div>
+    </AuthShell>
+  );
+}
+
+// ─── LOGIN ────────────────────────────────────────────────
+function Login({onBack,onAgencyLogin,onWorkerLogin,onSuperAdmin}){
+  const[role,setRole]=useState('agency');
+  const[email,setEmail]=useState('');const[agEmail,setAgEmail]=useState('');
+  const[pw,setPw]=useState('');const[show,setShow]=useState(false);
+  const[err,setErr]=useState('');const[loading,setLoading]=useState(false);
+  const[connErr,setConnErr]=useState(false);
+  if(connErr)return<ConnError onRetry={()=>setConnErr(false)}/>;
+  const submit=async()=>{
+    if(!pw)return setErr(t('password'));
+    setLoading(true);setErr('');
+    if(email===SUPER_EMAIL&&pw===SUPER_PASS){setLoading(false);onSuperAdmin();return;}
+    try{
+      if(role==='agency'){
+        if(!email.includes('@'))return setErr(t('err_email'));
+        const ag=await DB.loginAgency(email.toLowerCase().trim(),pw);
+        onAgencyLogin(ag);
+      } else {
+        if(!agEmail.includes('@'))return setErr(t('err_email'));
+        const{agency,worker,appData}=await DB.loginWorker(agEmail,pw);
+        onWorkerLogin(agency,worker,appData);
+      }
+    }catch(e){
+      const msg=e.message||'';
+      if(msg.includes('تعذّر')||msg.includes('fetch')){setConnErr(true);}
+      else setErr(msg);
+    }
+    finally{setLoading(false);}
+  };
+  return(
+    <AuthShell title={t('login')}>
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0.375rem',padding:'0.25rem',background:B.inputBg,borderRadius:'0.75rem',marginBottom:'1.25rem'}}>
+        {[{v:'agency',l:t('agency'),ic:'building'},{v:'worker',l:t('worker'),ic:'video'}].map(r=>(
+          <button key={r.v} onClick={()=>{setRole(r.v);setErr('');setPw('');}}
+            style={{padding:'0.625rem',borderRadius:'0.5rem',fontWeight:'700',fontSize:'0.875rem',display:'flex',alignItems:'center',justifyContent:'center',gap:'0.5rem',border:'none',cursor:'pointer',background:role===r.v?B.accent:'transparent',color:role===r.v?'white':B.muted,transition:'all 0.15s'}}>
+            <Ic n={r.ic} size={15}/>{r.l}
+          </button>
+        ))}
+      </div>
+      <div style={{display:'flex',flexDirection:'column',gap:'1rem'}}>
+        {role==='agency'?(
+          <Field label={t('email')}>
+            <div style={{position:'relative'}}>
+              <div style={{position:'absolute',right:'0.75rem',top:'50%',transform:'translateY(-50%)',display:'flex',pointerEvents:'none'}}><Ic n="mail" size={14} color={B.muted}/></div>
+              <input type="email" value={email} onChange={e=>setEmail(e.target.value)} placeholder="agency@email.com" style={{...INP,paddingRight:'2.5rem'}}/>
+            </div>
+          </Field>
+        ):(
+          <>
+            <Field label={t('agency_email')}>
+              <div style={{position:'relative'}}>
+                <div style={{position:'absolute',right:'0.75rem',top:'50%',transform:'translateY(-50%)',display:'flex',pointerEvents:'none'}}><Ic n="building" size={14} color={B.muted}/></div>
+                <input type="email" value={agEmail} onChange={e=>setAgEmail(e.target.value)} placeholder={t('worker_email_hint')} style={{...INP,paddingRight:'2.5rem'}}/>
+              </div>
+            </Field>
+            <div style={{padding:'0.5rem 0.75rem',background:B.accentSoft,border:`1px solid ${B.accent}33`,borderRadius:'0.5rem',fontSize:'0.75rem',color:B.accent}}>
+              {t('role_hint')}
+            </div>
+          </>
+        )}
+        <Field label={t('password')}>
+          <PwField value={pw} onChange={setPw} show={show} setShow={setShow} placeholder={t('password')} onEnter={submit}/>
+        </Field>
+        {err&&<div style={{fontSize:'0.75rem',color:B.danger,fontWeight:'700',padding:'0.5rem 0.75rem',background:`rgba(239,68,68,0.1)`,borderRadius:'0.5rem',border:`1px solid rgba(239,68,68,0.2)`}}>{err}</div>}
+        <button onClick={submit} disabled={loading} style={{width:'100%',padding:'0.9rem',borderRadius:'0.875rem',background:`linear-gradient(135deg,${B.accent},#8a2010)`,color:'white',fontWeight:'800',border:'none',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',gap:'0.5rem',opacity:loading?0.7:1,boxShadow:`0 6px 20px ${B.accent}44`,fontSize:'0.92rem'}}>
+          {loading?<><span className="spin" style={{display:'inline-block'}}><Ic n="loader" size={16} color="white"/></span>{t('login')}...</>:t('login')}
+        </button>
+        <button onClick={onBack} style={{background:'none',border:'none',cursor:'pointer',color:B.muted,fontSize:'0.85rem',textAlign:'center',padding:'0.25rem'}}>{t('back')}</button>
+      </div>
+    </AuthShell>
+  );
+}
+
+// ─── CONNECTION ERROR ─────────────────────────────────────
+function ConnError({onRetry}){
+  return(
+    <div style={{minHeight:'100vh',display:'flex',alignItems:'center',justifyContent:'center',background:B.bg,padding:'2rem 1rem'}}>
+      <div style={{position:'fixed',top:'1rem',left:'1rem',zIndex:10}}><SettingsBar/></div>
+      <div style={{textAlign:'center',maxWidth:'22rem',width:'100%'}} className="fade-up">
+        <div style={{fontSize:'4rem',marginBottom:'1rem'}}>📡</div>
+        <h2 style={{fontSize:'1.4rem',fontWeight:'900',color:B.text,marginBottom:'0.5rem'}}>مشكلة في الاتصال</h2>
+        <p style={{color:B.muted,fontSize:'0.875rem',lineHeight:1.7,marginBottom:'1.5rem'}}>
+          تعذّر الاتصال بالسيرفر. تأكد من اتصالك بالإنترنت.
+          <br/>إذا المشكلة مستمرة، المشروع قد يكون موقوف مؤقتاً.
+        </p>
+        <div style={{background:B.card,border:`1px solid ${B.border}`,borderRadius:'1rem',padding:'1rem',marginBottom:'1.25rem',textAlign:'right',fontSize:'0.78rem',color:B.muted}}>
+          <div style={{fontWeight:'700',color:B.text,marginBottom:'0.5rem'}}>💡 الحلول المحتملة:</div>
+          <div>• تحقق من اتصال الإنترنت</div>
+          <div>• تأكد أن المشروع على Supabase نشط</div>
+          <div>• افتح الملف من سيرفر محلي (لا file://)</div>
+        </div>
+        <button onClick={onRetry} style={{width:'100%',padding:'0.875rem',borderRadius:'0.875rem',background:`linear-gradient(135deg,${B.accent},#8a2010)`,color:'white',fontWeight:'800',border:'none',cursor:'pointer',boxShadow:`0 4px 16px ${B.accent}44`,marginBottom:'0.75rem'}}>
+          🔄 إعادة المحاولة
+        </button>
+        <button onClick={()=>window.location.reload()} style={{width:'100%',padding:'0.75rem',borderRadius:'0.875rem',background:'none',color:B.muted,fontWeight:'600',border:`1px solid ${B.border}`,cursor:'pointer',fontSize:'0.85rem'}}>
+          تحديث الصفحة
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ─── EXPIRED ──────────────────────────────────────────────
+function ExpiredScreen({agency,onLogout}){
+  const sus=isSuspended(agency);
+  return(
+    <div style={{minHeight:'100vh',display:'flex',alignItems:'center',justifyContent:'center',background:B.bg,padding:'2rem 1rem'}}>
+      <div style={{position:'fixed',top:'1rem',left:'1rem',zIndex:10}}><SettingsBar/></div>
+      <div style={{textAlign:'center',maxWidth:'24rem',width:'100%'}}>
+        <Logo size={80}/>
+        <div style={{marginTop:'2rem',padding:'2rem',background:B.card,borderRadius:'1.5rem',border:`1px solid ${B.border}`}}>
+          <div style={{fontSize:'3rem',marginBottom:'1rem'}}>{sus?'🚫':'⏰'}</div>
+          <h2 style={{fontSize:'1.5rem',fontWeight:'900',color:B.text,marginBottom:'0.5rem'}}>{sus?t('suspended_title'):t('expired_title')}</h2>
+          <p style={{color:B.muted,marginBottom:'1.5rem',fontSize:'0.875rem'}}>{sus?t('suspended_msg'):t('expired_msg')}</p>
+          <div style={{background:B.inputBg,borderRadius:'1rem',padding:'1rem',marginBottom:'1.5rem',display:'flex',alignItems:'center',justifyContent:'center',gap:'0.75rem'}}>
+            <Ic n="phone" size={20} color={B.accent}/>
+            <span style={{fontWeight:'800',color:B.text}}>{t('contact_us')}</span>
+          </div>
+          <button onClick={onLogout} style={{width:'100%',padding:'0.75rem',borderRadius:'0.75rem',background:B.border,color:B.text,fontWeight:'700',border:'none',cursor:'pointer'}}>{t('logout')}</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── SUPER ADMIN ──────────────────────────────────────────
+function SuperAdmin({onLogout}){
+  const[agencies,setAgencies]=useState([]);
+  const[loading,setLoading]=useState(true);
+  const[selected,setSelected]=useState(null);
+  const[agData,setAgData]=useState(null);
+  const[editAg,setEditAg]=useState(null);
+  const[toast,setToast]=useState(null);
+  const showToast=(msg,type='success')=>{setToast({msg,type});setTimeout(()=>setToast(null),2500);};
+
+  useEffect(()=>{DB.getAllAgencies().then(d=>{setAgencies(d);setLoading(false);});},[]);
+
+  const viewAgency=async ag=>{setSelected(ag);const d=await DB.getAgencyData(ag.id);setAgData(d);};
+  const updateAgency=async(id,patch)=>{
+    await DB.updateAgency(id,patch);
+    setAgencies(a=>a.map(x=>x.id===id?{...x,...patch}:x));
+    if(selected?.id===id)setSelected(s=>({...s,...patch}));
+    showToast(t('toast_saved'));setEditAg(null);
+  };
+  const deleteAgency=async id=>{
+    if(!confirm(t('confirm_delete')))return;
+    await DB.deleteAgency(id);
+    setAgencies(a=>a.filter(x=>x.id!==id));
+    if(selected?.id===id){setSelected(null);setAgData(null);}
+    showToast(t('toast_deleted'));
+  };
+
+  const stats={total:agencies.length,active:agencies.filter(a=>a.is_active&&!isExpired(a)).length,paid:agencies.filter(a=>a.plan!=='free').length};
+
+  if(loading)return<div style={{minHeight:'100vh',display:'flex',alignItems:'center',justifyContent:'center',background:B.bg}}><Logo size={70}/></div>;
+
+  return(
+    <div style={{minHeight:'100vh',background:B.bg,fontFamily:"'Cairo','Inter',sans-serif"}}>
+      <header style={{borderBottom:`1px solid ${B.border}`,background:B.navBg,backdropFilter:'blur(16px)',position:'sticky',top:0,zIndex:40}}>
+        <div style={{maxWidth:'80rem',margin:'0 auto',padding:'0.7rem 1rem',display:'flex',alignItems:'center',justifyContent:'space-between'}}>
+          <div style={{display:'flex',alignItems:'center',gap:'0.75rem'}}>
+            <Logo size={36}/>
+            <div>
+              <div style={{fontWeight:'800',color:B.text,fontSize:'0.92rem',display:'flex',alignItems:'center',gap:'0.4rem'}}>{t('super_admin')} <Ic n="crown" size={14} color={B.warning}/></div>
+              <div style={{fontSize:'0.62rem',color:B.muted}}>{t('admin_panel')}</div>
+            </div>
+          </div>
+          <div style={{display:'flex',alignItems:'center',gap:'0.6rem'}}>
+            <SettingsBar/>
+            <button onClick={onLogout} style={{padding:'0.45rem 0.9rem',borderRadius:'9999px',border:`1px solid ${B.dangerSoft}`,background:B.dangerSoft,color:B.danger,fontWeight:'700',cursor:'pointer',display:'flex',alignItems:'center',gap:'0.4rem',fontSize:'0.78rem'}}>
+              <Ic n="logout" size={13} color={B.danger}/>{t('logout')}
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <main style={{maxWidth:'80rem',margin:'0 auto',padding:'1.5rem 1rem'}}>
+        <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:'0.75rem',marginBottom:'1.5rem'}}>
+          <StatCard label={t('total_agencies')} value={stats.total} ic="building"/>
+          <StatCard label={t('active_agencies')} value={stats.active} ic="checkCircle"/>
+          <StatCard label={t('paid_subs')} value={stats.paid} ic="crown"/>
+        </div>
+
+        <div style={{display:'grid',gridTemplateColumns:selected?'1fr 1fr':'1fr',gap:'1.5rem'}}>
+          <div style={{background:B.card,borderRadius:'1rem',border:`1px solid ${B.border}`,overflow:'hidden'}}>
+            <div style={{padding:'1rem 1.25rem',borderBottom:`1px solid ${B.border}`,fontWeight:'800',fontSize:'1rem',color:B.text}}>
+              {agencies.length} {t('total_agencies').split(' ')[1]||t('total_agencies')}
+            </div>
+            {agencies.length===0?<div style={{padding:'3rem',textAlign:'center',color:B.muted,fontSize:'0.875rem'}}>{t('no_agencies')}</div>
+            :agencies.map(ag=>{
+              const pl=planLabel(ag.plan);
+              const exp=isExpired(ag);const sus=isSuspended(ag);const dl=daysLeft(ag);
+              return(
+                <div key={ag.id} style={{padding:'0.875rem 1.25rem',borderBottom:`1px solid ${B.border}`,background:selected?.id===ag.id?_theme==='dark'?'#222':'#f0f0f0':'transparent'}}>
+                  <div style={{display:'flex',alignItems:'center',gap:'0.75rem'}}>
+                    <div style={{width:'2.5rem',height:'2.5rem',borderRadius:'50%',display:'grid',placeItems:'center',fontWeight:'700',flexShrink:0,background:B.accentSoft,color:B.accent}}>
+                      {ag.name.charAt(0)}
+                    </div>
+                    <div style={{flex:1,minWidth:0}}>
+                      <div style={{display:'flex',alignItems:'center',gap:'0.5rem',flexWrap:'wrap'}}>
+                        <span style={{fontWeight:'700',color:B.text,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{ag.name}</span>
+                        <span style={{fontSize:'0.6rem',fontWeight:'700',padding:'0.1rem 0.4rem',borderRadius:'9999px',background:pl.bg,color:pl.color}}>{pl.label}</span>
+                        {sus&&<span style={{fontSize:'0.6rem',fontWeight:'700',padding:'0.1rem 0.4rem',borderRadius:'9999px',background:`rgba(239,68,68,0.15)`,color:B.danger}}>🚫</span>}
+                        {exp&&!sus&&<span style={{fontSize:'0.6rem',fontWeight:'700',padding:'0.1rem 0.4rem',borderRadius:'9999px',background:`rgba(239,68,68,0.15)`,color:B.danger}}>⏰</span>}
+                      </div>
+                      <div style={{fontSize:'0.7rem',color:B.muted}}>{ag.email} {ag.phone&&<span style={{color:B.accent}}>· 📱 {ag.phone}</span>}</div>
+                      {dl!==null&&!exp&&<div style={{fontSize:'0.65rem',color:dl<7?B.danger:B.success,fontWeight:'600'}}>{t('days_left',dl)}</div>}
+                    </div>
+                    <div style={{display:'flex',gap:'0.25rem',flexShrink:0}}>
+                      <button onClick={()=>viewAgency(ag)} style={{padding:'0.35rem 0.6rem',border:'none',borderRadius:'0.5rem',background:selected?.id===ag.id?B.accent:B.border,color:selected?.id===ag.id?'white':B.text,cursor:'pointer',fontSize:'0.7rem',fontWeight:'700'}}>
+                        {selected?.id===ag.id?t('opened'):t('view')}
+                      </button>
+                      <button onClick={()=>setEditAg(ag)} style={{padding:'0.35rem',border:'none',background:'none',cursor:'pointer',color:B.muted,display:'flex'}}><Ic n="pencil" size={14}/></button>
+                      <button onClick={()=>deleteAgency(ag.id)} style={{padding:'0.35rem',border:'none',background:'none',cursor:'pointer',color:B.danger,display:'flex'}}><Ic n="trash" size={14} color={B.danger}/></button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {selected&&agData&&(
+            <div style={{background:B.card,borderRadius:'1rem',border:`1px solid ${B.border}`,overflow:'hidden'}}>
+              <div style={{padding:'1rem 1.25rem',borderBottom:`1px solid ${B.border}`,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+                <div>
+                  <div style={{fontWeight:'800',fontSize:'1rem',color:B.text}}>{selected.name}</div>
+                  <div style={{fontSize:'0.75rem',color:B.muted}}>{selected.email} {selected.phone&&<span style={{color:B.accent}}>· 📱 {selected.phone}</span>}</div>
+                </div>
+                <button onClick={()=>{setSelected(null);setAgData(null);}} style={{background:'none',border:'none',cursor:'pointer',display:'flex',color:B.muted}}><Ic n="x" size={18}/></button>
+              </div>
+              <div style={{padding:'1rem'}}>
+                <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:'0.5rem',marginBottom:'1rem'}}>
+                  {[{l:t('team'),v:agData.editors?.length||0},{l:t('clients'),v:agData.clients?.length||0},{l:t('videos'),v:agData.videos?.length||0}].map(s=>(
+                    <div key={s.l} style={{background:B.inputBg,borderRadius:'0.75rem',padding:'0.75rem',textAlign:'center'}}>
+                      <div style={{fontSize:'1.5rem',fontWeight:'900',color:B.accent}}>{s.v}</div>
+                      <div style={{fontSize:'0.65rem',color:B.muted}}>{s.l}</div>
+                    </div>
+                  ))}
+                </div>
+                <div style={{fontWeight:'700',fontSize:'0.875rem',color:B.text,marginBottom:'0.5rem'}}>{t('videos')}</div>
+                {!agData.videos?.length?<div style={{color:B.muted,fontSize:'0.875rem',textAlign:'center',padding:'1rem'}}>{t('no_videos')}</div>
+                :<div style={{maxHeight:'250px',overflowY:'auto'}}>
+                  {agData.videos.slice(0,10).map(v=>{
+                    const eMap=Object.fromEntries((agData.editors||[]).map(e=>[e.id,e.name]));
+                    const cMap=Object.fromEntries((agData.clients||[]).map(c=>[c.id,c.name]));
+                    return(
+                      <div key={v.id} style={{padding:'0.6rem',borderBottom:`1px solid ${B.border}`,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+                        <div>
+                          <div style={{fontWeight:'600',fontSize:'0.8rem',color:B.text}}>{v.title||'—'}</div>
+                          <div style={{fontSize:'0.65rem',color:B.muted}}>{eMap[v.editorId]||'—'} · {cMap[v.clientId]||'—'}</div>
+                        </div>
+                        <span style={{fontWeight:'700',fontSize:'0.8rem',color:B.text,fontVariantNumeric:'tabular-nums'}}>{fmt(v.price)}<span style={{fontSize:'0.6rem',color:B.muted}}> دج</span></span>
+                      </div>
+                    );
+                  })}
+                </div>}
+              </div>
+            </div>
+          )}
+        </div>
+      </main>
+
+      {editAg&&<EditAgencyModal ag={editAg} onClose={()=>setEditAg(null)} onSave={(id,patch)=>updateAgency(id,patch)}/>}
+      <Toast toast={toast}/>
+    </div>
+  );
+}
+
+function EditAgencyModal({ag,onClose,onSave}){
+  const[plan,setPlan]=useState(ag.plan||'free');
+  const[days,setDays]=useState('30');
+  const[active,setActive]=useState(ag.is_active!==false);
+  const[notes,setNotes]=useState(ag.notes||'');
+  const save=()=>{
+    const patch={plan,is_active:active,notes};
+    if(plan!=='free'&&days){const e=new Date();e.setDate(e.getDate()+Number(days));patch.plan_expires_at=e.toISOString();}
+    if(plan==='free')patch.plan_expires_at=null;
+    onSave(ag.id,patch);
+  };
+  return(
+    <Modal onClose={onClose} title={`${t('manage')}: ${ag.name}`}>
+      <div style={{display:'flex',flexDirection:'column',gap:'1rem'}}>
+        <Field label={t('plan')}>
+          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:'0.5rem'}}>
+            {[{v:'free',l:t('free_plan'),c:B.muted},{v:'basic',l:'Basic ⭐',c:'#fbbf24'},{v:'pro',l:'Pro 💎',c:'#a78bfa'}].map(p=>(
+              <button key={p.v} onClick={()=>setPlan(p.v)}
+                style={{padding:'0.625rem',borderRadius:'0.75rem',border:`2px solid ${plan===p.v?p.c:B.border}`,background:plan===p.v?`${p.c}22`:'transparent',color:p.c,fontWeight:'700',cursor:'pointer',fontSize:'0.8rem'}}>
+                {p.l}
+              </button>
+            ))}
+          </div>
+        </Field>
+        {plan!=='free'&&(
+          <Field label={t('duration')}>
+            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:'0.5rem'}}>
+              {[['30',t('one_month')],['90',t('three_months')],['365',t('one_year')]].map(([d,l])=>(
+                <button key={d} onClick={()=>setDays(d)}
+                  style={{padding:'0.5rem',borderRadius:'0.75rem',border:`2px solid ${days===d?B.accent:B.border}`,background:days===d?B.accentSoft:'transparent',color:days===d?B.accent:B.text,fontWeight:'700',cursor:'pointer',fontSize:'0.8rem'}}>
+                  {l}
+                </button>
+              ))}
+            </div>
+          </Field>
+        )}
+        <label style={{display:'flex',alignItems:'center',gap:'0.75rem',padding:'0.875rem',background:active?`rgba(34,197,94,0.1)`:`rgba(239,68,68,0.1)`,borderRadius:'0.75rem',cursor:'pointer',border:`1px solid ${active?`rgba(34,197,94,0.2)`:`rgba(239,68,68,0.2)`}`}}>
+          <input type="checkbox" checked={active} onChange={e=>setActive(e.target.checked)} style={{width:'1.25rem',height:'1.25rem',accentColor:B.success}}/>
+          <div>
+            <div style={{fontWeight:'700',color:active?B.success:B.danger,fontSize:'0.875rem'}}>{active?t('account_active'):t('account_suspended')}</div>
+          </div>
+        </label>
+        <Field label={t('notes')}>
+          <textarea value={notes} onChange={e=>setNotes(e.target.value)} placeholder={t('notes_ph')}
+            style={{...INP,height:'70px',resize:'none'}}/>
+        </Field>
+        <button onClick={save} style={{width:'100%',padding:'0.9rem',borderRadius:'0.875rem',background:`linear-gradient(135deg,${B.accent},#8a2010)`,color:'white',fontWeight:'800',border:'none',cursor:'pointer',boxShadow:`0 4px 16px ${B.accent}44`}}>
+          {t('save_changes')}
+        </button>
+      </div>
+    </Modal>
+  );
+}
+
+// ─── BOTTOM NAV ───────────────────────────────────────────
+function BottomNav({tabs,tab,setTab}){
+  return(
+    <div style={{position:'fixed',bottom:0,left:0,right:0,zIndex:40,background:B.navBg,borderTop:`1px solid ${B.border}`,backdropFilter:'blur(20px)',display:'flex',paddingBottom:'env(safe-area-inset-bottom)'}}>
+      {tabs.map(tt=>(
+        <button key={tt.id} onClick={()=>setTab(tt.id)} style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center',gap:'0.2rem',border:'none',background:'none',cursor:'pointer',padding:'0.6rem 0.25rem',color:tab===tt.id?B.accent:B.muted}}>
+          <div style={{padding:'0.3rem 0.875rem',borderRadius:'9999px',background:tab===tt.id?B.accentSoft:'transparent',transition:'background 0.15s'}}>
+            <Ic n={tt.ic} size={20} color={tab===tt.id?B.accent:B.muted}/>
+          </div>
+          <span style={{fontSize:'0.6rem',fontWeight:'800',letterSpacing:'0.01em'}}>{tt.label}</span>
+        </button>
+      ))}
+    </div>
+  );
+}
+
+// ─── AGENCY APP ───────────────────────────────────────────
+function AgencyApp({agency,onLogout}){
+  const[data,setData]=useState(EMPTY);
+  const[loading,setLoading]=useState(true);
+  const[saving,setSaving]=useState(false);
+  const[tab,setTab]=useState('dashboard');
+  const[toast,setToast]=useState(null);
+  const[isMobile,setIsMobile]=useState(window.innerWidth<640);
+  useEffect(()=>{const fn=()=>setIsMobile(window.innerWidth<640);window.addEventListener('resize',fn);return()=>window.removeEventListener('resize',fn);},[]);
+
+  useEffect(()=>{DB.loadData(agency.id).then(d=>{setData(d);setLoading(false);});},[agency.id]);
+
+  const persist=async next=>{
+    setData(next);setSaving(true);
+    try{await DB.saveData(agency.id,next);}
+    catch(e){showToast(t('toast_save_failed'),'error');}
+    finally{setSaving(false);}
+  };
+  const showToast=(msg,type='success')=>{setToast({msg,type});setTimeout(()=>setToast(null),3000);};
+
+  const canAdd=type=>{
+    if(agency.plan!=='free')return true;
+    if(type==='editor')return data.editors.length<FREE_LIMITS.editors;
+    if(type==='client')return data.clients.length<FREE_LIMITS.clients;
+    if(type==='video')return data.videos.length<FREE_LIMITS.videos;
+    return true;
+  };
+
+  const tabs=[
+    {id:'dashboard',label:t('dashboard'),ic:'dashboard'},
+    {id:'videos',label:t('videos'),ic:'film'},
+    {id:'editors',label:t('team'),ic:'users'},
+    {id:'clients',label:t('clients'),ic:'briefcase'},
+  ];
+
+  const addEditor=(name,pw,role='editor')=>{
+    if(!canAdd('editor'))return showToast(t('toast_limit',FREE_LIMITS.editors),'error');
+    persist({...data,editors:[...data.editors,{id:uid(),name,password:hash(pw),role}]});showToast(t('toast_editor_added'));
+  };
+  const updEditor=(id,patch)=>persist({...data,editors:data.editors.map(e=>e.id===id?{...e,...patch}:e)});
+  const delEditor=id=>{if(!confirm(t('confirm_delete')))return;persist({...data,editors:data.editors.filter(e=>e.id!==id),videos:data.videos.filter(v=>v.editorId!==id)});showToast(t('toast_deleted'));};
+  const addClient=name=>{
+    if(!canAdd('client'))return showToast(t('toast_limit',FREE_LIMITS.clients),'error');
+    persist({...data,clients:[...data.clients,{id:uid(),name}]});showToast(t('toast_client_added'));
+  };
+  const updClient=(id,name)=>persist({...data,clients:data.clients.map(c=>c.id===id?{...c,name}:c)});
+  const delClient=id=>{if(!confirm(t('confirm_delete')))return;persist({...data,clients:data.clients.filter(c=>c.id!==id),videos:data.videos.filter(v=>v.clientId!==id)});showToast(t('toast_deleted'));};
+  const addVideo=v=>{
+    if(!canAdd('video'))return showToast(t('toast_limit',FREE_LIMITS.videos),'error');
+    persist({...data,videos:[{id:uid(),...v,paid:false,createdAt:new Date().toISOString()},...data.videos]});showToast(t('toast_video_added'));
+  };
+  const updVideo=(id,patch)=>persist({...data,videos:data.videos.map(x=>x.id===id?{...x,...patch}:x)});
+  const delVideo=id=>{if(!confirm(t('confirm_delete')))return;persist({...data,videos:data.videos.filter(x=>x.id!==id)});showToast(t('toast_deleted'));};
+  const togglePaid=id=>{const v=data.videos.find(x=>x.id===id);persist({...data,videos:data.videos.map(x=>x.id===id?{...x,paid:!v.paid}:x)});};
+
+  const pl=planLabel(agency.plan);const dl=daysLeft(agency);
+
+  if(loading)return(
+    <div style={{minHeight:'100vh',display:'flex',alignItems:'center',justifyContent:'center',background:B.bg,flexDirection:'column',gap:'1.25rem'}}>
+      <div style={{position:'relative'}}>
+        <Logo size={72}/>
+        <div style={{position:'absolute',inset:-8,borderRadius:'32%',border:`2px solid ${B.accent}33`,animation:'spin 3s linear infinite'}}/>
+      </div>
+      <div style={{display:'flex',gap:'0.4rem'}}>
+        {[0,1,2].map(i=><div key={i} style={{width:'6px',height:'6px',borderRadius:'50%',background:B.accent,opacity:0.6,animation:`pulse 1.2s ease ${i*0.2}s infinite`}}/>)}
+      </div>
+    </div>
+  );
+
+  return(
+    <div style={{minHeight:'100vh',background:B.bg,fontFamily:"'Cairo','Inter',sans-serif"}}>
+      <header style={{borderBottom:`1px solid ${B.border}`,background:B.navBg,backdropFilter:'blur(16px)',position:'sticky',top:0,zIndex:40}}>
+        <div style={{maxWidth:'80rem',margin:'0 auto',padding:'0.7rem 1rem',display:'flex',alignItems:'center',justifyContent:'space-between',gap:'0.75rem'}}>
+          <div style={{display:'flex',alignItems:'center',gap:'0.75rem'}}>
+            <Logo size={36}/>
+            <div>
+              <div style={{fontWeight:'800',fontSize:'0.92rem',color:B.text,lineHeight:1.2}}>{agency.name}</div>
+              <div style={{fontSize:'0.62rem',display:'flex',alignItems:'center',gap:'0.35rem',marginTop:'2px',flexWrap:'wrap'}}>
+                <span style={{padding:'0.1rem 0.45rem',borderRadius:'9999px',background:pl.bg,color:pl.color,fontWeight:'700'}}>{pl.label}</span>
+                {dl!==null&&<span style={{color:dl<7?B.danger:B.muted}}>· {t('days_left',dl)}</span>}
+                {saving&&<span style={{color:B.accent}}>· ⟳</span>}
+              </div>
+            </div>
+          </div>
+          <div style={{display:'flex',alignItems:'center',gap:'0.5rem'}}>
+            <SettingsBar/>
+            {!isMobile&&<nav style={{display:'flex',gap:'0.15rem',background:B.inputBg,borderRadius:'9999px',padding:'0.2rem'}}>
+              {tabs.map(tt=>(
+                <button key={tt.id} onClick={()=>setTab(tt.id)}
+                  style={{display:'flex',alignItems:'center',gap:'0.3rem',padding:'0.4rem 0.75rem',borderRadius:'9999px',border:'none',cursor:'pointer',fontWeight:'700',fontSize:'0.72rem',whiteSpace:'nowrap',background:tab===tt.id?B.accent:'transparent',color:tab===tt.id?'white':B.muted}}>
+                  <Ic n={tt.ic} size={13}/>{tt.label}
+                </button>
+              ))}
+            </nav>}
+            <button onClick={onLogout} style={{padding:'0.45rem',borderRadius:'50%',border:`1px solid ${B.border}`,background:B.card,cursor:'pointer',color:B.muted,display:'flex'}}>
+              <Ic n="logout" size={15}/>
+            </button>
+          </div>
+        </div>
+        {agency.plan==='free'&&(
+          <div style={{background:B.accentSoft,borderTop:`1px solid ${B.accentBorder}`,padding:'0.35rem 1rem',textAlign:'center',fontSize:'0.7rem',color:B.accent,fontWeight:'700'}}>
+            {t('free_warning',data.editors.length,FREE_LIMITS.editors,data.videos.length,FREE_LIMITS.videos)}
+          </div>
+        )}
+        {dl!==null&&dl<=7&&dl>0&&(
+          <div style={{background:B.dangerSoft,borderTop:`1px solid rgba(239,68,68,0.15)`,padding:'0.35rem 1rem',textAlign:'center',fontSize:'0.7rem',color:B.danger,fontWeight:'700'}}>
+            {t('expiry_warning',dl)}
+          </div>
+        )}
+      </header>
+
+      <main style={{maxWidth:'80rem',margin:'0 auto',padding:'1.25rem 1rem',paddingBottom:isMobile?'6rem':'1.25rem'}}>
+        {tab==='dashboard'&&<AgencyDash data={data} setTab={setTab} agency={agency}/>}
+        {tab==='videos'&&<VideosTab data={data} addVideo={addVideo} updVideo={updVideo} delVideo={delVideo} togglePaid={togglePaid}/>}
+        {tab==='editors'&&<TeamTab data={data} addEditor={addEditor} updEditor={updEditor} delEditor={delEditor} canAdd={canAdd('editor')} limit={FREE_LIMITS.editors} plan={agency.plan}/>}
+        {tab==='clients'&&<ClientsTab data={data} addClient={addClient} updClient={updClient} delClient={delClient} canAdd={canAdd('client')} limit={FREE_LIMITS.clients} plan={agency.plan}/>}
+      </main>
+      {isMobile&&<BottomNav tabs={tabs} tab={tab} setTab={setTab}/>}
+      <Toast toast={toast}/>
+    </div>
+  );
+}
+
+// ─── WORKER APP ───────────────────────────────────────────
+function WorkerApp({agency,worker,initialData,onLogout}){
+  const[data,setData]=useState(initialData);
+  const[saving,setSaving]=useState(false);
+  const[tab,setTab]=useState('dashboard');
+  const[toast,setToast]=useState(null);
+  const[isMobile,setIsMobile]=useState(window.innerWidth<640);
+  useEffect(()=>{const fn=()=>setIsMobile(window.innerWidth<640);window.addEventListener('resize',fn);return()=>window.removeEventListener('resize',fn);},[]);
+  const showToast=(msg,type='success')=>{setToast({msg,type});setTimeout(()=>setToast(null),2500);};
+
+  const myVideos=useMemo(()=>data.videos.filter(v=>v.editorId===worker.id),[data.videos,worker.id]);
+
+  const persist=async next=>{
+    setData(next);setSaving(true);
+    try{await DB.saveData(agency.id,next);}
+    catch(e){showToast(t('toast_save_failed'),'error');}
+    finally{setSaving(false);}
+  };
+
+  const addVideo=v=>{
+    persist({...data,videos:[{id:uid(),...v,editorId:worker.id,paid:false,createdAt:new Date().toISOString()},...data.videos]});
+    showToast(t('toast_video_added'));
+  };
+  const updVideo=(id,patch)=>{
+    const v=data.videos.find(x=>x.id===id);
+    if(!v||v.editorId!==worker.id||v.paid)return showToast(t('toast_no_edit'),'error');
+    delete patch.paid;
+    persist({...data,videos:data.videos.map(x=>x.id===id?{...x,...patch}:x)});
+  };
+  const delVideo=id=>{
+    const v=data.videos.find(x=>x.id===id);
+    if(!v||v.editorId!==worker.id||v.paid)return showToast(t('toast_no_edit'),'error');
+    if(!confirm(t('confirm_delete')))return;
+    persist({...data,videos:data.videos.filter(x=>x.id!==id)});showToast(t('toast_deleted'));
+  };
+
+  const total=myVideos.reduce((s,v)=>s+Number(v.price||0),0);
+  const paid=myVideos.filter(v=>v.paid).reduce((s,v)=>s+Number(v.price||0),0);
+  const ms=new Date();ms.setDate(1);ms.setHours(0,0,0,0);
+  const mv=myVideos.filter(v=>new Date(v.date)>=ms);
+
+  const tabs=[{id:'dashboard',label:t('my_dash'),ic:'dashboard'},{id:'videos',label:t('my_videos'),ic:'film'}];
+  const wRole=worker.role||'editor';
+
+  return(
+    <div style={{minHeight:'100vh',background:B.bg,fontFamily:"'Cairo','Inter',sans-serif"}}>
+      <header style={{borderBottom:`1px solid ${B.border}`,background:B.navBg,backdropFilter:'blur(16px)',position:'sticky',top:0,zIndex:40}}>
+        <div style={{maxWidth:'80rem',margin:'0 auto',padding:'0.7rem 1rem',display:'flex',alignItems:'center',justifyContent:'space-between',gap:'0.75rem'}}>
+          <div style={{display:'flex',alignItems:'center',gap:'0.75rem'}}>
+            <div style={{width:'2.25rem',height:'2.25rem',borderRadius:'50%',background:`linear-gradient(135deg,${roleColor(wRole)},${roleColor(wRole)}88)`,display:'grid',placeItems:'center',fontWeight:'800',color:'white',fontSize:'1rem',flexShrink:0}}>
+              {worker.name.charAt(0)}
+            </div>
+            <div>
+              <div style={{fontWeight:'800',fontSize:'0.92rem',color:B.text,lineHeight:1.2}}>{worker.name}</div>
+              <div style={{fontSize:'0.62rem',display:'flex',alignItems:'center',gap:'0.35rem',marginTop:'2px'}}>
+                <span style={{padding:'0.1rem 0.45rem',borderRadius:'9999px',background:roleBg(wRole),color:roleColor(wRole),fontWeight:'700'}}>{roleLabel(wRole)}</span>
+                <span style={{color:B.muted}}>· {agency.name}</span>
+                {saving&&<span style={{color:B.accent}}>· ⟳</span>}
+              </div>
+            </div>
+          </div>
+          <div style={{display:'flex',alignItems:'center',gap:'0.5rem'}}>
+            <SettingsBar/>
+            {!isMobile&&<nav style={{display:'flex',gap:'0.15rem',background:B.inputBg,borderRadius:'9999px',padding:'0.2rem'}}>
+              {tabs.map(tt=>(
+                <button key={tt.id} onClick={()=>setTab(tt.id)}
+                  style={{display:'flex',alignItems:'center',gap:'0.3rem',padding:'0.4rem 0.75rem',borderRadius:'9999px',border:'none',cursor:'pointer',fontWeight:'700',fontSize:'0.72rem',whiteSpace:'nowrap',background:tab===tt.id?B.accent:'transparent',color:tab===tt.id?'white':B.muted}}>
+                  <Ic n={tt.ic} size={13}/>{tt.label}
+                </button>
+              ))}
+            </nav>}
+            <button onClick={onLogout} style={{padding:'0.45rem',borderRadius:'50%',border:`1px solid ${B.border}`,background:B.card,cursor:'pointer',color:B.muted,display:'flex'}}>
+              <Ic n="logout" size={15}/>
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <main style={{maxWidth:'80rem',margin:'0 auto',padding:'1.25rem 1rem',paddingBottom:isMobile?'6rem':'1.25rem'}}>
+        {tab==='dashboard'&&(
+          <div style={{display:'flex',flexDirection:'column',gap:'1.5rem'}}>
+            <div>
+              <h2 style={{fontSize:'1.75rem',fontWeight:'900',color:B.text}}>👋 {worker.name}</h2>
+              <p style={{fontSize:'0.875rem',color:B.muted}}>{roleLabel(wRole)} · {agency.name}</p>
+            </div>
+            <div style={{display:'grid',gridTemplateColumns:'repeat(2,1fr)',gap:'0.75rem'}}>
+              <StatCard label={t('my_total')} value={`${fmt(total)} دج`} ic="trending"/>
+              <StatCard label={t('video_count')} value={myVideos.length} ic="film"/>
+              <StatCard label={t('total_paid')} value={`${fmt(paid)} دج`} ic="checkCircle"/>
+              <StatCard label={t('my_remaining')} value={`${fmt(total-paid)} دج`} ic="alertCircle"/>
+            </div>
+            <div style={{borderRadius:'1.5rem',padding:'1.5rem',background:`linear-gradient(135deg,${roleColor(wRole)} 0%,${roleColor(wRole)}88 100%)`,color:'white',position:'relative',overflow:'hidden'}}>
+              <div style={{position:'absolute',top:'-2rem',left:'-2rem',width:'7rem',height:'7rem',borderRadius:'50%',background:'rgba(255,255,255,0.08)'}}/>
+              <div style={{position:'relative'}}>
+                <div style={{fontSize:'0.72rem',opacity:0.75,fontWeight:'600',letterSpacing:'0.05em',marginBottom:'0.4rem'}}>{t('this_month')} · {mv.length} {t('videos')}</div>
+                <div style={{fontSize:'2.2rem',fontWeight:'900',fontVariantNumeric:'tabular-nums',lineHeight:1}}>{fmt(mv.reduce((s,v)=>s+Number(v.price||0),0))}<span style={{fontSize:'0.9rem',opacity:0.65,marginRight:'0.3rem'}}> دج</span></div>
+              </div>
+            </div>
+            <div style={{background:B.card,borderRadius:'1rem',border:`1px solid ${B.border}`,overflow:'hidden'}}>
+              <div style={{padding:'1rem 1.25rem',borderBottom:`1px solid ${B.border}`,fontWeight:'800',fontSize:'1rem',color:B.text}}>{t('my_videos')}</div>
+              {myVideos.length===0?<div style={{padding:'2.5rem',textAlign:'center',color:B.muted,fontSize:'0.875rem'}}>{t('no_videos')}</div>
+              :myVideos.slice(0,6).map(v=>{
+                const cMap=Object.fromEntries(data.clients.map(c=>[c.id,c.name]));
+                return(
+                  <div key={v.id} style={{padding:'0.75rem 1.25rem',display:'flex',alignItems:'center',justifyContent:'space-between',gap:'0.75rem',borderBottom:`1px solid ${B.border}`}}>
+                    <div style={{minWidth:0}}>
+                      <div style={{fontWeight:'600',color:B.text,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{v.title||'—'}</div>
+                      <div style={{fontSize:'0.7rem',color:B.muted}}>{cMap[v.clientId]||'—'} · {fmtD(v.date)}</div>
+                    </div>
+                    <div style={{display:'flex',alignItems:'center',gap:'0.5rem',flexShrink:0}}>
+                      <span style={{fontSize:'0.65rem',fontWeight:'700',padding:'0.15rem 0.5rem',borderRadius:'9999px',background:v.paid?`rgba(34,197,94,0.15)`:B.accentSoft,color:v.paid?B.success:B.accent}}>{v.paid?t('paid'):t('unpaid')}</span>
+                      <span style={{fontWeight:'700',fontSize:'0.875rem',color:B.text,fontVariantNumeric:'tabular-nums'}}>{fmt(v.price)}<span style={{fontSize:'0.65rem',color:B.muted}}> دج</span></span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+        {tab==='videos'&&<WorkerVideosTab data={data} worker={worker} myVideos={myVideos} addVideo={addVideo} updVideo={updVideo} delVideo={delVideo}/>}
+      </main>
+      {isMobile&&<BottomNav tabs={tabs} tab={tab} setTab={setTab}/>}
+      <Toast toast={toast}/>
+    </div>
+  );
+}
+
+// ─── AGENCY DASHBOARD ─────────────────────────────────────
+function AgencyDash({data,setTab,agency}){
+  const stats=useMemo(()=>{
+    const tot=data.videos.reduce((s,v)=>s+Number(v.price||0),0);
+    const pd=data.videos.filter(v=>v.paid).reduce((s,v)=>s+Number(v.price||0),0);
+    const ms=new Date();ms.setDate(1);ms.setHours(0,0,0,0);
+    const mv=data.videos.filter(v=>new Date(v.date)>=ms);
+    const be={};
+    data.videos.forEach(v=>{
+      if(!be[v.editorId])be[v.editorId]={total:0,owed:0,count:0};
+      be[v.editorId].total+=Number(v.price||0);be[v.editorId].count++;
+      if(!v.paid)be[v.editorId].owed+=Number(v.price||0);
+    });
+    return{tot,pd,owed:tot-pd,mTot:mv.reduce((s,v)=>s+Number(v.price||0),0),mCnt:mv.length,
+      edRows:data.editors.map(e=>({...e,...(be[e.id]||{total:0,owed:0,count:0})})).sort((a,b)=>b.owed-a.owed)};
+  },[data]);
+  const eMap=Object.fromEntries(data.editors.map(e=>[e.id,e.name]));
+  const cMap=Object.fromEntries(data.clients.map(c=>[c.id,c.name]));
+
+  if(!data.editors.length&&!data.clients.length&&!data.videos.length)return(
+    <div style={{textAlign:'center',padding:'3.5rem 1rem'}} className="fade-up">
+      <div style={{width:'6rem',height:'6rem',borderRadius:'50%',background:B.accentSoft,display:'grid',placeItems:'center',margin:'0 auto 1.5rem',border:`1px solid ${B.accentBorder}`}}>
+        <Logo size={56} showBeta={false}/>
+      </div>
+      <h2 style={{fontSize:'1.6rem',fontWeight:'900',color:B.text,marginBottom:'0.5rem'}}>👋 {agency.name}</h2>
+      <p style={{color:B.muted,marginBottom:'2.5rem',fontSize:'0.9rem'}}>{t('no_data')}</p>
+      <div style={{display:'flex',gap:'0.75rem',justifyContent:'center',flexWrap:'wrap'}}>
+        <button onClick={()=>setTab('editors')} style={{display:'flex',alignItems:'center',gap:'0.5rem',padding:'0.75rem 1.5rem',borderRadius:'9999px',background:`linear-gradient(135deg,${B.accent},#8a2010)`,color:'white',fontWeight:'700',border:'none',cursor:'pointer',boxShadow:`0 6px 20px ${B.accent}44`}}>
+          <Ic n="users" size={16} color="white"/>{t('team')}
+        </button>
+        <button onClick={()=>setTab('clients')} style={{display:'flex',alignItems:'center',gap:'0.5rem',padding:'0.75rem 1.5rem',borderRadius:'9999px',background:B.card,color:B.text,fontWeight:'700',border:`1px solid ${B.border}`,cursor:'pointer'}}>
+          <Ic n="briefcase" size={16}/>{t('clients')}
+        </button>
+      </div>
+    </div>
+  );
+
+  return(
+    <div style={{display:'flex',flexDirection:'column',gap:'1.25rem'}}>
+      {/* Monthly hero card */}
+      <div style={{borderRadius:'1.5rem',padding:'1.5rem',background:`linear-gradient(135deg,${B.accent} 0%,#6e1a08 100%)`,color:'white',position:'relative',overflow:'hidden'}}>
+        <div style={{position:'absolute',top:'-2rem',right:'-2rem',width:'8rem',height:'8rem',borderRadius:'50%',background:'rgba(255,255,255,0.07)'}}/>
+        <div style={{position:'absolute',bottom:'-1.5rem',left:'-1rem',width:'5rem',height:'5rem',borderRadius:'50%',background:'rgba(255,255,255,0.05)'}}/>
+        <div style={{position:'relative'}}>
+          <div style={{fontSize:'0.72rem',opacity:0.7,fontWeight:'600',letterSpacing:'0.05em',marginBottom:'0.4rem'}}>{t('this_month')} · {stats.mCnt} {t('videos')}</div>
+          <div style={{fontSize:'2.4rem',fontWeight:'900',fontVariantNumeric:'tabular-nums',lineHeight:1,marginBottom:'0.25rem'}}>{fmt(stats.mTot)}<span style={{fontSize:'1rem',opacity:0.6,marginRight:'0.3rem'}}>دج</span></div>
+          <div style={{display:'flex',gap:'1rem',marginTop:'0.75rem',fontSize:'0.72rem',opacity:0.8}}>
+            <span>✓ {fmt(stats.pd)} دج</span>
+            <span>⏳ {fmt(stats.owed)} دج</span>
+          </div>
+        </div>
+      </div>
+      <div style={{display:'grid',gridTemplateColumns:'repeat(2,1fr)',gap:'0.65rem'}}>
+        <StatCard label={t('total')} value={`${fmt(stats.tot)} دج`} ic="trending" color={B.accent}/>
+        <StatCard label={t('total_paid')} value={`${fmt(stats.pd)} دج`} ic="checkCircle" color={B.success}/>
+        <StatCard label={t('remaining')} value={`${fmt(stats.owed)} دج`} ic="alertCircle" color={B.warning}/>
+        <StatCard label={t('video_count')} value={data.videos.length} ic="film" color={B.purple}/>
+      </div>
+      <div style={{background:B.card,borderRadius:'1rem',border:`1px solid ${B.border}`,overflow:'hidden'}}>
+        <div style={{padding:'1rem 1.25rem',borderBottom:`1px solid ${B.border}`,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+          <div style={{fontWeight:'800',fontSize:'1rem',color:B.text}}>{t('team')}</div>
+          <Ic n="wallet" size={18} color={B.muted}/>
+        </div>
+        {stats.edRows.length===0?<div style={{padding:'2rem',textAlign:'center',color:B.muted,fontSize:'0.875rem'}}>{t('no_team')}</div>
+        :stats.edRows.map(e=>{
+          const rc=roleColor(e.role||'editor');
+          return(
+          <div key={e.id} style={{padding:'0.875rem 1rem',display:'flex',alignItems:'center',justifyContent:'space-between',gap:'0.75rem',borderBottom:`1px solid ${B.border}`}}>
+            <div style={{display:'flex',alignItems:'center',gap:'0.75rem',minWidth:0}}>
+              <div style={{width:'2.5rem',height:'2.5rem',borderRadius:'50%',display:'grid',placeItems:'center',fontWeight:'800',flexShrink:0,background:`linear-gradient(135deg,${rc},${rc}77)`,color:'white',boxShadow:`0 2px 8px ${rc}44`}}>{e.name.charAt(0)}</div>
+              <div style={{minWidth:0}}>
+                <div style={{display:'flex',alignItems:'center',gap:'0.4rem'}}>
+                  <span style={{fontWeight:'700',color:B.text,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',fontSize:'0.875rem'}}>{e.name}</span>
+                  <span style={{fontSize:'0.58rem',fontWeight:'700',padding:'0.1rem 0.4rem',borderRadius:'9999px',background:roleBg(e.role||'editor'),color:rc,flexShrink:0}}>{roleLabel(e.role||'editor')}</span>
+                </div>
+                <div style={{fontSize:'0.68rem',color:B.muted,marginTop:'1px'}}>{e.count} {t('videos')} · {fmt(e.total)} دج</div>
+              </div>
+            </div>
+            <div style={{textAlign:'left',flexShrink:0}}>
+              <div style={{fontSize:'0.62rem',color:B.muted,marginBottom:'1px'}}>{t('remaining')}</div>
+              <div style={{fontWeight:'900',color:e.owed>0?B.accent:B.muted,fontVariantNumeric:'tabular-nums',fontSize:'0.95rem'}}>{fmt(e.owed)}<span style={{fontSize:'0.6rem'}}> دج</span></div>
+            </div>
+          </div>
+        )})}
+      </div>
+      <div style={{background:B.card,borderRadius:'1rem',border:`1px solid ${B.border}`,overflow:'hidden'}}>
+        <div style={{padding:'1rem 1.25rem',borderBottom:`1px solid ${B.border}`,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+          <div style={{fontWeight:'800',fontSize:'1rem',color:B.text}}>{t('videos')}</div>
+          <button onClick={()=>setTab('videos')} style={{fontSize:'0.75rem',fontWeight:'700',color:B.accent,background:'none',border:'none',cursor:'pointer'}}>→</button>
+        </div>
+        {data.videos.slice(0,5).map(v=>(
+          <div key={v.id} style={{padding:'0.75rem 1rem',display:'flex',alignItems:'center',justifyContent:'space-between',gap:'0.75rem',borderBottom:`1px solid ${B.border}`,position:'relative'}}>
+            <div style={{position:'absolute',right:0,top:0,bottom:0,width:'3px',background:v.paid?B.success:B.accent,borderRadius:'0 3px 3px 0'}}/>
+            <div style={{minWidth:0}}>
+              <div style={{fontWeight:'700',color:B.text,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',fontSize:'0.875rem'}}>{v.title||'—'}</div>
+              <div style={{fontSize:'0.68rem',color:B.muted,marginTop:'2px'}}>{eMap[v.editorId]||'—'} · {cMap[v.clientId]||'—'}</div>
+            </div>
+            <div style={{display:'flex',alignItems:'center',gap:'0.5rem',flexShrink:0}}>
+              <span style={{fontSize:'0.62rem',fontWeight:'700',padding:'0.15rem 0.5rem',borderRadius:'9999px',background:v.paid?B.successSoft:B.accentSoft,color:v.paid?B.success:B.accent}}>{v.paid?t('paid'):t('unpaid')}</span>
+              <span style={{fontWeight:'800',fontSize:'0.875rem',color:B.text,fontVariantNumeric:'tabular-nums'}}>{fmt(v.price)}<span style={{fontSize:'0.62rem',color:B.muted}}> دج</span></span>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ─── VIDEOS TAB ───────────────────────────────────────────
+function VideosTab({data,addVideo,updVideo,delVideo,togglePaid}){
+  const[showForm,setShowForm]=useState(false);const[editing,setEditing]=useState(null);
+  const[search,setSearch]=useState('');const[fE,setFE]=useState('');const[fC,setFC]=useState('');const[fS,setFS]=useState('');
+  const eMap=Object.fromEntries(data.editors.map(e=>[e.id,e.name]));
+  const cMap=Object.fromEntries(data.clients.map(c=>[c.id,c.name]));
+  const filt=useMemo(()=>data.videos.filter(v=>{
+    if(fE&&v.editorId!==fE)return false;if(fC&&v.clientId!==fC)return false;
+    if(fS==='paid'&&!v.paid)return false;if(fS==='unpaid'&&v.paid)return false;
+    if(search){const q=search.toLowerCase();if(!(v.title||'').toLowerCase().includes(q)&&!(eMap[v.editorId]||'').toLowerCase().includes(q)&&!(cMap[v.clientId]||'').toLowerCase().includes(q))return false;}
+    return true;
+  }),[data.videos,fE,fC,fS,search,eMap,cMap]);
+  const tot=filt.reduce((s,v)=>s+Number(v.price||0),0);
+  const owed=filt.filter(v=>!v.paid).reduce((s,v)=>s+Number(v.price||0),0);
+  const SI={width:'100%',padding:'0.5rem 0.75rem',background:B.inputBg,border:`1px solid ${B.border}`,borderRadius:'0.75rem',outline:'none',fontSize:'0.8rem',color:B.text};
+  if(data.clients.length===0)return<div style={{background:`rgba(251,191,36,0.1)`,border:`1px solid rgba(251,191,36,0.2)`,borderRadius:'1rem',padding:'1.5rem',textAlign:'center',fontSize:'0.875rem',color:'#fbbf24'}}>{t('no_data')}</div>;
+  return(
+    <div style={{display:'flex',flexDirection:'column',gap:'1.25rem'}}>
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',gap:'0.75rem'}}>
+        <div>
+          <h2 style={{fontSize:'1.75rem',fontWeight:'900',color:B.text}}>{t('videos')}</h2>
+          <p style={{fontSize:'0.75rem',color:B.muted,fontVariantNumeric:'tabular-nums'}}>{filt.length} · {fmt(tot)} دج · {fmt(owed)} دج</p>
+        </div>
+        <button onClick={()=>{setEditing(null);setShowForm(true);}} style={{display:'flex',alignItems:'center',gap:'0.4rem',padding:'0.65rem 1.1rem',borderRadius:'9999px',background:`linear-gradient(135deg,${B.accent},#8a2010)`,color:'white',fontWeight:'700',border:'none',cursor:'pointer',fontSize:'0.8rem',whiteSpace:'nowrap',boxShadow:`0 4px 16px ${B.accent}44`}}>
+          <Ic n="plus" size={15} color="white"/>{t('new_video')}
+        </button>
+      </div>
+      <div style={{background:B.card,borderRadius:'1.25rem',border:`1px solid ${B.border}`,padding:'0.875rem',display:'flex',flexDirection:'column',gap:'0.5rem'}}>
+        <div style={{position:'relative'}}>
+          <span style={{position:'absolute',right:'0.75rem',top:'50%',transform:'translateY(-50%)',display:'flex',pointerEvents:'none'}}><Ic n="search" size={14} color={B.muted}/></span>
+          <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="بحث..." style={{...SI,paddingRight:'2.2rem'}}/>
+        </div>
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0.5rem'}}>
+          <select value={fE} onChange={e=>setFE(e.target.value)} style={SI}><option value="">{t('team')}</option>{data.editors.map(e=><option key={e.id} value={e.id}>{e.name}</option>)}</select>
+          <select value={fC} onChange={e=>setFC(e.target.value)} style={SI}><option value="">{t('clients')}</option>{data.clients.map(c=><option key={c.id} value={c.id}>{c.name}</option>)}</select>
+          <select value={fS} onChange={e=>setFS(e.target.value)} style={SI}><option value="">— الكل —</option><option value="paid">{t('paid')}</option><option value="unpaid">{t('unpaid')}</option></select>
+        </div>
+      </div>
+      <div style={{background:B.card,borderRadius:'1rem',border:`1px solid ${B.border}`,overflow:'hidden'}}>
+        {filt.length===0?<div style={{padding:'2.5rem',textAlign:'center',color:B.muted,fontSize:'0.875rem'}}>{t('no_videos')}</div>
+        :filt.map(v=>(
+          <div key={v.id} style={{padding:'0.875rem 1rem',borderBottom:`1px solid ${B.border}`,position:'relative'}}>
+            <div style={{position:'absolute',right:0,top:0,bottom:0,width:'3px',background:v.paid?B.success:B.accent,borderRadius:'0 3px 3px 0'}}/>
+            <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',gap:'0.5rem'}}>
+              <div style={{flex:1,minWidth:0}}>
+                <div style={{display:'flex',alignItems:'center',gap:'0.4rem',flexWrap:'wrap',marginBottom:'0.2rem'}}>
+                  <span style={{fontWeight:'700',color:B.text,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',fontSize:'0.875rem'}}>{v.title||'—'}</span>
+                  <button onClick={()=>togglePaid(v.id)} style={{fontSize:'0.6rem',fontWeight:'700',padding:'0.12rem 0.5rem',borderRadius:'9999px',border:'none',cursor:'pointer',background:v.paid?B.successSoft:B.accentSoft,color:v.paid?B.success:B.accent,flexShrink:0}}>
+                    {v.paid?t('paid'):t('unpaid')}
+                  </button>
+                </div>
+                <div style={{fontSize:'0.68rem',color:B.muted,display:'flex',gap:'0.4rem',flexWrap:'wrap',marginTop:'1px'}}>
+                  <span>{eMap[v.editorId]||'—'}</span><span>·</span><span>{cMap[v.clientId]||'—'}</span><span>·</span>
+                  <span style={{fontVariantNumeric:'tabular-nums'}}>{fmtD(v.date)}</span>
+                </div>
+              </div>
+              <div style={{display:'flex',alignItems:'center',gap:'0.2rem',flexShrink:0}}>
+                <span style={{fontWeight:'900',fontSize:'0.95rem',color:B.text,fontVariantNumeric:'tabular-nums'}}>{fmt(v.price)}<span style={{fontSize:'0.6rem',color:B.muted}}> دج</span></span>
+                <button onClick={()=>{setEditing(v);setShowForm(true);}} style={{padding:'0.4rem',border:'none',background:'none',cursor:'pointer',color:B.muted,display:'flex'}}><Ic n="pencil" size={13}/></button>
+                <button onClick={()=>delVideo(v.id)} style={{padding:'0.4rem',border:'none',background:'none',cursor:'pointer',display:'flex'}}><Ic n="trash" size={13} color={B.danger}/></button>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+      {showForm&&<VideoForm editors={data.editors} clients={data.clients} initial={editing} lockedEditor={false} onClose={()=>{setShowForm(false);setEditing(null);}} onSave={f=>{if(editing)updVideo(editing.id,f);else addVideo(f);setShowForm(false);setEditing(null);}}/>}
+    </div>
+  );
+}
+
+function WorkerVideosTab({data,worker,myVideos,addVideo,updVideo,delVideo}){
+  const[showForm,setShowForm]=useState(false);const[editing,setEditing]=useState(null);
+  const[search,setSearch]=useState('');const[fS,setFS]=useState('');
+  const cMap=Object.fromEntries(data.clients.map(c=>[c.id,c.name]));
+  const filt=useMemo(()=>myVideos.filter(v=>{
+    if(fS==='paid'&&!v.paid)return false;if(fS==='unpaid'&&v.paid)return false;
+    if(search&&!(v.title||'').toLowerCase().includes(search.toLowerCase())&&!(cMap[v.clientId]||'').toLowerCase().includes(search.toLowerCase()))return false;
+    return true;
+  }),[myVideos,fS,search,cMap]);
+  const tot=filt.reduce((s,v)=>s+Number(v.price||0),0);
+  const SI={width:'100%',padding:'0.5rem 0.75rem',background:B.inputBg,border:`1px solid ${B.border}`,borderRadius:'0.75rem',outline:'none',fontSize:'0.8rem',color:B.text};
+  if(data.clients.length===0)return<div style={{background:`rgba(251,191,36,0.1)`,border:`1px solid rgba(251,191,36,0.2)`,borderRadius:'1rem',padding:'1.5rem',textAlign:'center',fontSize:'0.875rem',color:'#fbbf24'}}>{t('no_clients')}</div>;
+  return(
+    <div style={{display:'flex',flexDirection:'column',gap:'1.25rem'}}>
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',gap:'0.75rem'}}>
+        <div>
+          <h2 style={{fontSize:'1.75rem',fontWeight:'900',color:B.text}}>{t('my_videos')}</h2>
+          <p style={{fontSize:'0.75rem',color:B.muted,fontVariantNumeric:'tabular-nums'}}>{filt.length} · {fmt(tot)} دج</p>
+        </div>
+        <button onClick={()=>{setEditing(null);setShowForm(true);}} style={{display:'flex',alignItems:'center',gap:'0.4rem',padding:'0.625rem 1rem',borderRadius:'9999px',background:B.accent,color:'white',fontWeight:'700',border:'none',cursor:'pointer',fontSize:'0.8rem',whiteSpace:'nowrap'}}>
+          <Ic n="plus" size={16} color="white"/>{t('new_video')}
+        </button>
+      </div>
+      <div style={{background:B.card,borderRadius:'1rem',border:`1px solid ${B.border}`,padding:'0.75rem',display:'flex',flexDirection:'column',gap:'0.5rem'}}>
+        <div style={{position:'relative'}}>
+          <span style={{position:'absolute',right:'0.75rem',top:'50%',transform:'translateY(-50%)',display:'flex',pointerEvents:'none'}}><Ic n="search" size={14} color={B.muted}/></span>
+          <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="..." style={{...SI,paddingRight:'2rem'}}/>
+        </div>
+        <select value={fS} onChange={e=>setFS(e.target.value)} style={SI}>
+          <option value="">— {t('videos')} —</option><option value="paid">{t('paid')}</option><option value="unpaid">{t('unpaid')}</option>
+        </select>
+      </div>
+      <div style={{background:B.card,borderRadius:'1rem',border:`1px solid ${B.border}`,overflow:'hidden'}}>
+        {filt.length===0?<div style={{padding:'2.5rem',textAlign:'center',color:B.muted,fontSize:'0.875rem'}}>{t('no_videos')}</div>
+        :filt.map(v=>(
+          <div key={v.id} style={{padding:'0.875rem 1.25rem',borderBottom:`1px solid ${B.border}`}}>
+            <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',gap:'0.5rem'}}>
+              <div style={{flex:1,minWidth:0}}>
+                <div style={{display:'flex',alignItems:'center',gap:'0.5rem',flexWrap:'wrap',marginBottom:'0.2rem'}}>
+                  <span style={{fontWeight:'700',color:B.text}}>{v.title||'—'}</span>
+                  <span style={{fontSize:'0.65rem',fontWeight:'700',padding:'0.15rem 0.5rem',borderRadius:'9999px',background:v.paid?`rgba(34,197,94,0.15)`:B.accentSoft,color:v.paid?B.success:B.accent}}>
+                    {v.paid?t('paid'):t('unpaid')}
+                  </span>
+                </div>
+                <div style={{fontSize:'0.7rem',color:B.muted,display:'flex',gap:'0.5rem'}}><span>{cMap[v.clientId]||'—'}</span><span>{fmtD(v.date)}</span></div>
+              </div>
+              <div style={{display:'flex',alignItems:'center',gap:'0.25rem',flexShrink:0}}>
+                <span style={{fontWeight:'900',fontSize:'1rem',color:B.text,fontVariantNumeric:'tabular-nums'}}>{fmt(v.price)}<span style={{fontSize:'0.65rem',color:B.muted}}> دج</span></span>
+                {!v.paid&&<>
+                  <button onClick={()=>{setEditing(v);setShowForm(true);}} style={{padding:'0.4rem',border:'none',background:'none',cursor:'pointer',color:B.muted,display:'flex'}}><Ic n="pencil" size={14}/></button>
+                  <button onClick={()=>delVideo(v.id)} style={{padding:'0.4rem',border:'none',background:'none',cursor:'pointer',color:B.danger,display:'flex'}}><Ic n="trash" size={14} color={B.danger}/></button>
+                </>}
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+      {showForm&&<VideoForm editors={[worker]} clients={data.clients} initial={editing} lockedEditor={true} onClose={()=>{setShowForm(false);setEditing(null);}} onSave={f=>{if(editing)updVideo(editing.id,f);else addVideo(f);setShowForm(false);setEditing(null);}}/>}
+    </div>
+  );
+}
+
+function VideoForm({editors,clients,initial,lockedEditor,onClose,onSave}){
+  const[f,setF]=useState(initial||{title:'',editorId:editors[0]?.id||'',clientId:clients[0]?.id||'',date:today(),price:'',paid:false});
+  const submit=()=>{
+    if(!f.editorId||!f.clientId)return alert(t('err_select'));
+    if(!f.price||Number(f.price)<=0)return alert(t('err_price'));
+    onSave({...f,price:Number(f.price)});
+  };
+  return(
+    <Modal onClose={onClose} title={initial?t('edit'):t('new_video')}>
+      <div style={{display:'flex',flexDirection:'column',gap:'1rem'}}>
+        <Field label={t('video_title')}><input value={f.title} onChange={e=>setF({...f,title:e.target.value})} placeholder={t('video_title_ph')} style={INP}/></Field>
+        {!lockedEditor?(
+          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0.75rem'}}>
+            <Field label={t('team')}><select value={f.editorId} onChange={e=>setF({...f,editorId:e.target.value})} style={INP}>{editors.map(e=><option key={e.id} value={e.id}>{e.name} ({roleLabel(e.role||'editor')})</option>)}</select></Field>
+            <Field label={t('clients')}><select value={f.clientId} onChange={e=>setF({...f,clientId:e.target.value})} style={INP}>{clients.map(c=><option key={c.id} value={c.id}>{c.name}</option>)}</select></Field>
+          </div>
+        ):(
+          <Field label={t('clients')}><select value={f.clientId} onChange={e=>setF({...f,clientId:e.target.value})} style={INP}>{clients.map(c=><option key={c.id} value={c.id}>{c.name}</option>)}</select></Field>
+        )}
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0.75rem'}}>
+          <Field label={t('date')}><input type="date" value={f.date} onChange={e=>setF({...f,date:e.target.value})} style={INP}/></Field>
+          <Field label={t('price')}><input type="number" inputMode="numeric" value={f.price} onChange={e=>setF({...f,price:e.target.value})} placeholder="0" style={{...INP,fontWeight:'700'}}/></Field>
+        </div>
+        {initial&&!lockedEditor&&(
+          <label style={{display:'flex',alignItems:'center',gap:'0.5rem',cursor:'pointer',padding:'0.75rem',background:B.inputBg,borderRadius:'0.75rem',border:`1px solid ${B.border}`}}>
+            <input type="checkbox" checked={!!f.paid} onChange={e=>setF({...f,paid:e.target.checked})} style={{width:'1.25rem',height:'1.25rem',accentColor:B.success}}/>
+            <span style={{fontSize:'0.875rem',fontWeight:'600',color:B.text}}>{t('mark_paid')}</span>
+          </label>
+        )}
+        <button onClick={submit} style={{width:'100%',padding:'0.9rem',borderRadius:'0.875rem',background:`linear-gradient(135deg,${B.accent},#8a2010)`,color:'white',fontWeight:'800',border:'none',cursor:'pointer',boxShadow:`0 4px 16px ${B.accent}44`,fontSize:'0.9rem'}}>{initial?t('save'):t('new_video')}</button>
+      </div>
+    </Modal>
+  );
+}
+
+// ─── TEAM TAB ─────────────────────────────────────────────
+function WorkerForm({initial,onClose,onSave}){
+  const[name,setName]=useState(initial?.name||'');
+  const[pw,setPw]=useState('');
+  const[role,setRole]=useState(initial?.role||'editor');
+  const[show,setShow]=useState(false);const[err,setErr]=useState('');
+  const submit=()=>{
+    if(!name.trim())return setErr(t('err_name'));
+    if(!initial&&pw.length<4)return setErr(t('err_pw'));
+    if(initial&&pw&&pw.length<4)return setErr(t('err_pw'));
+    onSave(name.trim(),pw,role);
+  };
+  return(
+    <Modal onClose={onClose} title={initial?t('edit'):t('worker')}>
+      <div style={{display:'flex',flexDirection:'column',gap:'1rem'}}>
+        <Field label={t('agency_name').replace("l'agence",'').replace('اسم الوكالة','الاسم')||'الاسم'}>
+          <input value={name} onChange={e=>setName(e.target.value)} placeholder="..." style={INP}/>
+        </Field>
+        <Field label={t('role')}>
+          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:'0.5rem'}}>
+            {ROLES.map(r=>(
+              <button key={r} onClick={()=>setRole(r)}
+                style={{padding:'0.625rem',borderRadius:'0.75rem',border:`2px solid ${role===r?roleColor(r):B.border}`,background:role===r?roleBg(r):'transparent',color:roleColor(r),fontWeight:'700',cursor:'pointer',fontSize:'0.8rem'}}>
+                {roleLabel(r)}
+              </button>
+            ))}
+          </div>
+        </Field>
+        <Field label={initial?t('pw_optional'):t('password')}>
+          <PwField value={pw} onChange={setPw} show={show} setShow={setShow} placeholder={initial?t('pw_optional'):t('pw_hint')} onEnter={submit}/>
+        </Field>
+        {err&&<div style={{fontSize:'0.75rem',color:B.danger,fontWeight:'700'}}>{err}</div>}
+        <button onClick={submit} style={{width:'100%',padding:'0.9rem',borderRadius:'0.875rem',background:`linear-gradient(135deg,${B.accent},#8a2010)`,color:'white',fontWeight:'800',border:'none',cursor:'pointer',boxShadow:`0 4px 16px ${B.accent}44`}}>{initial?t('save'):t('add')}</button>
+      </div>
+    </Modal>
+  );
+}
+
+function TeamTab({data,addEditor,updEditor,delEditor,canAdd,limit,plan}){
+  const[showForm,setShowForm]=useState(false);const[editing,setEditing]=useState(null);
+  const stats=useMemo(()=>{const m={};data.videos.forEach(v=>{if(!m[v.editorId])m[v.editorId]={count:0,total:0,owed:0};m[v.editorId].count++;m[v.editorId].total+=Number(v.price||0);if(!v.paid)m[v.editorId].owed+=Number(v.price||0);});return m;},[data.videos]);
+  return(
+    <div style={{display:'flex',flexDirection:'column',gap:'1.25rem'}}>
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+        <div>
+          <h2 style={{fontSize:'1.75rem',fontWeight:'900',color:B.text}}>{t('team')}</h2>
+          {plan==='free'&&<div style={{fontSize:'0.75rem',color:B.muted}}>{data.editors.length}/{limit}</div>}
+        </div>
+        <button onClick={()=>{setEditing(null);setShowForm(true);}} style={{display:'flex',alignItems:'center',gap:'0.4rem',padding:'0.625rem 1rem',borderRadius:'9999px',background:canAdd?B.accent:'#333',color:'white',fontWeight:'700',border:'none',cursor:'pointer',fontSize:'0.8rem'}}>
+          <Ic n="plus" size={16} color="white"/>{t('add')}
+        </button>
+      </div>
+      <div style={{padding:'0.75rem 1rem',background:B.accentSoft,border:`1px solid ${B.accent}33`,borderRadius:'0.75rem',fontSize:'0.8rem',color:B.accent}}>
+        {t('pw_info')}
+      </div>
+      <div style={{background:B.card,borderRadius:'1rem',border:`1px solid ${B.border}`,overflow:'hidden'}}>
+        {data.editors.length===0?<div style={{padding:'2.5rem',textAlign:'center',color:B.muted,fontSize:'0.875rem'}}>{t('no_team')}</div>
+        :data.editors.map(item=>{
+          const s=stats[item.id]||{count:0,total:0,owed:0};
+          const r=item.role||'editor';
+          const rc=roleColor(r);
+          return(
+            <div key={item.id} style={{padding:'0.875rem 1rem',display:'flex',alignItems:'center',gap:'0.75rem',borderBottom:`1px solid ${B.border}`}}>
+              <div style={{width:'2.75rem',height:'2.75rem',borderRadius:'50%',display:'grid',placeItems:'center',fontWeight:'800',flexShrink:0,background:`linear-gradient(135deg,${rc},${rc}88)`,color:'white',fontSize:'1.1rem',boxShadow:`0 3px 10px ${rc}44`}}>
+                {item.name.charAt(0)}
+              </div>
+              <div style={{flex:1,minWidth:0}}>
+                <div style={{display:'flex',alignItems:'center',gap:'0.4rem',marginBottom:'1px'}}>
+                  <span style={{fontWeight:'700',color:B.text,fontSize:'0.9rem'}}>{item.name}</span>
+                  <span style={{fontSize:'0.58rem',fontWeight:'700',padding:'0.1rem 0.4rem',borderRadius:'9999px',background:roleBg(r),color:rc,border:`1px solid ${rc}33`}}>{roleLabel(r)}</span>
+                </div>
+                <div style={{fontSize:'0.7rem',color:B.muted,display:'flex',gap:'0.5rem',alignItems:'center'}}>
+                  <span>{s.count} {t('videos')}</span>
+                  <span style={{color:B.border}}>·</span>
+                  <span>{fmt(s.total)} دج</span>
+                  {s.owed>0&&<><span style={{color:B.border}}>·</span><span style={{color:B.accent,fontWeight:'700'}}>{fmt(s.owed)} دج ⏳</span></>}
+                </div>
+              </div>
+              <div style={{display:'flex',gap:'0.1rem',flexShrink:0}}>
+                <button onClick={()=>{setEditing(item);setShowForm(true);}} style={{padding:'0.4rem 0.45rem',border:'none',background:'none',cursor:'pointer',color:B.muted,display:'flex',borderRadius:'0.5rem'}}><Ic n="pencil" size={14}/></button>
+                <button onClick={()=>delEditor(item.id)} style={{padding:'0.4rem 0.45rem',border:'none',background:'none',cursor:'pointer',display:'flex',borderRadius:'0.5rem'}}><Ic n="trash" size={14} color={B.danger}/></button>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+      {showForm&&<WorkerForm initial={editing} onClose={()=>{setShowForm(false);setEditing(null);}} onSave={(name,pw,role)=>{if(editing){const p={name,role};if(pw)p.password=hash(pw);updEditor(editing.id,p);}else addEditor(name,pw,role);setShowForm(false);setEditing(null);}}/>}
+    </div>
+  );
+}
+
+function ClientsTab({data,addClient,updClient,delClient,canAdd,limit,plan}){
+  const[name,setName]=useState('');const[edId,setEdId]=useState(null);const[edName,setEdName]=useState('');
+  const stats=useMemo(()=>{const m={};data.videos.forEach(v=>{if(!m[v.clientId])m[v.clientId]={count:0,total:0};m[v.clientId].count++;m[v.clientId].total+=Number(v.price||0);});return m;},[data.videos]);
+  const doAdd=()=>{if(name.trim()){addClient(name);setName('');}};
+  return(
+    <div style={{display:'flex',flexDirection:'column',gap:'1.25rem'}}>
+      <div>
+        <h2 style={{fontSize:'1.75rem',fontWeight:'900',color:B.text}}>{t('clients')}</h2>
+        {plan==='free'&&<div style={{fontSize:'0.75rem',color:B.muted}}>{data.clients.length}/{limit}</div>}
+      </div>
+      <div style={{background:B.card,borderRadius:'1.25rem',border:`1px solid ${B.border}`,padding:'0.75rem',display:'flex',gap:'0.5rem'}}>
+        <input value={name} onChange={e=>setName(e.target.value)} onKeyDown={e=>e.key==='Enter'&&doAdd()} placeholder="اسم الزبون..." style={{...INP,flex:1}}/>
+        <button onClick={doAdd} style={{display:'flex',alignItems:'center',gap:'0.4rem',padding:'0.75rem 1rem',borderRadius:'0.875rem',background:canAdd?`linear-gradient(135deg,${B.accent},#8a2010)`:'#333',color:'white',fontWeight:'700',border:'none',cursor:'pointer',flexShrink:0,boxShadow:canAdd?`0 4px 12px ${B.accent}44`:'none'}}>
+          <Ic n="plus" size={16} color="white"/>{t('add')}
+        </button>
+      </div>
+      <div style={{background:B.card,borderRadius:'1rem',border:`1px solid ${B.border}`,overflow:'hidden'}}>
+        {data.clients.length===0?<div style={{padding:'2.5rem',textAlign:'center',color:B.muted,fontSize:'0.875rem'}}>{t('no_clients')}</div>
+        :data.clients.map(item=>{
+          const s=stats[item.id]||{count:0,total:0};const isEd=edId===item.id;
+          return(
+            <div key={item.id} style={{padding:'0.875rem 1.25rem',display:'flex',alignItems:'center',gap:'0.75rem',borderBottom:`1px solid ${B.border}`}}>
+              <div style={{width:'2.5rem',height:'2.5rem',borderRadius:'50%',display:'grid',placeItems:'center',fontWeight:'700',flexShrink:0,background:'rgba(59,130,246,0.15)',color:'#60a5fa'}}>{item.name.charAt(0)}</div>
+              <div style={{flex:1,minWidth:0}}>
+                {isEd?<div style={{display:'flex',gap:'0.5rem'}}>
+                  <input value={edName} onChange={e=>setEdName(e.target.value)} onKeyDown={e=>e.key==='Enter'&&(edName.trim()&&updClient(edId,edName.trim()),setEdId(null))}
+                    style={{flex:1,padding:'0.375rem 0.75rem',border:`1px solid ${B.border}`,borderRadius:'0.5rem',outline:'none',fontSize:'0.875rem',background:B.inputBg,color:B.text}} autoFocus/>
+                  <button onClick={()=>{if(edName.trim())updClient(edId,edName.trim());setEdId(null);}} style={{padding:'0.4rem',border:'none',background:'none',cursor:'pointer',color:B.success,display:'flex'}}><Ic n="check" size={16} color={B.success}/></button>
+                  <button onClick={()=>setEdId(null)} style={{padding:'0.4rem',border:'none',background:'none',cursor:'pointer',color:B.muted,display:'flex'}}><Ic n="x" size={16}/></button>
+                </div>:<><div style={{fontWeight:'700',color:B.text}}>{item.name}</div><div style={{fontSize:'0.75rem',color:B.muted}}>{s.count} {t('videos')} · {fmt(s.total)} دج</div></>}
+              </div>
+              {!isEd&&<div style={{display:'flex',gap:'0.15rem',flexShrink:0}}>
+                <button onClick={()=>{setEdId(item.id);setEdName(item.name);}} style={{padding:'0.4rem',border:'none',background:'none',cursor:'pointer',color:B.muted,display:'flex'}}><Ic n="pencil" size={14}/></button>
+                <button onClick={()=>delClient(item.id)} style={{padding:'0.4rem',border:'none',background:'none',cursor:'pointer',color:B.danger,display:'flex'}}><Ic n="trash" size={14} color={B.danger}/></button>
+              </div>}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// ─── ROOT ─────────────────────────────────────────────────
+function App(){
+  const[screen,setScreen]=useState('landing');
+  const[agency,setAgency]=useState(null);
+  const[worker,setWorker]=useState(null);
+  const[workerData,setWorkerData]=useState(null);
+
+  useEffect(()=>{
+    const s=localStorage.getItem('_session');
+    if(s){
+      try{
+        const p=JSON.parse(s);
+        if(p.type==='superadmin')setScreen('superadmin');
+        else if(p.type==='agency'&&p.agency){
+          if(isSuspended(p.agency)||isExpired(p.agency)&&p.agency.plan!=='free'){setAgency(p.agency);setScreen('expired');}
+          else{setAgency(p.agency);setScreen('agency');}
+        }
+        else if(p.type==='worker'&&p.agency&&p.worker){
+          if(isSuspended(p.agency)||isExpired(p.agency)&&p.agency.plan!=='free'){setAgency(p.agency);setScreen('expired');}
+          else{setAgency(p.agency);setWorker(p.worker);setWorkerData(p.workerData);setScreen('worker');}
+        }
+      }catch(e){}
+    }
+  },[]);
+
+  const save=s=>localStorage.setItem('_session',JSON.stringify(s));
+
+  const onAgency=ag=>{
+    if(isSuspended(ag)||isExpired(ag)&&ag.plan!=='free'){setAgency(ag);setScreen('expired');return;}
+    setAgency(ag);save({type:'agency',agency:ag});setScreen('agency');
+  };
+  const onWorker=(ag,w,d)=>{
+    if(isSuspended(ag)||isExpired(ag)&&ag.plan!=='free'){setAgency(ag);setScreen('expired');return;}
+    setAgency(ag);setWorker(w);setWorkerData(d);save({type:'worker',agency:ag,worker:w,workerData:d});setScreen('worker');
+  };
+  const onSuper=()=>{save({type:'superadmin'});setScreen('superadmin');};
+  const logout=()=>{localStorage.removeItem('_session');setAgency(null);setWorker(null);setWorkerData(null);setScreen('landing');};
+
+  const isConnErr=s=>s&&(s.includes('Failed to fetch')||s.includes('تعذّر الاتصال'));
+
+  if(screen==='landing')return<Landing onLogin={()=>setScreen('login')} onRegister={()=>setScreen('register')}/>;
+  if(screen==='register')return<Register onBack={()=>setScreen('landing')} onSuccess={onAgency}/>;
+  if(screen==='login')return<Login onBack={()=>setScreen('landing')} onAgencyLogin={onAgency} onWorkerLogin={onWorker} onSuperAdmin={onSuper}/>;
+  if(screen==='superadmin')return<SuperAdmin onLogout={logout}/>;
+  if(screen==='expired'&&agency)return<ExpiredScreen agency={agency} onLogout={logout}/>;
+  if(screen==='agency'&&agency)return<AgencyApp agency={agency} onLogout={logout}/>;
+  if(screen==='worker'&&worker&&agency)return<WorkerApp agency={agency} worker={worker} initialData={workerData} onLogout={logout}/>;
+  return null;
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>
