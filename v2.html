@@ -8,13 +8,14 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&family=Cairo:wght@400;600;700;800;900&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet"/>
   <style>
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
     html,body{height:100%;}
-    body{font-family:'Cairo','Inter',sans-serif;}
+    body{font-family:'Tajawal','Cairo',sans-serif;letter-spacing:0.01em;}
     *{-webkit-tap-highlight-color:transparent;}
     input,select,textarea,button{font-family:inherit;}
+    ::selection{background:rgba(255,92,51,0.35);}
     ::-webkit-scrollbar{width:4px;height:4px;}
     ::-webkit-scrollbar-thumb{border-radius:4px;}
     @keyframes spin{from{transform:rotate(0deg);}to{transform:rotate(360deg);}}
@@ -22,14 +23,22 @@
     @keyframes overlayIn{from{opacity:0;}to{opacity:1;}}
     @keyframes toastSlide{from{transform:translateX(-50%) translateY(16px);opacity:0;}to{transform:translateX(-50%) translateY(0);opacity:1;}}
     @keyframes fadeUp{from{transform:translateY(8px);opacity:0;}to{transform:translateY(0);opacity:1;}}
-    @keyframes glow{0%,100%{box-shadow:0 0 20px rgba(224,85,53,0.3);}50%{box-shadow:0 0 40px rgba(224,85,53,0.6);}}
+    @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.35;}}
+    @keyframes floaty{0%,100%{transform:translateY(0);}50%{transform:translateY(-10px);}}
+    @keyframes shimmer{0%{background-position:200% 0;}100%{background-position:-200% 0;}}
     .spin{animation:spin 1s linear infinite;}
     .modal-sheet{animation:modalIn 0.32s cubic-bezier(0.32,0.72,0,1);}
     .overlay-ani{animation:overlayIn 0.2s ease;}
     .toast-ani{animation:toastSlide 0.3s cubic-bezier(0.34,1.56,0.64,1);}
-    .fade-up{animation:fadeUp 0.25s ease both;}
-    button{transition:opacity 0.12s,transform 0.12s,background 0.15s;}
+    .fade-up{animation:fadeUp 0.3s cubic-bezier(0.2,0.8,0.3,1) both;}
+    .floaty{animation:floaty 5s ease-in-out infinite;}
+    button{transition:opacity 0.15s,transform 0.15s,background 0.2s,box-shadow 0.2s,border-color 0.2s;}
     button:active:not(:disabled){transform:scale(0.96);}
+    input,select,textarea{transition:border-color 0.18s,box-shadow 0.18s;}
+    input:focus,select:focus,textarea:focus{border-color:#ff5c33 !important;box-shadow:0 0 0 3px rgba(255,92,51,0.18);}
+    .grad-text{background:linear-gradient(120deg,#ff8a5c,#ff5c33 45%,#ffb35c);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;}
+    .card-hover{transition:transform 0.2s,box-shadow 0.2s,border-color 0.2s;}
+    .card-hover:hover{transform:translateY(-2px);border-color:rgba(255,92,51,0.35) !important;}
   </style>
 </head>
 <body>
@@ -304,20 +313,24 @@ function t(key,...args){
 }
 
 // ─── THEME ────────────────────────────────────────────────
-const DARK={bg:'#070710',card:'#0e0e1c',card2:'#131322',border:'#1c1c30',accent:'#e0552e',accentSoft:'rgba(224,85,46,0.13)',accentBorder:'rgba(224,85,46,0.22)',text:'#eeeef5',textSub:'#8888aa',muted:'#454560',success:'#22c55e',successSoft:'rgba(34,197,94,0.12)',warning:'#f59e0b',danger:'#ef4444',dangerSoft:'rgba(239,68,68,0.1)',purple:'#a78bfa',purpleSoft:'rgba(167,139,250,0.12)',blue:'#60a5fa',blueSoft:'rgba(96,165,250,0.12)',inputBg:'#0a0a18',navBg:'rgba(7,7,16,0.95)',scrollThumb:'#25253a'};
-const LIGHT={bg:'#ecedf5',card:'#ffffff',card2:'#f5f5fc',border:'#dcdcee',accent:'#c44428',accentSoft:'rgba(196,68,40,0.08)',accentBorder:'rgba(196,68,40,0.18)',text:'#0a0a1a',textSub:'#5a5a7a',muted:'#a0a0be',success:'#16a34a',successSoft:'rgba(22,163,74,0.1)',warning:'#d97706',danger:'#dc2626',dangerSoft:'rgba(220,38,38,0.08)',purple:'#7c3aed',purpleSoft:'rgba(124,58,237,0.08)',blue:'#2563eb',blueSoft:'rgba(37,99,235,0.08)',inputBg:'#f0f0f8',navBg:'rgba(236,237,245,0.96)',scrollThumb:'#c0c0d5'};
+const DARK={bg:'#04050d',card:'#0b0d1d',card2:'#111428',border:'#1d2138',accent:'#ff5c33',accentSoft:'rgba(255,92,51,0.13)',accentBorder:'rgba(255,92,51,0.28)',text:'#f2f3fa',textSub:'#8d92b8',muted:'#4a4f75',success:'#2dd975',successSoft:'rgba(45,217,117,0.12)',warning:'#ffb020',danger:'#ff4d5e',dangerSoft:'rgba(255,77,94,0.1)',purple:'#b49cff',purpleSoft:'rgba(180,156,255,0.12)',blue:'#5cb2ff',blueSoft:'rgba(92,178,255,0.12)',inputBg:'#070912',navBg:'rgba(4,5,13,0.92)',scrollThumb:'#272c48'};
+const LIGHT={bg:'#eef0f8',card:'#ffffff',card2:'#f6f7fd',border:'#dfe2f0',accent:'#e8471f',accentSoft:'rgba(232,71,31,0.08)',accentBorder:'rgba(232,71,31,0.22)',text:'#0b0d1c',textSub:'#5c6185',muted:'#a3a8c5',success:'#0eaa55',successSoft:'rgba(14,170,85,0.1)',warning:'#d98a06',danger:'#e0293c',dangerSoft:'rgba(224,41,60,0.08)',purple:'#7550e8',purpleSoft:'rgba(117,80,232,0.08)',blue:'#1f6fe0',blueSoft:'rgba(31,111,224,0.08)',inputBg:'#f1f2fa',navBg:'rgba(238,240,248,0.94)',scrollThumb:'#c3c7dd'};
 const B=_theme==='dark'?DARK:LIGHT;
 
-// update body bg and scrollbar
-document.body.style.background=B.bg;
+// update body bg and scrollbar — layered ambient gradients
+const BODY_BG=_theme==='dark'
+  ?`radial-gradient(60rem 40rem at 85% -10%,rgba(255,92,51,0.09),transparent 60%),radial-gradient(50rem 35rem at -10% 100%,rgba(92,110,255,0.07),transparent 60%),${B.bg}`
+  :`radial-gradient(60rem 40rem at 85% -10%,rgba(232,71,31,0.06),transparent 60%),radial-gradient(50rem 35rem at -10% 100%,rgba(80,100,232,0.05),transparent 60%),${B.bg}`;
+document.body.style.background=BODY_BG;
+document.body.style.backgroundAttachment='fixed';
 document.body.style.color=B.text;
 const styleEl=document.createElement('style');
-styleEl.textContent=`::-webkit-scrollbar-thumb{background:${B.scrollThumb};}::-webkit-scrollbar-track{background:transparent;}body{background:${B.bg};}`;
+styleEl.textContent=`::-webkit-scrollbar-thumb{background:${B.scrollThumb};}::-webkit-scrollbar-track{background:transparent;}body{background:${BODY_BG};background-attachment:fixed;}`;
 document.head.appendChild(styleEl);
 
 // ─── CONFIG ──────────────────────────────────────────────
-const SUPABASE_URL='https://vwrxtpsgfhqocdxxprzh.supabase.co';
-const SUPABASE_KEY='sb_publishable_MEY45rbr0sAJr7mr37dpGQ_T4I1iftp';
+const SUPABASE_URL='https://fiodvxrdlmyucrqgjzno.supabase.co';
+const SUPABASE_KEY='sb_publishable_oXjL4hrqNRhr5OJruOhtgg_Ubp4hbc0';
 const SUPER_EMAIL='admin@bghplatform.com';
 const SUPER_PASS='bgh@admin2024';
 const FREE_LIMITS={editors:2,clients:5,videos:20};
@@ -419,7 +432,7 @@ const DB={
 // ─── LOGO ─────────────────────────────────────────────────
 const Logo=({size=64,showBeta=true})=>(
   <div style={{position:'relative',display:'inline-block'}}>
-    <div style={{width:size,height:size,borderRadius:'26%',background:`linear-gradient(145deg,${B.accent} 0%,#6e1e0a 100%)`,display:'flex',alignItems:'center',justifyContent:'center',boxShadow:`0 6px 24px ${B.accent}55, 0 2px 8px rgba(0,0,0,0.3)`}}>
+    <div style={{width:size,height:size,borderRadius:'26%',background:`linear-gradient(145deg,${B.accent} 0%,#b02508 100%)`,display:'flex',alignItems:'center',justifyContent:'center',boxShadow:`0 6px 24px ${B.accent}55, 0 2px 8px rgba(0,0,0,0.3)`}}>
       <svg viewBox="0 0 48 48" width={size*0.58} height={size*0.58} fill="none">
         <rect x="6" y="11" width="36" height="7" rx="3.5" fill="white"/>
         <rect x="6" y="21" width="27" height="7" rx="3.5" fill="rgba(255,255,255,0.72)"/>
@@ -532,7 +545,7 @@ function Toast({toast}){
   if(!toast)return null;
   const isErr=toast.type==='error';
   return(
-    <div key={toast.msg} className="toast-ani" style={{position:'fixed',bottom:'5.5rem',left:'50%',transform:'translateX(-50%)',padding:'0.7rem 1.4rem',borderRadius:'9999px',color:'white',fontWeight:'700',fontSize:'0.82rem',boxShadow:`0 12px 32px rgba(0,0,0,0.5)`,zIndex:60,background:isErr?B.danger:`linear-gradient(135deg,${B.accent},#8a2010)`,whiteSpace:'nowrap',maxWidth:'88vw',textAlign:'center',display:'flex',alignItems:'center',gap:'0.5rem',border:`1px solid ${isErr?'rgba(239,68,68,0.3)':'rgba(255,255,255,0.15)'}`}}>
+    <div key={toast.msg} className="toast-ani" style={{position:'fixed',bottom:'5.5rem',left:'50%',transform:'translateX(-50%)',padding:'0.7rem 1.4rem',borderRadius:'9999px',color:'white',fontWeight:'700',fontSize:'0.82rem',boxShadow:`0 12px 32px rgba(0,0,0,0.5)`,zIndex:60,background:isErr?B.danger:`linear-gradient(135deg,${B.accent},#cc2f0f)`,whiteSpace:'nowrap',maxWidth:'88vw',textAlign:'center',display:'flex',alignItems:'center',gap:'0.5rem',border:`1px solid ${isErr?'rgba(239,68,68,0.3)':'rgba(255,255,255,0.15)'}`}}>
       <span>{isErr?'⚠️':'✓'}</span>{toast.msg}
     </div>
   );
@@ -540,7 +553,7 @@ function Toast({toast}){
 function StatCard({label,value,ic,color,sub}){
   const c=color||B.accent;
   return(
-    <div className="fade-up" style={{background:B.card,border:`1px solid ${B.border}`,borderRadius:'1.25rem',padding:'1.1rem',position:'relative',overflow:'hidden'}}>
+    <div className="fade-up card-hover" style={{background:B.card,border:`1px solid ${B.border}`,borderRadius:'1.25rem',padding:'1.1rem',position:'relative',overflow:'hidden'}}>
       <div style={{position:'absolute',top:0,left:0,right:0,height:'2.5px',background:`linear-gradient(90deg,${c},transparent)`}}/>
       <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:'0.875rem'}}>
         <div style={{width:'2.2rem',height:'2.2rem',borderRadius:'0.65rem',background:`${c}1a`,display:'grid',placeItems:'center',flexShrink:0}}>
@@ -568,7 +581,7 @@ function AuthShell({children,title,sub}){
           <Logo size={80}/>
           <div style={{marginTop:'0.875rem',fontSize:'10px',letterSpacing:'0.35em',color:B.muted,textTransform:'uppercase',fontWeight:'700'}}>{t('app_name')}</div>
         </div>
-        <div style={{background:B.card,borderRadius:'1.75rem',border:`1px solid ${B.border}`,padding:'2rem',boxShadow:_theme==='dark'?`0 24px 80px rgba(0,0,0,0.6),0 0 0 1px ${B.border}`:`0 12px 40px rgba(0,0,0,0.08)`}}>
+        <div style={{background:_theme==='dark'?'rgba(11,13,29,0.82)':B.card,backdropFilter:'blur(20px)',borderRadius:'2rem',border:`1px solid ${B.border}`,borderTop:`1px solid ${B.accentBorder}`,padding:'2rem',boxShadow:_theme==='dark'?`0 30px 90px rgba(0,0,0,0.65),0 0 60px ${B.accent}11`:`0 16px 48px rgba(20,25,60,0.1)`}}>
           {title&&<div style={{textAlign:'center',marginBottom:'1.5rem'}}>
             <h2 style={{fontSize:'1.5rem',fontWeight:'900',color:B.text,marginBottom:'0.25rem'}}>{title}</h2>
             {sub&&<p style={{fontSize:'0.875rem',color:B.muted}}>{sub}</p>}
@@ -589,8 +602,9 @@ function Landing({onLogin,onRegister}){
       <div style={{position:'absolute',bottom:'-10rem',left:'-8rem',width:'28rem',height:'28rem',borderRadius:'50%',background:`radial-gradient(circle,${B.accent}10,transparent 65%)`,pointerEvents:'none'}}/>
       <div style={{position:'fixed',top:'1rem',left:'1rem',zIndex:10}}><SettingsBar/></div>
       <div style={{textAlign:'center',position:'relative',maxWidth:'30rem',width:'100%'}} className="fade-up">
-        <Logo size={96}/>
-        <h1 style={{fontSize:'2.4rem',fontWeight:'900',color:B.text,margin:'1.5rem 0 0.75rem',lineHeight:1.15,letterSpacing:'-0.02em'}}>{t('landing_title')}</h1>
+        <div className="floaty" style={{display:'inline-block'}}><Logo size={96}/></div>
+        <h1 style={{fontSize:'2.5rem',fontWeight:'900',color:B.text,margin:'1.5rem 0 0.75rem',lineHeight:1.2,letterSpacing:'-0.02em'}}>{t('landing_title')}</h1>
+        <div style={{width:'4rem',height:'4px',borderRadius:'9999px',background:`linear-gradient(90deg,${B.accent},transparent)`,margin:'0 auto 1rem'}}/>
         <p style={{color:B.textSub||B.muted,marginBottom:'2rem',fontSize:'0.975rem',lineHeight:1.75}}>{t('landing_sub')}</p>
         <div style={{display:'inline-flex',alignItems:'center',gap:'0.875rem',padding:'0.875rem 1.5rem',borderRadius:'1.25rem',background:B.card,border:`1px solid ${B.successSoft||'rgba(34,197,94,0.2)'}`,marginBottom:'2rem',boxShadow:`0 4px 20px rgba(34,197,94,0.1)`}}>
           <div style={{width:'2.5rem',height:'2.5rem',borderRadius:'50%',background:'rgba(34,197,94,0.15)',display:'grid',placeItems:'center',fontSize:'1.2rem'}}>🎉</div>
@@ -610,7 +624,7 @@ function Landing({onLogin,onRegister}){
           ))}
         </div>
         <div style={{display:'flex',flexDirection:'column',gap:'0.75rem'}}>
-          <button onClick={onRegister} style={{width:'100%',padding:'1.05rem',borderRadius:'1rem',background:`linear-gradient(135deg,${B.accent},#8a2010)`,color:'white',fontWeight:'800',border:'none',cursor:'pointer',fontSize:'1rem',display:'flex',alignItems:'center',justifyContent:'center',gap:'0.6rem',boxShadow:`0 8px 24px ${B.accent}44`}}>
+          <button onClick={onRegister} style={{width:'100%',padding:'1.05rem',borderRadius:'1rem',background:`linear-gradient(135deg,${B.accent},#cc2f0f)`,color:'white',fontWeight:'800',border:'none',cursor:'pointer',fontSize:'1rem',display:'flex',alignItems:'center',justifyContent:'center',gap:'0.6rem',boxShadow:`0 8px 24px ${B.accent}44`}}>
             <Ic n="building" size={19} color="white"/>{t('start_free')}
           </button>
           <button onClick={onLogin} style={{width:'100%',padding:'1rem',borderRadius:'1rem',background:B.card,color:B.textSub||B.muted,fontWeight:'700',border:`1px solid ${B.border}`,cursor:'pointer',fontSize:'0.9rem'}}>
@@ -668,7 +682,7 @@ function Register({onBack,onSuccess}){
           <PwField value={pw} onChange={setPw} show={show} setShow={setShow} placeholder={t('pw_hint')} onEnter={submit}/>
         </Field>
         {err&&<div style={{fontSize:'0.75rem',color:B.danger,fontWeight:'700',padding:'0.5rem 0.75rem',background:`rgba(239,68,68,0.1)`,borderRadius:'0.5rem',border:`1px solid rgba(239,68,68,0.2)`}}>{err}</div>}
-        <button onClick={submit} disabled={loading} style={{width:'100%',padding:'0.9rem',borderRadius:'0.875rem',background:`linear-gradient(135deg,${B.accent},#8a2010)`,color:'white',fontWeight:'800',border:'none',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',gap:'0.5rem',opacity:loading?0.7:1,boxShadow:`0 6px 20px ${B.accent}44`,fontSize:'0.92rem'}}>
+        <button onClick={submit} disabled={loading} style={{width:'100%',padding:'0.9rem',borderRadius:'0.875rem',background:`linear-gradient(135deg,${B.accent},#cc2f0f)`,color:'white',fontWeight:'800',border:'none',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',gap:'0.5rem',opacity:loading?0.7:1,boxShadow:`0 6px 20px ${B.accent}44`,fontSize:'0.92rem'}}>
           {loading?<><span className="spin" style={{display:'inline-block'}}><Ic n="loader" size={16} color="white"/></span>{t('register')}...</>:t('start_free')}
         </button>
         <button onClick={onBack} style={{background:'none',border:'none',cursor:'pointer',color:B.muted,fontSize:'0.85rem',textAlign:'center',padding:'0.25rem'}}>{t('back')}</button>
@@ -741,7 +755,7 @@ function Login({onBack,onAgencyLogin,onWorkerLogin,onSuperAdmin}){
           <PwField value={pw} onChange={setPw} show={show} setShow={setShow} placeholder={t('password')} onEnter={submit}/>
         </Field>
         {err&&<div style={{fontSize:'0.75rem',color:B.danger,fontWeight:'700',padding:'0.5rem 0.75rem',background:`rgba(239,68,68,0.1)`,borderRadius:'0.5rem',border:`1px solid rgba(239,68,68,0.2)`}}>{err}</div>}
-        <button onClick={submit} disabled={loading} style={{width:'100%',padding:'0.9rem',borderRadius:'0.875rem',background:`linear-gradient(135deg,${B.accent},#8a2010)`,color:'white',fontWeight:'800',border:'none',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',gap:'0.5rem',opacity:loading?0.7:1,boxShadow:`0 6px 20px ${B.accent}44`,fontSize:'0.92rem'}}>
+        <button onClick={submit} disabled={loading} style={{width:'100%',padding:'0.9rem',borderRadius:'0.875rem',background:`linear-gradient(135deg,${B.accent},#cc2f0f)`,color:'white',fontWeight:'800',border:'none',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',gap:'0.5rem',opacity:loading?0.7:1,boxShadow:`0 6px 20px ${B.accent}44`,fontSize:'0.92rem'}}>
           {loading?<><span className="spin" style={{display:'inline-block'}}><Ic n="loader" size={16} color="white"/></span>{t('login')}...</>:t('login')}
         </button>
         <button onClick={onBack} style={{background:'none',border:'none',cursor:'pointer',color:B.muted,fontSize:'0.85rem',textAlign:'center',padding:'0.25rem'}}>{t('back')}</button>
@@ -768,7 +782,7 @@ function ConnError({onRetry}){
           <div>• تأكد أن المشروع على Supabase نشط</div>
           <div>• افتح الملف من سيرفر محلي (لا file://)</div>
         </div>
-        <button onClick={onRetry} style={{width:'100%',padding:'0.875rem',borderRadius:'0.875rem',background:`linear-gradient(135deg,${B.accent},#8a2010)`,color:'white',fontWeight:'800',border:'none',cursor:'pointer',boxShadow:`0 4px 16px ${B.accent}44`,marginBottom:'0.75rem'}}>
+        <button onClick={onRetry} style={{width:'100%',padding:'0.875rem',borderRadius:'0.875rem',background:`linear-gradient(135deg,${B.accent},#cc2f0f)`,color:'white',fontWeight:'800',border:'none',cursor:'pointer',boxShadow:`0 4px 16px ${B.accent}44`,marginBottom:'0.75rem'}}>
           🔄 إعادة المحاولة
         </button>
         <button onClick={()=>window.location.reload()} style={{width:'100%',padding:'0.75rem',borderRadius:'0.875rem',background:'none',color:B.muted,fontWeight:'600',border:`1px solid ${B.border}`,cursor:'pointer',fontSize:'0.85rem'}}>
@@ -834,7 +848,7 @@ function SuperAdmin({onLogout}){
   if(loading)return<div style={{minHeight:'100vh',display:'flex',alignItems:'center',justifyContent:'center',background:B.bg}}><Logo size={70}/></div>;
 
   return(
-    <div style={{minHeight:'100vh',background:B.bg,fontFamily:"'Cairo','Inter',sans-serif"}}>
+    <div style={{minHeight:'100vh',background:B.bg,fontFamily:"'Tajawal','Cairo',sans-serif"}}>
       <header style={{borderBottom:`1px solid ${B.border}`,background:B.navBg,backdropFilter:'blur(16px)',position:'sticky',top:0,zIndex:40}}>
         <div style={{maxWidth:'80rem',margin:'0 auto',padding:'0.7rem 1rem',display:'flex',alignItems:'center',justifyContent:'space-between'}}>
           <div style={{display:'flex',alignItems:'center',gap:'0.75rem'}}>
@@ -991,7 +1005,7 @@ function EditAgencyModal({ag,onClose,onSave}){
           <textarea value={notes} onChange={e=>setNotes(e.target.value)} placeholder={t('notes_ph')}
             style={{...INP,height:'70px',resize:'none'}}/>
         </Field>
-        <button onClick={save} style={{width:'100%',padding:'0.9rem',borderRadius:'0.875rem',background:`linear-gradient(135deg,${B.accent},#8a2010)`,color:'white',fontWeight:'800',border:'none',cursor:'pointer',boxShadow:`0 4px 16px ${B.accent}44`}}>
+        <button onClick={save} style={{width:'100%',padding:'0.9rem',borderRadius:'0.875rem',background:`linear-gradient(135deg,${B.accent},#cc2f0f)`,color:'white',fontWeight:'800',border:'none',cursor:'pointer',boxShadow:`0 4px 16px ${B.accent}44`}}>
           {t('save_changes')}
         </button>
       </div>
@@ -1002,13 +1016,12 @@ function EditAgencyModal({ag,onClose,onSave}){
 // ─── BOTTOM NAV ───────────────────────────────────────────
 function BottomNav({tabs,tab,setTab}){
   return(
-    <div style={{position:'fixed',bottom:0,left:0,right:0,zIndex:40,background:B.navBg,borderTop:`1px solid ${B.border}`,backdropFilter:'blur(20px)',display:'flex',paddingBottom:'env(safe-area-inset-bottom)'}}>
+    <div style={{position:'fixed',bottom:'calc(0.9rem + env(safe-area-inset-bottom))',left:'0.9rem',right:'0.9rem',zIndex:40,background:B.navBg,border:`1px solid ${B.border}`,backdropFilter:'blur(24px)',display:'flex',borderRadius:'1.5rem',boxShadow:'0 12px 40px rgba(0,0,0,0.45)',padding:'0.3rem',maxWidth:'26rem',margin:'0 auto'}}>
       {tabs.map(tt=>(
-        <button key={tt.id} onClick={()=>setTab(tt.id)} style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center',gap:'0.2rem',border:'none',background:'none',cursor:'pointer',padding:'0.6rem 0.25rem',color:tab===tt.id?B.accent:B.muted}}>
-          <div style={{padding:'0.3rem 0.875rem',borderRadius:'9999px',background:tab===tt.id?B.accentSoft:'transparent',transition:'background 0.15s'}}>
-            <Ic n={tt.ic} size={20} color={tab===tt.id?B.accent:B.muted}/>
-          </div>
-          <span style={{fontSize:'0.6rem',fontWeight:'800',letterSpacing:'0.01em'}}>{tt.label}</span>
+        <button key={tt.id} onClick={()=>setTab(tt.id)} style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center',gap:'0.15rem',border:'none',cursor:'pointer',padding:'0.5rem 0.25rem',borderRadius:'1.15rem',background:tab===tt.id?B.accentSoft:'transparent',color:tab===tt.id?B.accent:B.muted}}>
+          <Ic n={tt.ic} size={19} color={tab===tt.id?B.accent:B.muted}/>
+          <span style={{fontSize:'0.58rem',fontWeight:'800',letterSpacing:'0.01em'}}>{tt.label}</span>
+          {tab===tt.id&&<div style={{width:'4px',height:'4px',borderRadius:'50%',background:B.accent,marginTop:'1px'}}/>}
         </button>
       ))}
     </div>
@@ -1085,7 +1098,7 @@ function AgencyApp({agency,onLogout}){
   );
 
   return(
-    <div style={{minHeight:'100vh',background:B.bg,fontFamily:"'Cairo','Inter',sans-serif"}}>
+    <div style={{minHeight:'100vh',background:B.bg,fontFamily:"'Tajawal','Cairo',sans-serif"}}>
       <header style={{borderBottom:`1px solid ${B.border}`,background:B.navBg,backdropFilter:'blur(16px)',position:'sticky',top:0,zIndex:40}}>
         <div style={{maxWidth:'80rem',margin:'0 auto',padding:'0.7rem 1rem',display:'flex',alignItems:'center',justifyContent:'space-between',gap:'0.75rem'}}>
           <div style={{display:'flex',alignItems:'center',gap:'0.75rem'}}>
@@ -1183,7 +1196,7 @@ function WorkerApp({agency,worker,initialData,onLogout}){
   const wRole=worker.role||'editor';
 
   return(
-    <div style={{minHeight:'100vh',background:B.bg,fontFamily:"'Cairo','Inter',sans-serif"}}>
+    <div style={{minHeight:'100vh',background:B.bg,fontFamily:"'Tajawal','Cairo',sans-serif"}}>
       <header style={{borderBottom:`1px solid ${B.border}`,background:B.navBg,backdropFilter:'blur(16px)',position:'sticky',top:0,zIndex:40}}>
         <div style={{maxWidth:'80rem',margin:'0 auto',padding:'0.7rem 1rem',display:'flex',alignItems:'center',justifyContent:'space-between',gap:'0.75rem'}}>
           <div style={{display:'flex',alignItems:'center',gap:'0.75rem'}}>
@@ -1292,7 +1305,7 @@ function AgencyDash({data,setTab,agency}){
       <h2 style={{fontSize:'1.6rem',fontWeight:'900',color:B.text,marginBottom:'0.5rem'}}>👋 {agency.name}</h2>
       <p style={{color:B.muted,marginBottom:'2.5rem',fontSize:'0.9rem'}}>{t('no_data')}</p>
       <div style={{display:'flex',gap:'0.75rem',justifyContent:'center',flexWrap:'wrap'}}>
-        <button onClick={()=>setTab('editors')} style={{display:'flex',alignItems:'center',gap:'0.5rem',padding:'0.75rem 1.5rem',borderRadius:'9999px',background:`linear-gradient(135deg,${B.accent},#8a2010)`,color:'white',fontWeight:'700',border:'none',cursor:'pointer',boxShadow:`0 6px 20px ${B.accent}44`}}>
+        <button onClick={()=>setTab('editors')} style={{display:'flex',alignItems:'center',gap:'0.5rem',padding:'0.75rem 1.5rem',borderRadius:'9999px',background:`linear-gradient(135deg,${B.accent},#cc2f0f)`,color:'white',fontWeight:'700',border:'none',cursor:'pointer',boxShadow:`0 6px 20px ${B.accent}44`}}>
           <Ic n="users" size={16} color="white"/>{t('team')}
         </button>
         <button onClick={()=>setTab('clients')} style={{display:'flex',alignItems:'center',gap:'0.5rem',padding:'0.75rem 1.5rem',borderRadius:'9999px',background:B.card,color:B.text,fontWeight:'700',border:`1px solid ${B.border}`,cursor:'pointer'}}>
@@ -1305,9 +1318,9 @@ function AgencyDash({data,setTab,agency}){
   return(
     <div style={{display:'flex',flexDirection:'column',gap:'1.25rem'}}>
       {/* Monthly hero card */}
-      <div style={{borderRadius:'1.5rem',padding:'1.5rem',background:`linear-gradient(135deg,${B.accent} 0%,#6e1a08 100%)`,color:'white',position:'relative',overflow:'hidden'}}>
-        <div style={{position:'absolute',top:'-2rem',right:'-2rem',width:'8rem',height:'8rem',borderRadius:'50%',background:'rgba(255,255,255,0.07)'}}/>
-        <div style={{position:'absolute',bottom:'-1.5rem',left:'-1rem',width:'5rem',height:'5rem',borderRadius:'50%',background:'rgba(255,255,255,0.05)'}}/>
+      <div style={{borderRadius:'1.75rem',padding:'1.6rem',background:`linear-gradient(130deg,${B.accent} 0%,#c2340d 55%,#8f1d05 100%)`,color:'white',position:'relative',overflow:'hidden',boxShadow:`0 16px 48px ${B.accent}33, inset 0 1px 0 rgba(255,255,255,0.25)`}}>
+        <div style={{position:'absolute',top:'-3rem',right:'-3rem',width:'11rem',height:'11rem',borderRadius:'50%',background:'radial-gradient(circle,rgba(255,255,255,0.14),transparent 70%)'}}/>
+        <div style={{position:'absolute',bottom:'-2rem',left:'-1.5rem',width:'7rem',height:'7rem',borderRadius:'50%',background:'radial-gradient(circle,rgba(255,255,255,0.08),transparent 70%)'}} className="floaty"/>
         <div style={{position:'relative'}}>
           <div style={{fontSize:'0.72rem',opacity:0.7,fontWeight:'600',letterSpacing:'0.05em',marginBottom:'0.4rem'}}>{t('this_month')} · {stats.mCnt} {t('videos')}</div>
           <div style={{fontSize:'2.4rem',fontWeight:'900',fontVariantNumeric:'tabular-nums',lineHeight:1,marginBottom:'0.25rem'}}>{fmt(stats.mTot)}<span style={{fontSize:'1rem',opacity:0.6,marginRight:'0.3rem'}}>دج</span></div>
@@ -1396,7 +1409,7 @@ function VideosTab({data,addVideo,updVideo,delVideo,togglePaid}){
           <h2 style={{fontSize:'1.75rem',fontWeight:'900',color:B.text}}>{t('videos')}</h2>
           <p style={{fontSize:'0.75rem',color:B.muted,fontVariantNumeric:'tabular-nums'}}>{filt.length} · {fmt(tot)} دج · {fmt(owed)} دج</p>
         </div>
-        <button onClick={()=>{setEditing(null);setShowForm(true);}} style={{display:'flex',alignItems:'center',gap:'0.4rem',padding:'0.65rem 1.1rem',borderRadius:'9999px',background:`linear-gradient(135deg,${B.accent},#8a2010)`,color:'white',fontWeight:'700',border:'none',cursor:'pointer',fontSize:'0.8rem',whiteSpace:'nowrap',boxShadow:`0 4px 16px ${B.accent}44`}}>
+        <button onClick={()=>{setEditing(null);setShowForm(true);}} style={{display:'flex',alignItems:'center',gap:'0.4rem',padding:'0.65rem 1.1rem',borderRadius:'9999px',background:`linear-gradient(135deg,${B.accent},#cc2f0f)`,color:'white',fontWeight:'700',border:'none',cursor:'pointer',fontSize:'0.8rem',whiteSpace:'nowrap',boxShadow:`0 4px 16px ${B.accent}44`}}>
           <Ic n="plus" size={15} color="white"/>{t('new_video')}
         </button>
       </div>
@@ -1534,7 +1547,7 @@ function VideoForm({editors,clients,initial,lockedEditor,onClose,onSave}){
             <span style={{fontSize:'0.875rem',fontWeight:'600',color:B.text}}>{t('mark_paid')}</span>
           </label>
         )}
-        <button onClick={submit} style={{width:'100%',padding:'0.9rem',borderRadius:'0.875rem',background:`linear-gradient(135deg,${B.accent},#8a2010)`,color:'white',fontWeight:'800',border:'none',cursor:'pointer',boxShadow:`0 4px 16px ${B.accent}44`,fontSize:'0.9rem'}}>{initial?t('save'):t('new_video')}</button>
+        <button onClick={submit} style={{width:'100%',padding:'0.9rem',borderRadius:'0.875rem',background:`linear-gradient(135deg,${B.accent},#cc2f0f)`,color:'white',fontWeight:'800',border:'none',cursor:'pointer',boxShadow:`0 4px 16px ${B.accent}44`,fontSize:'0.9rem'}}>{initial?t('save'):t('new_video')}</button>
       </div>
     </Modal>
   );
@@ -1572,7 +1585,7 @@ function WorkerForm({initial,onClose,onSave}){
           <PwField value={pw} onChange={setPw} show={show} setShow={setShow} placeholder={initial?t('pw_optional'):t('pw_hint')} onEnter={submit}/>
         </Field>
         {err&&<div style={{fontSize:'0.75rem',color:B.danger,fontWeight:'700'}}>{err}</div>}
-        <button onClick={submit} style={{width:'100%',padding:'0.9rem',borderRadius:'0.875rem',background:`linear-gradient(135deg,${B.accent},#8a2010)`,color:'white',fontWeight:'800',border:'none',cursor:'pointer',boxShadow:`0 4px 16px ${B.accent}44`}}>{initial?t('save'):t('add')}</button>
+        <button onClick={submit} style={{width:'100%',padding:'0.9rem',borderRadius:'0.875rem',background:`linear-gradient(135deg,${B.accent},#cc2f0f)`,color:'white',fontWeight:'800',border:'none',cursor:'pointer',boxShadow:`0 4px 16px ${B.accent}44`}}>{initial?t('save'):t('add')}</button>
       </div>
     </Modal>
   );
@@ -1643,7 +1656,7 @@ function ClientsTab({data,addClient,updClient,delClient,canAdd,limit,plan}){
       </div>
       <div style={{background:B.card,borderRadius:'1.25rem',border:`1px solid ${B.border}`,padding:'0.75rem',display:'flex',gap:'0.5rem'}}>
         <input value={name} onChange={e=>setName(e.target.value)} onKeyDown={e=>e.key==='Enter'&&doAdd()} placeholder="اسم الزبون..." style={{...INP,flex:1}}/>
-        <button onClick={doAdd} style={{display:'flex',alignItems:'center',gap:'0.4rem',padding:'0.75rem 1rem',borderRadius:'0.875rem',background:canAdd?`linear-gradient(135deg,${B.accent},#8a2010)`:'#333',color:'white',fontWeight:'700',border:'none',cursor:'pointer',flexShrink:0,boxShadow:canAdd?`0 4px 12px ${B.accent}44`:'none'}}>
+        <button onClick={doAdd} style={{display:'flex',alignItems:'center',gap:'0.4rem',padding:'0.75rem 1rem',borderRadius:'0.875rem',background:canAdd?`linear-gradient(135deg,${B.accent},#cc2f0f)`:'#333',color:'white',fontWeight:'700',border:'none',cursor:'pointer',flexShrink:0,boxShadow:canAdd?`0 4px 12px ${B.accent}44`:'none'}}>
           <Ic n="plus" size={16} color="white"/>{t('add')}
         </button>
       </div>
