@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
-  <title>منصة الإيديتورز BETA</title>
+  <title>Khedmti — خدمتي</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
@@ -15,7 +15,7 @@
     body{font-family:'Tajawal','Cairo',sans-serif;letter-spacing:0.01em;}
     *{-webkit-tap-highlight-color:transparent;}
     input,select,textarea,button{font-family:inherit;}
-    ::selection{background:rgba(255,92,51,0.35);}
+    ::selection{background:rgba(13,124,251,0.30);}
     ::-webkit-scrollbar{width:4px;height:4px;}
     ::-webkit-scrollbar-thumb{border-radius:4px;}
     @keyframes spin{from{transform:rotate(0deg);}to{transform:rotate(360deg);}}
@@ -35,10 +35,21 @@
     button{transition:opacity 0.15s,transform 0.15s,background 0.2s,box-shadow 0.2s,border-color 0.2s;}
     button:active:not(:disabled){transform:scale(0.96);}
     input,select,textarea{transition:border-color 0.18s,box-shadow 0.18s;}
-    input:focus,select:focus,textarea:focus{border-color:#ff5c33 !important;box-shadow:0 0 0 3px rgba(255,92,51,0.18);}
-    .grad-text{background:linear-gradient(120deg,#ff8a5c,#ff5c33 45%,#ffb35c);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;}
+    input:focus,select:focus,textarea:focus{border-color:#0D7CFB !important;box-shadow:0 0 0 3px rgba(13,124,251,0.20);}
+    .grad-text{background:linear-gradient(120deg,#4E9CFC,#0D7CFB 45%,#1652A2);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;}
     .card-hover{transition:transform 0.2s,box-shadow 0.2s,border-color 0.2s;}
-    .card-hover:hover{transform:translateY(-2px);border-color:rgba(255,92,51,0.35) !important;}
+    .card-hover:hover{transform:translateY(-2px);border-color:rgba(13,124,251,0.30) !important;}
+    @media print{
+      @page{margin:14mm;}
+      body{background:#fff !important;}
+      .no-print{display:none !important;}
+      .inv-sheet{position:static !important;inset:auto !important;padding:0 !important;background:#fff !important;color:#000 !important;overflow:visible !important;}
+      .inv-paper{box-shadow:none !important;border:none !important;border-radius:0 !important;max-width:100% !important;margin:0 !important;padding:0 !important;background:#fff !important;color:#000 !important;}
+      .inv-paper *{color:#000 !important;}
+      .inv-ink{background:#111 !important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+      .inv-ink *{color:#fff !important;}
+      .inv-rule{border-color:#bbb !important;}
+    }
   </style>
 </head>
 <body>
@@ -69,7 +80,7 @@ function toggleTheme(){
 const TR={
   ar:{
     // App
-    app_name:'منصة الإيديتورز',
+    app_name:'خدمتي',
     beta:'بيتا',
     // Nav
     dashboard:'لوحة التحكم',
@@ -186,8 +197,8 @@ const TR={
     suspended_msg:'حسابك موقوف مؤقتاً. تواصل معنا.',
     contact_us:'تواصل معنا على WhatsApp',
     // Landing
-    landing_title:'منصة إدارة الإيديتورز',
-    landing_sub:'سجل خدمة الفريق، تابع المدفوعات، وادر وكالتك من مكان واحد',
+    landing_title:'خدمتي',
+    landing_sub:'منصة إدارة للفريلانسرز، الإيديتورز ووكالات الماركتينغ — سجل خدمتك، تابع مهامك، وفوتر زباينك من بلاصة وحدة',
     free_now:'مجاني 100% الآن',
     free_sub:'سجل اليوم واستعمل المنصة مجاناً',
     feat_1:'تسجيل الفيديوهات',
@@ -197,9 +208,59 @@ const TR={
     no_card:'لا حاجة لبطاقة بنكية',
     // Team page info
     pw_info:'💡 كي تزيد عضو، حط لو كلمة سر — يستعملها يدخل بإيميل الوكالة + كلمة سرو',
+    // Invoices
+    invoices:'الفواتير',
+    invoice:'فاتورة',
+    new_invoice:'فاتورة جديدة',
+    invoice_no:'رقم الفاتورة',
+    issue_date:'تاريخ الإصدار',
+    due_date:'أجل الدفع',
+    items:'البنود',
+    subtotal:'المجموع الفرعي',
+    discount:'تخفيض (دج)',
+    grand_total:'الإجمالي',
+    status:'الحالة',
+    st_draft:'مسودة',
+    st_sent:'مرسلة',
+    st_paid:'مدفوعة',
+    select_videos:'اختار الفيديوهات',
+    unbilled_only:'الفيديوهات اللي ما تفوترتش',
+    no_invoices:'ما كاين حتى فاتورة',
+    no_unbilled:'كل الفيديوهات تفوترت',
+    print_inv:'طبع / PDF',
+    billed_to:'الفاتورة لـ',
+    issued_by:'من طرف',
+    toast_invoice_added:'تم إنشاء الفاتورة ✅',
+    toast_invoice_paid:'تعلمت مدفوعة ✅',
+    err_no_items:'اختار على الأقل فيديو واحد',
+    err_no_client:'اختار الزبون',
+    total_invoiced:'مجموع الفواتير',
+    awaiting:'في انتظار الدفع',
+    // Tasks
+    tasks:'المهام',
+    my_tasks:'مهامي',
+    new_task:'مهمة جديدة',
+    task_title:'عنوان المهمة',
+    task_title_ph:'مثال: مونتاج ريلز للزبون',
+    assigned_to:'مكلّف بيها',
+    unassigned:'بلا تكليف',
+    priority:'الأولوية',
+    p_normal:'عادية',
+    p_high:'مستعجلة',
+    t_todo:'مطلوبة',
+    t_doing:'قيد الخدمة',
+    t_done:'خلاصت',
+    no_tasks:'ما كاين حتى مهمة',
+    toast_task_added:'تمت إضافة المهمة ✅',
+    overdue:'متأخرة',
+    due_today:'اليوم',
+    open_tasks:'مهام مفتوحة',
+    notes_opt:'ملاحظات (اختياري)',
+    more:'المزيد',
+    all:'الكل',
   },
   fr:{
-    app_name:'Plateforme Éditeurs',
+    app_name:'Khedmti',
     beta:'Bêta',
     dashboard:'Tableau de bord',
     my_dash:'Mon espace',
@@ -303,8 +364,8 @@ const TR={
     expired_msg:'Votre abonnement a expiré. Contactez-nous pour renouveler.',
     suspended_msg:'Votre compte est temporairement suspendu. Contactez-nous.',
     contact_us:'Contactez-nous sur WhatsApp',
-    landing_title:'Plateforme de gestion des éditeurs',
-    landing_sub:'Enregistrez le travail de votre équipe, suivez les paiements et gérez votre agence en un seul endroit',
+    landing_title:'Khedmti',
+    landing_sub:'Plateforme de gestion pour freelancers, video editors et agences marketing — travail, tâches et facturation au même endroit',
     free_now:'100% Gratuit maintenant',
     free_sub:"Inscrivez-vous aujourd'hui et utilisez la plateforme gratuitement",
     feat_1:'Enregistrement des vidéos',
@@ -313,6 +374,54 @@ const TR={
     feat_4:'Compatible mobile et ordinateur',
     no_card:'Aucune carte bancaire requise',
     pw_info:"💡 Définissez un mot de passe pour chaque membre afin qu'il puisse se connecter",
+    invoices:'Factures',
+    invoice:'Facture',
+    new_invoice:'Nouvelle facture',
+    invoice_no:'N° de facture',
+    issue_date:"Date d'émission",
+    due_date:'Échéance',
+    items:'Lignes',
+    subtotal:'Sous-total',
+    discount:'Remise (DA)',
+    grand_total:'Total',
+    status:'Statut',
+    st_draft:'Brouillon',
+    st_sent:'Envoyée',
+    st_paid:'Payée',
+    select_videos:'Sélectionnez les vidéos',
+    unbilled_only:'Vidéos non facturées',
+    no_invoices:'Aucune facture',
+    no_unbilled:'Toutes les vidéos sont facturées',
+    print_inv:'Imprimer / PDF',
+    billed_to:'Facturé à',
+    issued_by:'Émis par',
+    toast_invoice_added:'Facture créée ✅',
+    toast_invoice_paid:'Marquée payée ✅',
+    err_no_items:'Sélectionnez au moins une vidéo',
+    err_no_client:'Sélectionnez un client',
+    total_invoiced:'Total facturé',
+    awaiting:'En attente de paiement',
+    tasks:'Tâches',
+    my_tasks:'Mes tâches',
+    new_task:'Nouvelle tâche',
+    task_title:'Titre de la tâche',
+    task_title_ph:'Ex: Montage reels pour le client',
+    assigned_to:'Assignée à',
+    unassigned:'Non assignée',
+    priority:'Priorité',
+    p_normal:'Normale',
+    p_high:'Urgente',
+    t_todo:'À faire',
+    t_doing:'En cours',
+    t_done:'Terminée',
+    no_tasks:'Aucune tâche',
+    toast_task_added:'Tâche ajoutée ✅',
+    overdue:'En retard',
+    due_today:"Aujourd'hui",
+    open_tasks:'Tâches ouvertes',
+    notes_opt:'Notes (optionnel)',
+    more:'Plus',
+    all:'Tout',
   }
 };
 
@@ -323,14 +432,20 @@ function t(key,...args){
 }
 
 // ─── THEME ────────────────────────────────────────────────
-const DARK={bg:'#04050d',card:'#0b0d1d',card2:'#111428',border:'#1d2138',accent:'#ff5c33',accentSoft:'rgba(255,92,51,0.13)',accentBorder:'rgba(255,92,51,0.28)',text:'#f2f3fa',textSub:'#8d92b8',muted:'#4a4f75',success:'#2dd975',successSoft:'rgba(45,217,117,0.12)',warning:'#ffb020',danger:'#ff4d5e',dangerSoft:'rgba(255,77,94,0.1)',purple:'#b49cff',purpleSoft:'rgba(180,156,255,0.12)',blue:'#5cb2ff',blueSoft:'rgba(92,178,255,0.12)',inputBg:'#070912',navBg:'rgba(4,5,13,0.92)',scrollThumb:'#272c48'};
-const LIGHT={bg:'#eef0f8',card:'#ffffff',card2:'#f6f7fd',border:'#dfe2f0',accent:'#e8471f',accentSoft:'rgba(232,71,31,0.08)',accentBorder:'rgba(232,71,31,0.22)',text:'#0b0d1c',textSub:'#5c6185',muted:'#a3a8c5',success:'#0eaa55',successSoft:'rgba(14,170,85,0.1)',warning:'#d98a06',danger:'#e0293c',dangerSoft:'rgba(224,41,60,0.08)',purple:'#7550e8',purpleSoft:'rgba(117,80,232,0.08)',blue:'#1f6fe0',blueSoft:'rgba(31,111,224,0.08)',inputBg:'#f1f2fa',navBg:'rgba(238,240,248,0.94)',scrollThumb:'#c3c7dd'};
+// ─── KHEDMTI BRAND ────────────────────────────────────────
+// Charte graphique: Primary Blue #0D7CFB · Electric #1652A2 · Deep Navy #0B111A
+// · Charcoal #1A1D22 · White · Soft Gray #F4F7FB
+// Blue is the action colour (paid / done / active); neutral gray carries
+// pending & draft; red is reserved for alerts only.
+const BRAND={blue:'#0D7CFB',electric:'#1652A2',navy:'#0B111A',charcoal:'#1A1D22',white:'#FFFFFF',soft:'#F4F7FB'};
+const DARK={bg:'#0B111A',card:'#1A1D22',card2:'#212530',border:'#2B303A',accent:'#0D7CFB',accentSoft:'rgba(13,124,251,0.14)',accentBorder:'rgba(13,124,251,0.32)',text:'#F4F7FB',textSub:'#8B93A3',muted:'#565E6D',success:'#0D7CFB',successSoft:'rgba(13,124,251,0.14)',warning:'#C8912F',danger:'#E5484D',dangerSoft:'rgba(229,72,77,0.12)',purple:'#7C9CE0',purpleSoft:'rgba(124,156,224,0.12)',blue:'#4E9CFC',blueSoft:'rgba(78,156,252,0.12)',inputBg:'#12161D',navBg:'rgba(11,17,26,0.92)',scrollThumb:'#333A47'};
+const LIGHT={bg:'#F4F7FB',card:'#FFFFFF',card2:'#F4F7FB',border:'#DDE4EE',accent:'#0D7CFB',accentSoft:'rgba(13,124,251,0.08)',accentBorder:'rgba(13,124,251,0.26)',text:'#0B111A',textSub:'#5A6473',muted:'#98A2B3',success:'#0D7CFB',successSoft:'rgba(13,124,251,0.09)',warning:'#96690F',danger:'#D32F2F',dangerSoft:'rgba(211,47,47,0.08)',purple:'#1652A2',purpleSoft:'rgba(22,82,162,0.08)',blue:'#1652A2',blueSoft:'rgba(22,82,162,0.08)',inputBg:'#F4F7FB',navBg:'rgba(244,247,251,0.94)',scrollThumb:'#C7D0DD'};
 const B=_theme==='dark'?DARK:LIGHT;
 
 // update body bg and scrollbar — layered ambient gradients
 const BODY_BG=_theme==='dark'
-  ?`radial-gradient(60rem 40rem at 85% -10%,rgba(255,92,51,0.09),transparent 60%),radial-gradient(50rem 35rem at -10% 100%,rgba(92,110,255,0.07),transparent 60%),${B.bg}`
-  :`radial-gradient(60rem 40rem at 85% -10%,rgba(232,71,31,0.06),transparent 60%),radial-gradient(50rem 35rem at -10% 100%,rgba(80,100,232,0.05),transparent 60%),${B.bg}`;
+  ?`radial-gradient(60rem 40rem at 85% -10%,rgba(13,124,251,0.10),transparent 60%),radial-gradient(50rem 35rem at -10% 100%,rgba(22,82,162,0.10),transparent 60%),${B.bg}`
+  :`radial-gradient(60rem 40rem at 85% -10%,rgba(13,124,251,0.07),transparent 60%),radial-gradient(50rem 35rem at -10% 100%,rgba(22,82,162,0.05),transparent 60%),${B.bg}`;
 document.body.style.background=BODY_BG;
 document.body.style.backgroundAttachment='fixed';
 document.body.style.color=B.text;
@@ -347,22 +462,34 @@ const FREE_LIMITS={editors:2,clients:5,videos:20};
 
 const ROLES=['editor','filmmaker','designer'];
 const roleLabel=r=>({editor:t('editor'),filmmaker:t('filmmaker'),designer:t('designer')}[r]||t('editor'));
-const roleColor=r=>({editor:B.accent,filmmaker:'#a78bfa',designer:'#22c55e'}[r]||B.accent);
-const roleBg=r=>({editor:B.accentSoft,filmmaker:'rgba(167,139,250,0.15)',designer:'rgba(34,197,94,0.15)'}[r]||B.accentSoft);
+const roleColor=r=>({editor:B.accent,filmmaker:B.blue,designer:B.purple}[r]||B.accent);
+const roleBg=r=>({editor:B.accentSoft,filmmaker:B.blueSoft,designer:B.purpleSoft}[r]||B.accentSoft);
 
 const fmt=n=>new Intl.NumberFormat('en-US').format(Math.round(Number(n)||0));
 const fmtD=iso=>iso?new Date(iso).toLocaleDateString('fr-FR'):'';
 const today=()=>new Date().toISOString().slice(0,10);
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,8);
 const hash=s=>{let h=0;for(let i=0;i<s.length;i++){h=((h<<5)-h)+s.charCodeAt(i);h|=0;}return'h'+Math.abs(h).toString(36)+'_'+s.length;};
-const EMPTY={editors:[],clients:[],videos:[]};
+const EMPTY={editors:[],clients:[],videos:[],invoices:[],tasks:[]};
+// older rows may miss the newer collections — normalize on read
+const norm=d=>({...EMPTY,...(d||{}),editors:d?.editors||[],clients:d?.clients||[],videos:d?.videos||[],invoices:d?.invoices||[],tasks:d?.tasks||[]});
+
+// ─── INVOICE / TASK CONSTANTS ────────────────────────────
+const INV_STATUS={draft:{k:'st_draft',c:'muted'},sent:{k:'st_sent',c:'blue'},paid:{k:'st_paid',c:'success'}};
+const T_STATUS=['todo','doing','done'];
+const tStatusLabel=s=>({todo:t('t_todo'),doing:t('t_doing'),done:t('t_done')}[s]||t('t_todo'));
+const tStatusColor=s=>({todo:B.textSub,doing:B.accent,done:B.success}[s]||B.textSub);
+const invNumber=list=>{
+  const n=(list||[]).reduce((m,i)=>{const x=parseInt(String(i.number||'').replace(/\D/g,''),10);return Number.isFinite(x)&&x>m?x:m;},0);
+  return 'F-'+String(n+1).padStart(4,'0');
+};
 
 const isExpired=ag=>{if(!ag?.plan_expires_at)return false;return new Date(ag.plan_expires_at)<new Date();};
 const isSuspended=ag=>ag?.is_active===false;
 const daysLeft=ag=>{if(!ag?.plan_expires_at)return null;return Math.max(0,Math.ceil((new Date(ag.plan_expires_at)-new Date())/(86400000)));};
 const planLabel=plan=>{
-  if(plan==='pro')return{label:'Pro 💎',color:'#a78bfa',bg:'rgba(167,139,250,0.15)'};
-  if(plan==='basic')return{label:'Basic ⭐',color:'#fbbf24',bg:'rgba(251,191,36,0.15)'};
+  if(plan==='pro')return{label:'Pro',color:B.accent,bg:B.accentSoft};
+  if(plan==='basic')return{label:'Basic',color:B.blue,bg:B.blueSoft};
   return{label:t('free_plan'),color:B.muted,bg:_theme==='dark'?'rgba(255,255,255,0.05)':'rgba(0,0,0,0.05)'};
 };
 
@@ -405,7 +532,7 @@ const DB={
       const{data:ag,error:agErr}=await sb.from('agencies').select('*').eq('email',agencyEmail.toLowerCase().trim()).single();
       if(agErr||!ag)throw new Error(t('err_no_agency'));
       const{data:appData}=await sb.from('app_data').select('data').eq('agency_id',ag.id).single();
-      const d=appData?.data||EMPTY;
+      const d=norm(appData?.data);
       const worker=d.editors.find(e=>e.password===hash(workerPassword));
       if(!worker)throw new Error(t('err_wrong_pw'));
       return{agency:ag,worker,appData:d};
@@ -414,7 +541,7 @@ const DB={
   async loadData(agencyId){
     return wrapFetch(async()=>{
       const{data}=await sb.from('app_data').select('data').eq('agency_id',agencyId).single();
-      return data?.data||{...EMPTY};
+      return norm(data?.data);
     });
   },
   async saveData(agencyId,data){
@@ -430,7 +557,7 @@ const DB={
   },
   async getAgencyData(agencyId){
     const{data}=await sb.from('app_data').select('data').eq('agency_id',agencyId).single();
-    return data?.data||{...EMPTY};
+    return norm(data?.data);
   },
   async updateAgency(id,patch){await sb.from('agencies').update(patch).eq('id',id);},
   async deleteAgency(id){
@@ -440,16 +567,13 @@ const DB={
 };
 
 // ─── LOGO ─────────────────────────────────────────────────
+const LOGO_URI='data:image/png;base64,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';
+// Brand rule: the mark always sits on a dark ground with strong contrast,
+// so the navy tile is kept in both themes.
 const Logo=({size=64,showBeta=true})=>(
   <div style={{position:'relative',display:'inline-block'}}>
-    <div style={{width:size,height:size,borderRadius:'26%',background:`linear-gradient(145deg,${B.accent} 0%,#b02508 100%)`,display:'flex',alignItems:'center',justifyContent:'center',boxShadow:`0 6px 24px ${B.accent}55, 0 2px 8px rgba(0,0,0,0.3)`}}>
-      <svg viewBox="0 0 48 48" width={size*0.58} height={size*0.58} fill="none">
-        <rect x="6" y="11" width="36" height="7" rx="3.5" fill="white"/>
-        <rect x="6" y="21" width="27" height="7" rx="3.5" fill="rgba(255,255,255,0.72)"/>
-        <rect x="6" y="31" width="18" height="7" rx="3.5" fill="rgba(255,255,255,0.45)"/>
-        <circle cx="38" cy="37" r="8" fill="white"/>
-        <path d="M35 37l2.2 2.2 4.3-4.3" stroke={B.accent} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
-      </svg>
+    <div style={{width:size,height:size,borderRadius:'27%',background:`linear-gradient(145deg,${BRAND.charcoal} 0%,${BRAND.navy} 100%)`,display:'flex',alignItems:'center',justifyContent:'center',boxShadow:`0 6px 22px rgba(11,17,26,0.45), inset 0 0 0 1px rgba(255,255,255,0.06)`}}>
+      <img src={LOGO_URI} alt="Khedmti" width={size*0.62} height={size*0.62*125/150} style={{display:'block',objectFit:'contain'}}/>
     </div>
     {showBeta&&<div style={{position:'absolute',top:-7,left:-8,background:B.card,border:`1.5px solid ${B.accent}`,color:B.accent,fontSize:'8px',fontWeight:'900',padding:'2px 6px',borderRadius:'9999px',letterSpacing:'0.12em',boxShadow:`0 2px 8px ${B.accent}33`}}>{t('beta').toUpperCase()}</div>}
   </div>
@@ -487,6 +611,13 @@ const IC={
   sun:'<circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>',
   moon:'<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>',
   globe:'<circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>',
+  receipt:'<path d="M4 2v20l2.5-1.5L9 22l2.5-1.5L14 22l2.5-1.5L19 22V2l-2.5 1.5L14 2l-2.5 1.5L9 2 6.5 3.5z"/><line x1="8" y1="8" x2="15" y2="8"/><line x1="8" y1="12" x2="15" y2="12"/>',
+  task:'<polyline points="9 11 12 14 20 6"/><path d="M20 12v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h9"/>',
+  flag:'<path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V4s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/>',
+  calendar:'<rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>',
+  printer:'<polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/>',
+  dots:'<circle cx="12" cy="5" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="12" cy="19" r="1.6"/>',
+  play:'<polygon points="5 3 19 12 5 21 5 3"/>',
 };
 const Ic=({n,size=18,color='currentColor'})=>(
   <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none"
@@ -555,7 +686,7 @@ function Toast({toast}){
   if(!toast)return null;
   const isErr=toast.type==='error';
   return(
-    <div key={toast.msg} className="toast-ani" style={{position:'fixed',bottom:'5.5rem',left:'50%',transform:'translateX(-50%)',padding:'0.7rem 1.4rem',borderRadius:'9999px',color:'white',fontWeight:'700',fontSize:'0.82rem',boxShadow:`0 12px 32px rgba(0,0,0,0.5)`,zIndex:60,background:isErr?B.danger:`linear-gradient(135deg,${B.accent},#cc2f0f)`,whiteSpace:'nowrap',maxWidth:'88vw',textAlign:'center',display:'flex',alignItems:'center',gap:'0.5rem',border:`1px solid ${isErr?'rgba(239,68,68,0.3)':'rgba(255,255,255,0.15)'}`}}>
+    <div key={toast.msg} className="toast-ani" style={{position:'fixed',bottom:'5.5rem',left:'50%',transform:'translateX(-50%)',padding:'0.7rem 1.4rem',borderRadius:'9999px',color:'white',fontWeight:'700',fontSize:'0.82rem',boxShadow:`0 12px 32px rgba(0,0,0,0.5)`,zIndex:60,background:isErr?B.danger:`linear-gradient(135deg,${B.accent},#1652A2)`,whiteSpace:'nowrap',maxWidth:'88vw',textAlign:'center',display:'flex',alignItems:'center',gap:'0.5rem',border:`1px solid ${isErr?'rgba(229,72,77,0.35)':'rgba(255,255,255,0.15)'}`}}>
       <span>{isErr?'⚠️':'✓'}</span>{toast.msg}
     </div>
   );
@@ -616,8 +747,8 @@ function Landing({onLogin,onRegister}){
         <h1 style={{fontSize:'2.5rem',fontWeight:'900',color:B.text,margin:'1.5rem 0 0.75rem',lineHeight:1.2,letterSpacing:'-0.02em'}}>{t('landing_title')}</h1>
         <div style={{width:'4rem',height:'4px',borderRadius:'9999px',background:`linear-gradient(90deg,${B.accent},transparent)`,margin:'0 auto 1rem'}}/>
         <p style={{color:B.textSub||B.muted,marginBottom:'2rem',fontSize:'0.975rem',lineHeight:1.75}}>{t('landing_sub')}</p>
-        <div style={{display:'inline-flex',alignItems:'center',gap:'0.875rem',padding:'0.875rem 1.5rem',borderRadius:'1.25rem',background:B.card,border:`1px solid ${B.successSoft||'rgba(34,197,94,0.2)'}`,marginBottom:'2rem',boxShadow:`0 4px 20px rgba(34,197,94,0.1)`}}>
-          <div style={{width:'2.5rem',height:'2.5rem',borderRadius:'50%',background:'rgba(34,197,94,0.15)',display:'grid',placeItems:'center',fontSize:'1.2rem'}}>🎉</div>
+        <div style={{display:'inline-flex',alignItems:'center',gap:'0.875rem',padding:'0.875rem 1.5rem',borderRadius:'1.25rem',background:B.card,border:`1px solid ${B.accentBorder}`,marginBottom:'2rem',boxShadow:`0 4px 20px rgba(13,124,251,0.12)`}}>
+          <div style={{width:'2.5rem',height:'2.5rem',borderRadius:'50%',background:B.accentSoft,display:'grid',placeItems:'center',fontSize:'1.2rem'}}>🎉</div>
           <div style={{textAlign:_lang==='ar'?'right':'left'}}>
             <div style={{fontWeight:'800',color:B.success,fontSize:'0.95rem'}}>{t('free_now')}</div>
             <div style={{fontSize:'0.72rem',color:B.muted,marginTop:'1px'}}>{t('free_sub')}</div>
@@ -634,7 +765,7 @@ function Landing({onLogin,onRegister}){
           ))}
         </div>
         <div style={{display:'flex',flexDirection:'column',gap:'0.75rem'}}>
-          <button onClick={onRegister} style={{width:'100%',padding:'1.05rem',borderRadius:'1rem',background:`linear-gradient(135deg,${B.accent},#cc2f0f)`,color:'white',fontWeight:'800',border:'none',cursor:'pointer',fontSize:'1rem',display:'flex',alignItems:'center',justifyContent:'center',gap:'0.6rem',boxShadow:`0 8px 24px ${B.accent}44`}}>
+          <button onClick={onRegister} style={{width:'100%',padding:'1.05rem',borderRadius:'1rem',background:`linear-gradient(135deg,${B.accent},#1652A2)`,color:'white',fontWeight:'800',border:'none',cursor:'pointer',fontSize:'1rem',display:'flex',alignItems:'center',justifyContent:'center',gap:'0.6rem',boxShadow:`0 8px 24px ${B.accent}44`}}>
             <Ic n="building" size={19} color="white"/>{t('start_free')}
           </button>
           <button onClick={onLogin} style={{width:'100%',padding:'1rem',borderRadius:'1rem',background:B.card,color:B.textSub||B.muted,fontWeight:'700',border:`1px solid ${B.border}`,cursor:'pointer',fontSize:'0.9rem'}}>
@@ -706,7 +837,7 @@ function Register({onBack,onSuccess}){
           <PwField value={pw} onChange={setPw} show={show} setShow={setShow} placeholder={t('pw_hint')} onEnter={submit}/>
         </Field>
         {err&&<div style={{fontSize:'0.75rem',color:B.danger,fontWeight:'700',padding:'0.5rem 0.75rem',background:`rgba(239,68,68,0.1)`,borderRadius:'0.5rem',border:`1px solid rgba(239,68,68,0.2)`}}>{err}</div>}
-        <button onClick={submit} disabled={loading} style={{width:'100%',padding:'0.9rem',borderRadius:'0.875rem',background:`linear-gradient(135deg,${B.accent},#cc2f0f)`,color:'white',fontWeight:'800',border:'none',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',gap:'0.5rem',opacity:loading?0.7:1,boxShadow:`0 6px 20px ${B.accent}44`,fontSize:'0.92rem'}}>
+        <button onClick={submit} disabled={loading} style={{width:'100%',padding:'0.9rem',borderRadius:'0.875rem',background:`linear-gradient(135deg,${B.accent},#1652A2)`,color:'white',fontWeight:'800',border:'none',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',gap:'0.5rem',opacity:loading?0.7:1,boxShadow:`0 6px 20px ${B.accent}44`,fontSize:'0.92rem'}}>
           {loading?<><span className="spin" style={{display:'inline-block'}}><Ic n="loader" size={16} color="white"/></span>{t('register')}...</>:t('start_free')}
         </button>
         <button onClick={onBack} style={{background:'none',border:'none',cursor:'pointer',color:B.muted,fontSize:'0.85rem',textAlign:'center',padding:'0.25rem'}}>{t('back')}</button>
@@ -779,7 +910,7 @@ function Login({onBack,onAgencyLogin,onWorkerLogin,onSuperAdmin}){
           <PwField value={pw} onChange={setPw} show={show} setShow={setShow} placeholder={t('password')} onEnter={submit}/>
         </Field>
         {err&&<div style={{fontSize:'0.75rem',color:B.danger,fontWeight:'700',padding:'0.5rem 0.75rem',background:`rgba(239,68,68,0.1)`,borderRadius:'0.5rem',border:`1px solid rgba(239,68,68,0.2)`}}>{err}</div>}
-        <button onClick={submit} disabled={loading} style={{width:'100%',padding:'0.9rem',borderRadius:'0.875rem',background:`linear-gradient(135deg,${B.accent},#cc2f0f)`,color:'white',fontWeight:'800',border:'none',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',gap:'0.5rem',opacity:loading?0.7:1,boxShadow:`0 6px 20px ${B.accent}44`,fontSize:'0.92rem'}}>
+        <button onClick={submit} disabled={loading} style={{width:'100%',padding:'0.9rem',borderRadius:'0.875rem',background:`linear-gradient(135deg,${B.accent},#1652A2)`,color:'white',fontWeight:'800',border:'none',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',gap:'0.5rem',opacity:loading?0.7:1,boxShadow:`0 6px 20px ${B.accent}44`,fontSize:'0.92rem'}}>
           {loading?<><span className="spin" style={{display:'inline-block'}}><Ic n="loader" size={16} color="white"/></span>{t('login')}...</>:t('login')}
         </button>
         <button onClick={onBack} style={{background:'none',border:'none',cursor:'pointer',color:B.muted,fontSize:'0.85rem',textAlign:'center',padding:'0.25rem'}}>{t('back')}</button>
@@ -806,7 +937,7 @@ function ConnError({onRetry}){
           <div>• تأكد أن المشروع على Supabase نشط</div>
           <div>• افتح الملف من سيرفر محلي (لا file://)</div>
         </div>
-        <button onClick={onRetry} style={{width:'100%',padding:'0.875rem',borderRadius:'0.875rem',background:`linear-gradient(135deg,${B.accent},#cc2f0f)`,color:'white',fontWeight:'800',border:'none',cursor:'pointer',boxShadow:`0 4px 16px ${B.accent}44`,marginBottom:'0.75rem'}}>
+        <button onClick={onRetry} style={{width:'100%',padding:'0.875rem',borderRadius:'0.875rem',background:`linear-gradient(135deg,${B.accent},#1652A2)`,color:'white',fontWeight:'800',border:'none',cursor:'pointer',boxShadow:`0 4px 16px ${B.accent}44`,marginBottom:'0.75rem'}}>
           🔄 إعادة المحاولة
         </button>
         <button onClick={()=>window.location.reload()} style={{width:'100%',padding:'0.75rem',borderRadius:'0.875rem',background:'none',color:B.muted,fontWeight:'600',border:`1px solid ${B.border}`,cursor:'pointer',fontSize:'0.85rem'}}>
@@ -908,7 +1039,7 @@ function SuperAdmin({onLogout}){
               const pl=planLabel(ag.plan);
               const exp=isExpired(ag);const sus=isSuspended(ag);const dl=daysLeft(ag);
               return(
-                <div key={ag.id} style={{padding:'0.875rem 1.25rem',borderBottom:`1px solid ${B.border}`,background:selected?.id===ag.id?_theme==='dark'?'#222':'#f0f0f0':'transparent'}}>
+                <div key={ag.id} style={{padding:'0.875rem 1.25rem',borderBottom:`1px solid ${B.border}`,background:selected?.id===ag.id?_theme==='dark'?B.card2:B.bg:'transparent'}}>
                   <div style={{display:'flex',alignItems:'center',gap:'0.75rem'}}>
                     <div style={{width:'2.5rem',height:'2.5rem',borderRadius:'50%',display:'grid',placeItems:'center',fontWeight:'700',flexShrink:0,background:B.accentSoft,color:B.accent}}>
                       {ag.name.charAt(0)}
@@ -999,7 +1130,7 @@ function EditAgencyModal({ag,onClose,onSave}){
       <div style={{display:'flex',flexDirection:'column',gap:'1rem'}}>
         <Field label={t('plan')}>
           <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:'0.5rem'}}>
-            {[{v:'free',l:t('free_plan'),c:B.muted},{v:'basic',l:'Basic ⭐',c:'#fbbf24'},{v:'pro',l:'Pro 💎',c:'#a78bfa'}].map(p=>(
+            {[{v:'free',l:t('free_plan'),c:B.muted},{v:'basic',l:'Basic',c:B.blue},{v:'pro',l:'Pro',c:B.accent}].map(p=>(
               <button key={p.v} onClick={()=>setPlan(p.v)}
                 style={{padding:'0.625rem',borderRadius:'0.75rem',border:`2px solid ${plan===p.v?p.c:B.border}`,background:plan===p.v?`${p.c}22`:'transparent',color:p.c,fontWeight:'700',cursor:'pointer',fontSize:'0.8rem'}}>
                 {p.l}
@@ -1019,7 +1150,7 @@ function EditAgencyModal({ag,onClose,onSave}){
             </div>
           </Field>
         )}
-        <label style={{display:'flex',alignItems:'center',gap:'0.75rem',padding:'0.875rem',background:active?`rgba(34,197,94,0.1)`:`rgba(239,68,68,0.1)`,borderRadius:'0.75rem',cursor:'pointer',border:`1px solid ${active?`rgba(34,197,94,0.2)`:`rgba(239,68,68,0.2)`}`}}>
+        <label style={{display:'flex',alignItems:'center',gap:'0.75rem',padding:'0.875rem',background:active?B.accentSoft:B.dangerSoft,borderRadius:'0.75rem',cursor:'pointer',border:`1px solid ${active?B.accentBorder:'rgba(229,72,77,0.25)'}`}}>
           <input type="checkbox" checked={active} onChange={e=>setActive(e.target.checked)} style={{width:'1.25rem',height:'1.25rem',accentColor:B.success}}/>
           <div>
             <div style={{fontWeight:'700',color:active?B.success:B.danger,fontSize:'0.875rem'}}>{active?t('account_active'):t('account_suspended')}</div>
@@ -1029,7 +1160,7 @@ function EditAgencyModal({ag,onClose,onSave}){
           <textarea value={notes} onChange={e=>setNotes(e.target.value)} placeholder={t('notes_ph')}
             style={{...INP,height:'70px',resize:'none'}}/>
         </Field>
-        <button onClick={save} style={{width:'100%',padding:'0.9rem',borderRadius:'0.875rem',background:`linear-gradient(135deg,${B.accent},#cc2f0f)`,color:'white',fontWeight:'800',border:'none',cursor:'pointer',boxShadow:`0 4px 16px ${B.accent}44`}}>
+        <button onClick={save} style={{width:'100%',padding:'0.9rem',borderRadius:'0.875rem',background:`linear-gradient(135deg,${B.accent},#1652A2)`,color:'white',fontWeight:'800',border:'none',cursor:'pointer',boxShadow:`0 4px 16px ${B.accent}44`}}>
           {t('save_changes')}
         </button>
       </div>
@@ -1038,17 +1169,34 @@ function EditAgencyModal({ag,onClose,onSave}){
 }
 
 // ─── BOTTOM NAV ───────────────────────────────────────────
-function BottomNav({tabs,tab,setTab}){
+function BottomNav({primary,secondary=[],tab,setTab}){
+  const[open,setOpen]=useState(false);
+  const inMore=secondary.some(s=>s.id===tab);
+  const slot=(tt,active,onClick)=>(
+    <button key={tt.id} onClick={onClick} style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center',gap:'0.15rem',border:'none',cursor:'pointer',padding:'0.5rem 0.15rem',borderRadius:'1.15rem',background:active?B.accentSoft:'transparent',color:active?B.accent:B.muted,minWidth:0}}>
+      <Ic n={tt.ic} size={19} color={active?B.accent:B.muted}/>
+      <span style={{fontSize:'0.56rem',fontWeight:'800',letterSpacing:'0.01em',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis',maxWidth:'100%'}}>{tt.label}</span>
+      {active&&<div style={{width:'4px',height:'4px',borderRadius:'50%',background:B.accent,marginTop:'1px'}}/>}
+    </button>
+  );
   return(
-    <div style={{position:'fixed',bottom:'calc(0.9rem + env(safe-area-inset-bottom))',left:'0.9rem',right:'0.9rem',zIndex:40,background:B.navBg,border:`1px solid ${B.border}`,backdropFilter:'blur(24px)',display:'flex',borderRadius:'1.5rem',boxShadow:'0 12px 40px rgba(0,0,0,0.45)',padding:'0.3rem',maxWidth:'26rem',margin:'0 auto'}}>
-      {tabs.map(tt=>(
-        <button key={tt.id} onClick={()=>setTab(tt.id)} style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center',gap:'0.15rem',border:'none',cursor:'pointer',padding:'0.5rem 0.25rem',borderRadius:'1.15rem',background:tab===tt.id?B.accentSoft:'transparent',color:tab===tt.id?B.accent:B.muted}}>
-          <Ic n={tt.ic} size={19} color={tab===tt.id?B.accent:B.muted}/>
-          <span style={{fontSize:'0.58rem',fontWeight:'800',letterSpacing:'0.01em'}}>{tt.label}</span>
-          {tab===tt.id&&<div style={{width:'4px',height:'4px',borderRadius:'50%',background:B.accent,marginTop:'1px'}}/>}
-        </button>
-      ))}
-    </div>
+    <>
+      {open&&(
+        <div onClick={()=>setOpen(false)} className="overlay-ani" style={{position:'fixed',inset:0,background:'rgba(0,0,6,0.6)',backdropFilter:'blur(4px)',zIndex:44}}>
+          <div onClick={e=>e.stopPropagation()} className="modal-sheet" style={{position:'absolute',bottom:'calc(5.6rem + env(safe-area-inset-bottom))',left:'0.9rem',right:'0.9rem',maxWidth:'26rem',margin:'0 auto',background:B.card,border:`1px solid ${B.border}`,borderRadius:'1.5rem',padding:'0.4rem',boxShadow:'0 16px 48px rgba(0,0,0,0.5)'}}>
+            {secondary.map(s=>(
+              <button key={s.id} onClick={()=>{setTab(s.id);setOpen(false);}} style={{width:'100%',display:'flex',alignItems:'center',gap:'0.75rem',padding:'0.8rem 0.9rem',border:'none',borderRadius:'1.15rem',cursor:'pointer',background:tab===s.id?B.accentSoft:'transparent',color:tab===s.id?B.accent:B.text,fontWeight:'700',fontSize:'0.85rem'}}>
+                <Ic n={s.ic} size={17} color={tab===s.id?B.accent:B.textSub}/>{s.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+      <div style={{position:'fixed',bottom:'calc(0.9rem + env(safe-area-inset-bottom))',left:'0.9rem',right:'0.9rem',zIndex:45,background:B.navBg,border:`1px solid ${B.border}`,backdropFilter:'blur(24px)',display:'flex',borderRadius:'1.5rem',boxShadow:'0 12px 40px rgba(0,0,0,0.45)',padding:'0.3rem',maxWidth:'26rem',margin:'0 auto'}}>
+        {primary.map(tt=>slot(tt,tab===tt.id,()=>{setTab(tt.id);setOpen(false);}))}
+        {secondary.length>0&&slot({id:'__more',label:t('more'),ic:'dots'},inMore||open,()=>setOpen(o=>!o))}
+      </div>
+    </>
   );
 }
 
@@ -1081,25 +1229,31 @@ function AgencyApp({agency,onLogout}){
   };
 
   const solo=agency.account_type==='solo';
-  const tabs=[
+  // primary = daily work · secondary = setup, tucked behind "more" on mobile
+  const primaryTabs=[
     {id:'dashboard',label:t('dashboard'),ic:'dashboard'},
     {id:'videos',label:t('videos'),ic:'film'},
+    {id:'tasks',label:t('tasks'),ic:'task'},
+    {id:'invoices',label:t('invoices'),ic:'receipt'},
+  ];
+  const secondaryTabs=[
     {id:'editors',label:t('team'),ic:'users'},
     {id:'clients',label:t('clients'),ic:'briefcase'},
   ].filter(tt=>!(solo&&tt.id==='editors'));
+  const tabs=[...primaryTabs,...secondaryTabs];
 
   const addEditor=(name,pw,role='editor')=>{
     if(!canAdd('editor'))return showToast(t('toast_limit',FREE_LIMITS.editors),'error');
     persist({...data,editors:[...data.editors,{id:uid(),name,password:hash(pw),role}]});showToast(t('toast_editor_added'));
   };
   const updEditor=(id,patch)=>persist({...data,editors:data.editors.map(e=>e.id===id?{...e,...patch}:e)});
-  const delEditor=id=>{if(!confirm(t('confirm_delete')))return;persist({...data,editors:data.editors.filter(e=>e.id!==id),videos:data.videos.filter(v=>v.editorId!==id)});showToast(t('toast_deleted'));};
+  const delEditor=id=>{if(!confirm(t('confirm_delete')))return;persist({...data,editors:data.editors.filter(e=>e.id!==id),videos:data.videos.filter(v=>v.editorId!==id),tasks:data.tasks.map(k=>k.editorId===id?{...k,editorId:''}:k)});showToast(t('toast_deleted'));};
   const addClient=name=>{
     if(!canAdd('client'))return showToast(t('toast_limit',FREE_LIMITS.clients),'error');
     persist({...data,clients:[...data.clients,{id:uid(),name}]});showToast(t('toast_client_added'));
   };
   const updClient=(id,name)=>persist({...data,clients:data.clients.map(c=>c.id===id?{...c,name}:c)});
-  const delClient=id=>{if(!confirm(t('confirm_delete')))return;persist({...data,clients:data.clients.filter(c=>c.id!==id),videos:data.videos.filter(v=>v.clientId!==id)});showToast(t('toast_deleted'));};
+  const delClient=id=>{if(!confirm(t('confirm_delete')))return;persist({...data,clients:data.clients.filter(c=>c.id!==id),videos:data.videos.filter(v=>v.clientId!==id),invoices:data.invoices.filter(i=>i.clientId!==id),tasks:data.tasks.filter(k=>k.clientId!==id)});showToast(t('toast_deleted'));};
   const addVideo=v=>{
     if(!canAdd('video'))return showToast(t('toast_limit',FREE_LIMITS.videos),'error');
     persist({...data,videos:[{id:uid(),...v,paid:false,createdAt:new Date().toISOString()},...data.videos]});showToast(t('toast_video_added'));
@@ -1107,6 +1261,28 @@ function AgencyApp({agency,onLogout}){
   const updVideo=(id,patch)=>persist({...data,videos:data.videos.map(x=>x.id===id?{...x,...patch}:x)});
   const delVideo=id=>{if(!confirm(t('confirm_delete')))return;persist({...data,videos:data.videos.filter(x=>x.id!==id)});showToast(t('toast_deleted'));};
   const togglePaid=id=>{const v=data.videos.find(x=>x.id===id);persist({...data,videos:data.videos.map(x=>x.id===id?{...x,paid:!v.paid}:x)});};
+
+  // ── invoices ──
+  const addInvoice=inv=>{
+    persist({...data,invoices:[{id:uid(),number:invNumber(data.invoices),status:'draft',createdAt:new Date().toISOString(),...inv},...data.invoices]});
+    showToast(t('toast_invoice_added'));
+  };
+  const updInvoice=(id,patch)=>persist({...data,invoices:data.invoices.map(x=>x.id===id?{...x,...patch}:x)});
+  const delInvoice=id=>{if(!confirm(t('confirm_delete')))return;persist({...data,invoices:data.invoices.filter(x=>x.id!==id)});showToast(t('toast_deleted'));};
+  // marking an invoice paid settles every video it covers
+  const payInvoice=id=>{
+    const inv=data.invoices.find(x=>x.id===id);if(!inv)return;
+    const ids=new Set(inv.videoIds||[]);
+    persist({...data,
+      invoices:data.invoices.map(x=>x.id===id?{...x,status:'paid',paidAt:new Date().toISOString()}:x),
+      videos:data.videos.map(v=>ids.has(v.id)?{...v,paid:true}:v)});
+    showToast(t('toast_invoice_paid'));
+  };
+
+  // ── tasks ──
+  const addTask=tk=>{persist({...data,tasks:[{id:uid(),status:'todo',createdAt:new Date().toISOString(),...tk},...data.tasks]});showToast(t('toast_task_added'));};
+  const updTask=(id,patch)=>persist({...data,tasks:data.tasks.map(x=>x.id===id?{...x,...patch}:x)});
+  const delTask=id=>{if(!confirm(t('confirm_delete')))return;persist({...data,tasks:data.tasks.filter(x=>x.id!==id)});showToast(t('toast_deleted'));};
 
   const pl=planLabel(agency.plan);const dl=daysLeft(agency);
 
@@ -1167,10 +1343,12 @@ function AgencyApp({agency,onLogout}){
       <main style={{maxWidth:'80rem',margin:'0 auto',padding:'1.25rem 1rem',paddingBottom:isMobile?'6rem':'1.25rem'}}>
         {tab==='dashboard'&&<AgencyDash data={data} setTab={setTab} agency={agency} solo={solo}/>}
         {tab==='videos'&&<VideosTab data={data} addVideo={addVideo} updVideo={updVideo} delVideo={delVideo} togglePaid={togglePaid} solo={solo} selfName={agency.name}/>}
+        {tab==='tasks'&&<TasksTab data={data} addTask={addTask} updTask={updTask} delTask={delTask} solo={solo}/>}
+        {tab==='invoices'&&<InvoicesTab data={data} agency={agency} addInvoice={addInvoice} updInvoice={updInvoice} delInvoice={delInvoice} payInvoice={payInvoice}/>}
         {tab==='editors'&&<TeamTab data={data} addEditor={addEditor} updEditor={updEditor} delEditor={delEditor} canAdd={canAdd('editor')} limit={FREE_LIMITS.editors} plan={agency.plan}/>}
         {tab==='clients'&&<ClientsTab data={data} addClient={addClient} updClient={updClient} delClient={delClient} canAdd={canAdd('client')} limit={FREE_LIMITS.clients} plan={agency.plan}/>}
       </main>
-      {isMobile&&<BottomNav tabs={tabs} tab={tab} setTab={setTab}/>}
+      {isMobile&&<BottomNav primary={primaryTabs} secondary={secondaryTabs} tab={tab} setTab={setTab}/>}
       <Toast toast={toast}/>
     </div>
   );
@@ -1212,12 +1390,25 @@ function WorkerApp({agency,worker,initialData,onLogout}){
     persist({...data,videos:data.videos.filter(x=>x.id!==id)});showToast(t('toast_deleted'));
   };
 
+  // tasks — a member may only touch what is assigned to them
+  const ownsTask=id=>data.tasks.find(x=>x.id===id)?.editorId===worker.id;
+  const addTask=tk=>{persist({...data,tasks:[{id:uid(),status:'todo',createdAt:new Date().toISOString(),...tk,editorId:worker.id},...data.tasks]});showToast(t('toast_task_added'));};
+  const updTask=(id,patch)=>{
+    if(!ownsTask(id))return showToast(t('toast_no_edit'),'error');
+    persist({...data,tasks:data.tasks.map(x=>x.id===id?{...x,...patch,editorId:worker.id}:x)});
+  };
+  const delTask=id=>{
+    if(!ownsTask(id))return showToast(t('toast_no_edit'),'error');
+    if(!confirm(t('confirm_delete')))return;
+    persist({...data,tasks:data.tasks.filter(x=>x.id!==id)});showToast(t('toast_deleted'));
+  };
+
   const total=myVideos.reduce((s,v)=>s+Number(v.price||0),0);
   const paid=myVideos.filter(v=>v.paid).reduce((s,v)=>s+Number(v.price||0),0);
   const ms=new Date();ms.setDate(1);ms.setHours(0,0,0,0);
   const mv=myVideos.filter(v=>new Date(v.date)>=ms);
 
-  const tabs=[{id:'dashboard',label:t('my_dash'),ic:'dashboard'},{id:'videos',label:t('my_videos'),ic:'film'}];
+  const tabs=[{id:'dashboard',label:t('my_dash'),ic:'dashboard'},{id:'videos',label:t('my_videos'),ic:'film'},{id:'tasks',label:t('my_tasks'),ic:'task'}];
   const wRole=worker.role||'editor';
 
   return(
@@ -1286,7 +1477,7 @@ function WorkerApp({agency,worker,initialData,onLogout}){
                       <div style={{fontSize:'0.7rem',color:B.muted}}>{cMap[v.clientId]||'—'} · {fmtD(v.date)}</div>
                     </div>
                     <div style={{display:'flex',alignItems:'center',gap:'0.5rem',flexShrink:0}}>
-                      <span style={{fontSize:'0.65rem',fontWeight:'700',padding:'0.15rem 0.5rem',borderRadius:'9999px',background:v.paid?`rgba(34,197,94,0.15)`:B.accentSoft,color:v.paid?B.success:B.accent}}>{v.paid?t('paid'):t('unpaid')}</span>
+                      <span style={{fontSize:'0.65rem',fontWeight:'700',padding:'0.15rem 0.5rem',borderRadius:'9999px',background:v.paid?B.successSoft:B.card2,color:v.paid?B.success:B.textSub}}>{v.paid?t('paid'):t('unpaid')}</span>
                       <span style={{fontWeight:'700',fontSize:'0.875rem',color:B.text,fontVariantNumeric:'tabular-nums'}}>{fmt(v.price)}<span style={{fontSize:'0.65rem',color:B.muted}}> دج</span></span>
                     </div>
                   </div>
@@ -1296,8 +1487,9 @@ function WorkerApp({agency,worker,initialData,onLogout}){
           </div>
         )}
         {tab==='videos'&&<WorkerVideosTab data={data} worker={worker} myVideos={myVideos} addVideo={addVideo} updVideo={updVideo} delVideo={delVideo}/>}
+        {tab==='tasks'&&<TasksTab data={data} addTask={addTask} updTask={updTask} delTask={delTask} readOnlyFor={worker.id}/>}
       </main>
-      {isMobile&&<BottomNav tabs={tabs} tab={tab} setTab={setTab}/>}
+      {isMobile&&<BottomNav primary={tabs} tab={tab} setTab={setTab}/>}
       <Toast toast={toast}/>
     </div>
   );
@@ -1330,10 +1522,10 @@ function AgencyDash({data,setTab,agency,solo}){
       <h2 style={{fontSize:'1.6rem',fontWeight:'900',color:B.text,marginBottom:'0.5rem'}}>👋 {agency.name}</h2>
       <p style={{color:B.muted,marginBottom:'2.5rem',fontSize:'0.9rem'}}>{t('no_data')}</p>
       <div style={{display:'flex',gap:'0.75rem',justifyContent:'center',flexWrap:'wrap'}}>
-        {!solo&&<button onClick={()=>setTab('editors')} style={{display:'flex',alignItems:'center',gap:'0.5rem',padding:'0.75rem 1.5rem',borderRadius:'9999px',background:`linear-gradient(135deg,${B.accent},#cc2f0f)`,color:'white',fontWeight:'700',border:'none',cursor:'pointer',boxShadow:`0 6px 20px ${B.accent}44`}}>
+        {!solo&&<button onClick={()=>setTab('editors')} style={{display:'flex',alignItems:'center',gap:'0.5rem',padding:'0.75rem 1.5rem',borderRadius:'9999px',background:`linear-gradient(135deg,${B.accent},#1652A2)`,color:'white',fontWeight:'700',border:'none',cursor:'pointer',boxShadow:`0 6px 20px ${B.accent}44`}}>
           <Ic n="users" size={16} color="white"/>{t('team')}
         </button>}
-        <button onClick={()=>setTab('clients')} style={{display:'flex',alignItems:'center',gap:'0.5rem',padding:'0.75rem 1.5rem',borderRadius:'9999px',background:solo?`linear-gradient(135deg,${B.accent},#cc2f0f)`:B.card,color:solo?'white':B.text,fontWeight:'700',border:solo?'none':`1px solid ${B.border}`,cursor:'pointer',boxShadow:solo?`0 6px 20px ${B.accent}44`:'none'}}>
+        <button onClick={()=>setTab('clients')} style={{display:'flex',alignItems:'center',gap:'0.5rem',padding:'0.75rem 1.5rem',borderRadius:'9999px',background:solo?`linear-gradient(135deg,${B.accent},#1652A2)`:B.card,color:solo?'white':B.text,fontWeight:'700',border:solo?'none':`1px solid ${B.border}`,cursor:'pointer',boxShadow:solo?`0 6px 20px ${B.accent}44`:'none'}}>
           <Ic n="briefcase" size={16} color={solo?'white':undefined}/>{t('clients')}
         </button>
       </div>
@@ -1343,7 +1535,7 @@ function AgencyDash({data,setTab,agency,solo}){
   return(
     <div style={{display:'flex',flexDirection:'column',gap:'1.25rem'}}>
       {/* Monthly hero card */}
-      <div style={{borderRadius:'1.75rem',padding:'1.6rem',background:`linear-gradient(130deg,${B.accent} 0%,#c2340d 55%,#8f1d05 100%)`,color:'white',position:'relative',overflow:'hidden',boxShadow:`0 16px 48px ${B.accent}33, inset 0 1px 0 rgba(255,255,255,0.25)`}}>
+      <div style={{borderRadius:'1.75rem',padding:'1.6rem',background:`linear-gradient(130deg,${B.accent} 0%,#1157C4 55%,#1652A2 100%)`,color:'white',position:'relative',overflow:'hidden',boxShadow:`0 16px 48px ${B.accent}33, inset 0 1px 0 rgba(255,255,255,0.25)`}}>
         <div style={{position:'absolute',top:'-3rem',right:'-3rem',width:'11rem',height:'11rem',borderRadius:'50%',background:'radial-gradient(circle,rgba(255,255,255,0.14),transparent 70%)'}}/>
         <div style={{position:'absolute',bottom:'-2rem',left:'-1.5rem',width:'7rem',height:'7rem',borderRadius:'50%',background:'radial-gradient(circle,rgba(255,255,255,0.08),transparent 70%)'}} className="floaty"/>
         <div style={{position:'relative'}}>
@@ -1358,9 +1550,30 @@ function AgencyDash({data,setTab,agency,solo}){
       <div style={{display:'grid',gridTemplateColumns:'repeat(2,1fr)',gap:'0.65rem'}}>
         <StatCard label={t('total')} value={`${fmt(stats.tot)} دج`} ic="trending" color={B.accent}/>
         <StatCard label={t('total_paid')} value={`${fmt(stats.pd)} دج`} ic="checkCircle" color={B.success}/>
-        <StatCard label={t('remaining')} value={`${fmt(stats.owed)} دج`} ic="alertCircle" color={B.warning}/>
+        <StatCard label={t('remaining')} value={`${fmt(stats.owed)} دج`} ic="clock" color={B.textSub}/>
         <StatCard label={t('video_count')} value={data.videos.length} ic="film" color={B.purple}/>
       </div>
+      {/* quick pulse on the two things that need action */}
+      {(data.tasks.length>0||data.invoices.length>0)&&(
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0.65rem'}}>
+          <button onClick={()=>setTab('tasks')} style={{textAlign:_lang==='ar'?'right':'left',background:B.card,border:`1px solid ${B.border}`,borderRadius:'1.25rem',padding:'1rem',cursor:'pointer'}} className="card-hover">
+            <div style={{display:'flex',alignItems:'center',gap:'0.5rem',marginBottom:'0.5rem'}}>
+              <Ic n="task" size={15} color={B.accent}/>
+              <span style={{fontSize:'0.68rem',color:B.textSub,fontWeight:'600'}}>{t('open_tasks')}</span>
+            </div>
+            <div style={{fontSize:'1.4rem',fontWeight:'900',color:B.text,fontVariantNumeric:'tabular-nums'}}>{data.tasks.filter(k=>k.status!=='done').length}</div>
+          </button>
+          <button onClick={()=>setTab('invoices')} style={{textAlign:_lang==='ar'?'right':'left',background:B.card,border:`1px solid ${B.border}`,borderRadius:'1.25rem',padding:'1rem',cursor:'pointer'}} className="card-hover">
+            <div style={{display:'flex',alignItems:'center',gap:'0.5rem',marginBottom:'0.5rem'}}>
+              <Ic n="receipt" size={15} color={B.blue}/>
+              <span style={{fontSize:'0.68rem',color:B.textSub,fontWeight:'600'}}>{t('awaiting')}</span>
+            </div>
+            <div style={{fontSize:'1.4rem',fontWeight:'900',color:B.text,fontVariantNumeric:'tabular-nums'}}>
+              {fmt(data.invoices.filter(i=>i.status!=='paid').reduce((s,i)=>s+invTotal(i,data.videos).total,0))}<span style={{fontSize:'0.65rem',color:B.muted}}> {CUR}</span>
+            </div>
+          </button>
+        </div>
+      )}
       {!solo&&<div style={{background:B.card,borderRadius:'1rem',border:`1px solid ${B.border}`,overflow:'hidden'}}>
         <div style={{padding:'1rem 1.25rem',borderBottom:`1px solid ${B.border}`,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
           <div style={{fontWeight:'800',fontSize:'1rem',color:B.text}}>{t('team')}</div>
@@ -1395,13 +1608,13 @@ function AgencyDash({data,setTab,agency,solo}){
         </div>
         {data.videos.slice(0,5).map(v=>(
           <div key={v.id} style={{padding:'0.75rem 1rem',display:'flex',alignItems:'center',justifyContent:'space-between',gap:'0.75rem',borderBottom:`1px solid ${B.border}`,position:'relative'}}>
-            <div style={{position:'absolute',right:0,top:0,bottom:0,width:'3px',background:v.paid?B.success:B.accent,borderRadius:'0 3px 3px 0'}}/>
+            <div style={{position:'absolute',right:0,top:0,bottom:0,width:'3px',background:v.paid?B.success:B.muted,borderRadius:'0 3px 3px 0'}}/>
             <div style={{minWidth:0}}>
               <div style={{fontWeight:'700',color:B.text,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',fontSize:'0.875rem'}}>{v.title||'—'}</div>
               <div style={{fontSize:'0.68rem',color:B.muted,marginTop:'2px'}}>{solo?(cMap[v.clientId]||'—'):`${eMap[v.editorId]||'—'} · ${cMap[v.clientId]||'—'}`}</div>
             </div>
             <div style={{display:'flex',alignItems:'center',gap:'0.5rem',flexShrink:0}}>
-              <span style={{fontSize:'0.62rem',fontWeight:'700',padding:'0.15rem 0.5rem',borderRadius:'9999px',background:v.paid?B.successSoft:B.accentSoft,color:v.paid?B.success:B.accent}}>{v.paid?t('paid'):t('unpaid')}</span>
+              <span style={{fontSize:'0.62rem',fontWeight:'700',padding:'0.15rem 0.5rem',borderRadius:'9999px',background:v.paid?B.successSoft:B.card2,color:v.paid?B.success:B.textSub}}>{v.paid?t('paid'):t('unpaid')}</span>
               <span style={{fontWeight:'800',fontSize:'0.875rem',color:B.text,fontVariantNumeric:'tabular-nums'}}>{fmt(v.price)}<span style={{fontSize:'0.62rem',color:B.muted}}> دج</span></span>
             </div>
           </div>
@@ -1426,7 +1639,7 @@ function VideosTab({data,addVideo,updVideo,delVideo,togglePaid,solo,selfName}){
   const tot=filt.reduce((s,v)=>s+Number(v.price||0),0);
   const owed=filt.filter(v=>!v.paid).reduce((s,v)=>s+Number(v.price||0),0);
   const SI={width:'100%',padding:'0.5rem 0.75rem',background:B.inputBg,border:`1px solid ${B.border}`,borderRadius:'0.75rem',outline:'none',fontSize:'0.8rem',color:B.text};
-  if(data.clients.length===0)return<div style={{background:`rgba(251,191,36,0.1)`,border:`1px solid rgba(251,191,36,0.2)`,borderRadius:'1rem',padding:'1.5rem',textAlign:'center',fontSize:'0.875rem',color:'#fbbf24'}}>{t('no_data')}</div>;
+  if(data.clients.length===0)return<div style={{background:B.card,border:`1px solid ${B.border}`,borderRadius:'1.25rem',padding:'2.5rem 1.5rem',textAlign:'center',fontSize:'0.875rem',color:B.textSub}}>{t('no_data')}</div>;
   return(
     <div style={{display:'flex',flexDirection:'column',gap:'1.25rem'}}>
       <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',gap:'0.75rem'}}>
@@ -1434,7 +1647,7 @@ function VideosTab({data,addVideo,updVideo,delVideo,togglePaid,solo,selfName}){
           <h2 style={{fontSize:'1.75rem',fontWeight:'900',color:B.text}}>{t('videos')}</h2>
           <p style={{fontSize:'0.75rem',color:B.muted,fontVariantNumeric:'tabular-nums'}}>{filt.length} · {fmt(tot)} دج · {fmt(owed)} دج</p>
         </div>
-        <button onClick={()=>{setEditing(null);setShowForm(true);}} style={{display:'flex',alignItems:'center',gap:'0.4rem',padding:'0.65rem 1.1rem',borderRadius:'9999px',background:`linear-gradient(135deg,${B.accent},#cc2f0f)`,color:'white',fontWeight:'700',border:'none',cursor:'pointer',fontSize:'0.8rem',whiteSpace:'nowrap',boxShadow:`0 4px 16px ${B.accent}44`}}>
+        <button onClick={()=>{setEditing(null);setShowForm(true);}} style={{display:'flex',alignItems:'center',gap:'0.4rem',padding:'0.65rem 1.1rem',borderRadius:'9999px',background:`linear-gradient(135deg,${B.accent},#1652A2)`,color:'white',fontWeight:'700',border:'none',cursor:'pointer',fontSize:'0.8rem',whiteSpace:'nowrap',boxShadow:`0 4px 16px ${B.accent}44`}}>
           <Ic n="plus" size={15} color="white"/>{t('new_video')}
         </button>
       </div>
@@ -1453,12 +1666,12 @@ function VideosTab({data,addVideo,updVideo,delVideo,togglePaid,solo,selfName}){
         {filt.length===0?<div style={{padding:'2.5rem',textAlign:'center',color:B.muted,fontSize:'0.875rem'}}>{t('no_videos')}</div>
         :filt.map(v=>(
           <div key={v.id} style={{padding:'0.875rem 1rem',borderBottom:`1px solid ${B.border}`,position:'relative'}}>
-            <div style={{position:'absolute',right:0,top:0,bottom:0,width:'3px',background:v.paid?B.success:B.accent,borderRadius:'0 3px 3px 0'}}/>
+            <div style={{position:'absolute',right:0,top:0,bottom:0,width:'3px',background:v.paid?B.success:B.muted,borderRadius:'0 3px 3px 0'}}/>
             <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',gap:'0.5rem'}}>
               <div style={{flex:1,minWidth:0}}>
                 <div style={{display:'flex',alignItems:'center',gap:'0.4rem',flexWrap:'wrap',marginBottom:'0.2rem'}}>
                   <span style={{fontWeight:'700',color:B.text,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',fontSize:'0.875rem'}}>{v.title||'—'}</span>
-                  <button onClick={()=>togglePaid(v.id)} style={{fontSize:'0.6rem',fontWeight:'700',padding:'0.12rem 0.5rem',borderRadius:'9999px',border:'none',cursor:'pointer',background:v.paid?B.successSoft:B.accentSoft,color:v.paid?B.success:B.accent,flexShrink:0}}>
+                  <button onClick={()=>togglePaid(v.id)} style={{fontSize:'0.6rem',fontWeight:'700',padding:'0.12rem 0.5rem',borderRadius:'9999px',border:'none',cursor:'pointer',background:v.paid?B.successSoft:B.card2,color:v.paid?B.success:B.textSub,flexShrink:0}}>
                     {v.paid?t('paid'):t('unpaid')}
                   </button>
                 </div>
@@ -1493,7 +1706,7 @@ function WorkerVideosTab({data,worker,myVideos,addVideo,updVideo,delVideo}){
   }),[myVideos,fS,search,cMap]);
   const tot=filt.reduce((s,v)=>s+Number(v.price||0),0);
   const SI={width:'100%',padding:'0.5rem 0.75rem',background:B.inputBg,border:`1px solid ${B.border}`,borderRadius:'0.75rem',outline:'none',fontSize:'0.8rem',color:B.text};
-  if(data.clients.length===0)return<div style={{background:`rgba(251,191,36,0.1)`,border:`1px solid rgba(251,191,36,0.2)`,borderRadius:'1rem',padding:'1.5rem',textAlign:'center',fontSize:'0.875rem',color:'#fbbf24'}}>{t('no_clients')}</div>;
+  if(data.clients.length===0)return<div style={{background:B.card,border:`1px solid ${B.border}`,borderRadius:'1.25rem',padding:'2.5rem 1.5rem',textAlign:'center',fontSize:'0.875rem',color:B.textSub}}>{t('no_clients')}</div>;
   return(
     <div style={{display:'flex',flexDirection:'column',gap:'1.25rem'}}>
       <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',gap:'0.75rem'}}>
@@ -1522,7 +1735,7 @@ function WorkerVideosTab({data,worker,myVideos,addVideo,updVideo,delVideo}){
               <div style={{flex:1,minWidth:0}}>
                 <div style={{display:'flex',alignItems:'center',gap:'0.5rem',flexWrap:'wrap',marginBottom:'0.2rem'}}>
                   <span style={{fontWeight:'700',color:B.text}}>{v.title||'—'}</span>
-                  <span style={{fontSize:'0.65rem',fontWeight:'700',padding:'0.15rem 0.5rem',borderRadius:'9999px',background:v.paid?`rgba(34,197,94,0.15)`:B.accentSoft,color:v.paid?B.success:B.accent}}>
+                  <span style={{fontSize:'0.65rem',fontWeight:'700',padding:'0.15rem 0.5rem',borderRadius:'9999px',background:v.paid?B.successSoft:B.card2,color:v.paid?B.success:B.textSub}}>
                     {v.paid?t('paid'):t('unpaid')}
                   </span>
                 </div>
@@ -1573,7 +1786,7 @@ function VideoForm({editors,clients,initial,lockedEditor,onClose,onSave}){
             <span style={{fontSize:'0.875rem',fontWeight:'600',color:B.text}}>{t('mark_paid')}</span>
           </label>
         )}
-        <button onClick={submit} style={{width:'100%',padding:'0.9rem',borderRadius:'0.875rem',background:`linear-gradient(135deg,${B.accent},#cc2f0f)`,color:'white',fontWeight:'800',border:'none',cursor:'pointer',boxShadow:`0 4px 16px ${B.accent}44`,fontSize:'0.9rem'}}>{initial?t('save'):t('new_video')}</button>
+        <button onClick={submit} style={{width:'100%',padding:'0.9rem',borderRadius:'0.875rem',background:`linear-gradient(135deg,${B.accent},#1652A2)`,color:'white',fontWeight:'800',border:'none',cursor:'pointer',boxShadow:`0 4px 16px ${B.accent}44`,fontSize:'0.9rem'}}>{initial?t('save'):t('new_video')}</button>
       </div>
     </Modal>
   );
@@ -1611,9 +1824,401 @@ function WorkerForm({initial,onClose,onSave}){
           <PwField value={pw} onChange={setPw} show={show} setShow={setShow} placeholder={initial?t('pw_optional'):t('pw_hint')} onEnter={submit}/>
         </Field>
         {err&&<div style={{fontSize:'0.75rem',color:B.danger,fontWeight:'700'}}>{err}</div>}
-        <button onClick={submit} style={{width:'100%',padding:'0.9rem',borderRadius:'0.875rem',background:`linear-gradient(135deg,${B.accent},#cc2f0f)`,color:'white',fontWeight:'800',border:'none',cursor:'pointer',boxShadow:`0 4px 16px ${B.accent}44`}}>{initial?t('save'):t('add')}</button>
+        <button onClick={submit} style={{width:'100%',padding:'0.9rem',borderRadius:'0.875rem',background:`linear-gradient(135deg,${B.accent},#1652A2)`,color:'white',fontWeight:'800',border:'none',cursor:'pointer',boxShadow:`0 4px 16px ${B.accent}44`}}>{initial?t('save'):t('add')}</button>
       </div>
     </Modal>
+  );
+}
+
+// ─── INVOICES ─────────────────────────────────────────────
+const CUR=_lang==='fr'?'DA':'دج';
+const invTotal=(inv,vids)=>{
+  const map=Object.fromEntries(vids.map(v=>[v.id,v]));
+  const sub=(inv.videoIds||[]).reduce((s,id)=>s+Number(map[id]?.price||0),0);
+  return{sub,total:Math.max(0,sub-Number(inv.discount||0))};
+};
+
+// Printable document. Ink-on-paper regardless of the app theme.
+function InvoiceSheet({inv,data,agency,onClose}){
+  const client=data.clients.find(c=>c.id===inv.clientId);
+  const map=Object.fromEntries(data.videos.map(v=>[v.id,v]));
+  const rows=(inv.videoIds||[]).map(id=>map[id]).filter(Boolean);
+  const{sub,total}=invTotal(inv,data.videos);
+  const rtl=_lang==='ar';
+  const cell={padding:'0.7rem 0.5rem',fontSize:'0.82rem'};
+  return(
+    <div className="inv-sheet" style={{position:'fixed',inset:0,zIndex:60,background:_theme==='dark'?'rgba(0,0,6,0.8)':'rgba(20,22,40,0.5)',backdropFilter:'blur(6px)',overflowY:'auto',padding:'1.25rem 1rem 4rem'}}>
+      <div className="no-print" style={{display:'flex',gap:'0.5rem',justifyContent:'center',marginBottom:'1rem',position:'sticky',top:0,zIndex:2}}>
+        <button onClick={()=>window.print()} style={{display:'flex',alignItems:'center',gap:'0.45rem',padding:'0.7rem 1.3rem',borderRadius:'9999px',background:`linear-gradient(135deg,${B.accent},#1652A2)`,color:'white',fontWeight:'800',border:'none',cursor:'pointer',fontSize:'0.82rem',boxShadow:`0 6px 22px ${B.accent}55`}}>
+          <Ic n="printer" size={15} color="white"/>{t('print_inv')}
+        </button>
+        <button onClick={onClose} style={{padding:'0.7rem 1.1rem',borderRadius:'9999px',background:B.card,color:B.text,fontWeight:'700',border:`1px solid ${B.border}`,cursor:'pointer',fontSize:'0.82rem'}}>{t('cancel')}</button>
+      </div>
+      <div className="inv-paper" style={{background:'#fff',color:'#101223',maxWidth:'46rem',margin:'0 auto',borderRadius:'0.5rem',boxShadow:'0 24px 70px rgba(0,0,0,0.4)',overflow:'hidden'}}>
+        {/* masthead */}
+        <div className="inv-ink" style={{background:'#101223',color:'#fff',padding:'1.6rem 1.75rem',display:'flex',justifyContent:'space-between',alignItems:'flex-start',gap:'1rem'}}>
+          <div>
+            <div style={{fontSize:'1.35rem',fontWeight:'900',letterSpacing:'-0.01em'}}>{agency.name}</div>
+            {agency.phone&&<div style={{fontSize:'0.72rem',opacity:0.65,marginTop:'2px'}}>{agency.phone}</div>}
+            <div style={{fontSize:'0.72rem',opacity:0.65}}>{agency.email}</div>
+          </div>
+          <div style={{textAlign:rtl?'left':'right'}}>
+            <div style={{fontSize:'0.62rem',letterSpacing:'0.22em',textTransform:'uppercase',opacity:0.55}}>{t('invoice')}</div>
+            <div style={{fontSize:'1.15rem',fontWeight:'800',fontVariantNumeric:'tabular-nums',marginTop:'2px'}}>{inv.number}</div>
+          </div>
+        </div>
+        <div style={{padding:'1.75rem'}}>
+          {/* parties + dates */}
+          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'1rem',marginBottom:'1.75rem'}}>
+            <div>
+              <div style={{fontSize:'0.6rem',letterSpacing:'0.18em',textTransform:'uppercase',color:'#8a8fa8',marginBottom:'0.3rem'}}>{t('billed_to')}</div>
+              <div style={{fontWeight:'800',fontSize:'1rem'}}>{client?.name||'—'}</div>
+            </div>
+            <div style={{textAlign:rtl?'left':'right'}}>
+              <div style={{fontSize:'0.72rem',color:'#8a8fa8'}}>{t('issue_date')}: <span style={{color:'#101223',fontWeight:'700',fontVariantNumeric:'tabular-nums'}}>{fmtD(inv.date)}</span></div>
+              {inv.due&&<div style={{fontSize:'0.72rem',color:'#8a8fa8',marginTop:'2px'}}>{t('due_date')}: <span style={{color:'#101223',fontWeight:'700',fontVariantNumeric:'tabular-nums'}}>{fmtD(inv.due)}</span></div>}
+            </div>
+          </div>
+          {/* line items */}
+          <table style={{width:'100%',borderCollapse:'collapse'}}>
+            <thead>
+              <tr className="inv-rule" style={{borderBottom:'2px solid #101223'}}>
+                <th style={{...cell,textAlign:rtl?'right':'left',fontSize:'0.6rem',letterSpacing:'0.16em',textTransform:'uppercase',color:'#8a8fa8',fontWeight:'700'}}>{t('video_title')}</th>
+                <th style={{...cell,textAlign:'center',fontSize:'0.6rem',letterSpacing:'0.16em',textTransform:'uppercase',color:'#8a8fa8',fontWeight:'700',width:'7rem'}}>{t('date')}</th>
+                <th style={{...cell,textAlign:rtl?'left':'right',fontSize:'0.6rem',letterSpacing:'0.16em',textTransform:'uppercase',color:'#8a8fa8',fontWeight:'700',width:'8rem'}}>{t('price')}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map(v=>(
+                <tr key={v.id} className="inv-rule" style={{borderBottom:'1px solid #e6e8f0'}}>
+                  <td style={{...cell,textAlign:rtl?'right':'left',fontWeight:'600'}}>{v.title||'—'}</td>
+                  <td style={{...cell,textAlign:'center',color:'#8a8fa8',fontVariantNumeric:'tabular-nums',fontSize:'0.75rem'}}>{fmtD(v.date)}</td>
+                  <td style={{...cell,textAlign:rtl?'left':'right',fontWeight:'700',fontVariantNumeric:'tabular-nums'}}>{fmt(v.price)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          {/* totals */}
+          <div style={{display:'flex',justifyContent:rtl?'flex-start':'flex-end',marginTop:'1.25rem'}}>
+            <div style={{minWidth:'15rem'}}>
+              <div style={{display:'flex',justifyContent:'space-between',padding:'0.35rem 0.5rem',fontSize:'0.8rem',color:'#5c6185'}}>
+                <span>{t('subtotal')}</span><span style={{fontVariantNumeric:'tabular-nums'}}>{fmt(sub)} {CUR}</span>
+              </div>
+              {Number(inv.discount||0)>0&&(
+                <div style={{display:'flex',justifyContent:'space-between',padding:'0.35rem 0.5rem',fontSize:'0.8rem',color:'#5c6185'}}>
+                  <span>{t('discount')}</span><span style={{fontVariantNumeric:'tabular-nums'}}>− {fmt(inv.discount)} {CUR}</span>
+                </div>
+              )}
+              <div className="inv-rule" style={{display:'flex',justifyContent:'space-between',padding:'0.7rem 0.5rem',borderTop:'2px solid #101223',marginTop:'0.35rem',fontWeight:'900',fontSize:'1.05rem'}}>
+                <span>{t('grand_total')}</span><span style={{fontVariantNumeric:'tabular-nums'}}>{fmt(total)} {CUR}</span>
+              </div>
+            </div>
+          </div>
+          {inv.notes&&<div style={{marginTop:'1.5rem',fontSize:'0.75rem',color:'#5c6185',lineHeight:1.7,whiteSpace:'pre-wrap'}}>{inv.notes}</div>}
+          <div style={{marginTop:'2rem',paddingTop:'0.9rem',borderTop:'1px solid #e6e8f0',fontSize:'0.62rem',color:'#a3a8c5',display:'flex',justifyContent:'space-between',gap:'1rem'}}>
+            <span>{t('issued_by')} {agency.name}</span>
+            <span style={{fontVariantNumeric:'tabular-nums'}}>{inv.number}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function InvoiceForm({data,initial,onClose,onSave}){
+  const[f,setF]=useState(initial||{clientId:data.clients[0]?.id||'',videoIds:[],date:today(),due:'',discount:'',notes:''});
+  const[err,setErr]=useState('');
+  // a video belongs to at most one invoice — hide the ones already billed elsewhere
+  const billed=useMemo(()=>{
+    const s=new Set();
+    data.invoices.forEach(i=>{if(!initial||i.id!==initial.id)(i.videoIds||[]).forEach(v=>s.add(v));});
+    return s;
+  },[data.invoices,initial]);
+  const pool=useMemo(()=>data.videos.filter(v=>v.clientId===f.clientId&&!billed.has(v.id)),[data.videos,f.clientId,billed]);
+  const sel=new Set(f.videoIds);
+  const sub=pool.filter(v=>sel.has(v.id)).reduce((s,v)=>s+Number(v.price||0),0);
+  const total=Math.max(0,sub-Number(f.discount||0));
+  const toggle=id=>setF(p=>({...p,videoIds:p.videoIds.includes(id)?p.videoIds.filter(x=>x!==id):[...p.videoIds,id]}));
+  const submit=()=>{
+    if(!f.clientId)return setErr(t('err_no_client'));
+    if(!f.videoIds.length)return setErr(t('err_no_items'));
+    onSave({...f,discount:Number(f.discount||0),total});
+  };
+  return(
+    <Modal onClose={onClose} title={initial?t('edit'):t('new_invoice')}>
+      <div style={{display:'flex',flexDirection:'column',gap:'1rem'}}>
+        <Field label={t('clients')}>
+          <select value={f.clientId} onChange={e=>setF({...f,clientId:e.target.value,videoIds:[]})} style={INP}>
+            {data.clients.map(c=><option key={c.id} value={c.id}>{c.name}</option>)}
+          </select>
+        </Field>
+        <Field label={`${t('select_videos')} · ${t('unbilled_only')}`}>
+          <div style={{border:`1.5px solid ${B.border}`,borderRadius:'0.875rem',maxHeight:'13rem',overflowY:'auto',background:B.inputBg}}>
+            {pool.length===0?<div style={{padding:'1.5rem',textAlign:'center',color:B.muted,fontSize:'0.8rem'}}>{t('no_unbilled')}</div>
+            :pool.map(v=>{
+              const on=sel.has(v.id);
+              return(
+                <label key={v.id} style={{display:'flex',alignItems:'center',gap:'0.65rem',padding:'0.6rem 0.75rem',borderBottom:`1px solid ${B.border}`,cursor:'pointer',background:on?B.accentSoft:'transparent'}}>
+                  <input type="checkbox" checked={on} onChange={()=>toggle(v.id)} style={{width:'1.05rem',height:'1.05rem',accentColor:B.accent,flexShrink:0}}/>
+                  <div style={{flex:1,minWidth:0}}>
+                    <div style={{fontSize:'0.8rem',fontWeight:'600',color:B.text,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{v.title||'—'}</div>
+                    <div style={{fontSize:'0.65rem',color:B.muted,fontVariantNumeric:'tabular-nums'}}>{fmtD(v.date)}</div>
+                  </div>
+                  <span style={{fontSize:'0.8rem',fontWeight:'800',color:on?B.accent:B.textSub,fontVariantNumeric:'tabular-nums',flexShrink:0}}>{fmt(v.price)}</span>
+                </label>
+              );
+            })}
+          </div>
+        </Field>
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0.75rem'}}>
+          <Field label={t('issue_date')}><input type="date" value={f.date} onChange={e=>setF({...f,date:e.target.value})} style={INP}/></Field>
+          <Field label={t('due_date')}><input type="date" value={f.due} onChange={e=>setF({...f,due:e.target.value})} style={INP}/></Field>
+        </div>
+        <Field label={t('discount')}><input type="number" inputMode="numeric" value={f.discount} onChange={e=>setF({...f,discount:e.target.value})} placeholder="0" style={INP}/></Field>
+        <Field label={t('notes_opt')}><textarea value={f.notes} onChange={e=>setF({...f,notes:e.target.value})} style={{...INP,height:'58px',resize:'none'}}/></Field>
+        {/* running total */}
+        <div style={{background:B.inputBg,border:`1px solid ${B.border}`,borderRadius:'0.875rem',padding:'0.85rem 1rem'}}>
+          <div style={{display:'flex',justifyContent:'space-between',fontSize:'0.75rem',color:B.textSub}}>
+            <span>{t('subtotal')} · {f.videoIds.length}</span><span style={{fontVariantNumeric:'tabular-nums'}}>{fmt(sub)} {CUR}</span>
+          </div>
+          <div style={{display:'flex',justifyContent:'space-between',marginTop:'0.45rem',paddingTop:'0.45rem',borderTop:`1px solid ${B.border}`,fontWeight:'900',color:B.text}}>
+            <span>{t('grand_total')}</span><span style={{fontVariantNumeric:'tabular-nums',color:B.accent}}>{fmt(total)} {CUR}</span>
+          </div>
+        </div>
+        {err&&<div style={{fontSize:'0.75rem',color:B.danger,fontWeight:'700',padding:'0.5rem 0.75rem',background:B.dangerSoft,borderRadius:'0.5rem'}}>{err}</div>}
+        <button onClick={submit} style={{width:'100%',padding:'0.9rem',borderRadius:'0.875rem',background:`linear-gradient(135deg,${B.accent},#1652A2)`,color:'white',fontWeight:'800',border:'none',cursor:'pointer',boxShadow:`0 4px 16px ${B.accent}44`}}>{initial?t('save'):t('new_invoice')}</button>
+      </div>
+    </Modal>
+  );
+}
+
+function InvoicesTab({data,agency,addInvoice,updInvoice,delInvoice,payInvoice}){
+  const[showForm,setShowForm]=useState(false);const[editing,setEditing]=useState(null);const[viewing,setViewing]=useState(null);
+  const[fS,setFS]=useState('');
+  const cMap=Object.fromEntries(data.clients.map(c=>[c.id,c.name]));
+  const list=useMemo(()=>fS?data.invoices.filter(i=>i.status===fS):data.invoices,[data.invoices,fS]);
+  const totals=useMemo(()=>{
+    let all=0,open=0;
+    data.invoices.forEach(i=>{const{total}=invTotal(i,data.videos);all+=total;if(i.status!=='paid')open+=total;});
+    return{all,open};
+  },[data.invoices,data.videos]);
+  const statusColor=s=>({draft:B.textSub,sent:B.blue,paid:B.success}[s]||B.textSub);
+  const statusBg=s=>({draft:_theme==='dark'?'rgba(255,255,255,0.06)':'rgba(0,0,0,0.05)',sent:B.blueSoft,paid:B.successSoft}[s]);
+
+  if(data.clients.length===0)return(
+    <div style={{background:B.card,border:`1px solid ${B.border}`,borderRadius:'1.25rem',padding:'3rem 1.5rem',textAlign:'center'}}>
+      <div style={{fontSize:'2.5rem',marginBottom:'0.75rem',opacity:0.5}}>🧾</div>
+      <div style={{color:B.textSub,fontSize:'0.875rem'}}>{t('no_clients')}</div>
+    </div>
+  );
+
+  return(
+    <div style={{display:'flex',flexDirection:'column',gap:'1.25rem'}}>
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',gap:'0.75rem'}}>
+        <div>
+          <h2 style={{fontSize:'1.75rem',fontWeight:'900',color:B.text}}>{t('invoices')}</h2>
+          <p style={{fontSize:'0.75rem',color:B.textSub,fontVariantNumeric:'tabular-nums'}}>{data.invoices.length} · {fmt(totals.all)} {CUR}</p>
+        </div>
+        <button onClick={()=>{setEditing(null);setShowForm(true);}} style={{display:'flex',alignItems:'center',gap:'0.4rem',padding:'0.65rem 1.1rem',borderRadius:'9999px',background:`linear-gradient(135deg,${B.accent},#1652A2)`,color:'white',fontWeight:'700',border:'none',cursor:'pointer',fontSize:'0.8rem',whiteSpace:'nowrap',boxShadow:`0 4px 16px ${B.accent}44`}}>
+          <Ic n="plus" size={15} color="white"/>{t('new_invoice')}
+        </button>
+      </div>
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0.65rem'}}>
+        <StatCard label={t('total_invoiced')} value={`${fmt(totals.all)} ${CUR}`} ic="receipt" color={B.accent}/>
+        <StatCard label={t('awaiting')} value={`${fmt(totals.open)} ${CUR}`} ic="clock" color={B.textSub}/>
+      </div>
+      <div style={{display:'flex',gap:'0.4rem',flexWrap:'wrap'}}>
+        {[['',t('all')],['draft',t('st_draft')],['sent',t('st_sent')],['paid',t('st_paid')]].map(([v,l])=>(
+          <button key={v||'all'} onClick={()=>setFS(v)} style={{padding:'0.42rem 0.9rem',borderRadius:'9999px',border:`1px solid ${fS===v?B.accentBorder:B.border}`,background:fS===v?B.accentSoft:B.card,color:fS===v?B.accent:B.textSub,fontWeight:'700',fontSize:'0.75rem',cursor:'pointer'}}>{l}</button>
+        ))}
+      </div>
+      <div style={{background:B.card,borderRadius:'1.25rem',border:`1px solid ${B.border}`,overflow:'hidden'}}>
+        {list.length===0?<div style={{padding:'3rem 1rem',textAlign:'center'}}>
+          <div style={{fontSize:'2.5rem',marginBottom:'0.75rem',opacity:0.5}}>🧾</div>
+          <div style={{color:B.textSub,fontSize:'0.875rem'}}>{t('no_invoices')}</div>
+        </div>
+        :list.map(inv=>{
+          const{total}=invTotal(inv,data.videos);
+          const late=inv.due&&inv.status!=='paid'&&inv.due<today();
+          return(
+            <div key={inv.id} style={{padding:'0.9rem 1rem',borderBottom:`1px solid ${B.border}`,position:'relative'}}>
+              <div style={{position:'absolute',right:0,top:0,bottom:0,width:'3px',background:statusColor(inv.status)}}/>
+              <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',gap:'0.6rem'}}>
+                <div style={{flex:1,minWidth:0}}>
+                  <div style={{display:'flex',alignItems:'center',gap:'0.4rem',flexWrap:'wrap'}}>
+                    <span style={{fontWeight:'800',color:B.text,fontSize:'0.88rem',fontVariantNumeric:'tabular-nums'}}>{inv.number}</span>
+                    <span style={{fontSize:'0.58rem',fontWeight:'800',padding:'0.12rem 0.5rem',borderRadius:'9999px',background:statusBg(inv.status),color:statusColor(inv.status)}}>{t(INV_STATUS[inv.status]?.k||'st_draft')}</span>
+                    {late&&<span style={{fontSize:'0.58rem',fontWeight:'800',padding:'0.12rem 0.5rem',borderRadius:'9999px',background:B.dangerSoft,color:B.danger}}>{t('overdue')}</span>}
+                  </div>
+                  <div style={{fontSize:'0.68rem',color:B.muted,marginTop:'3px',display:'flex',gap:'0.4rem',flexWrap:'wrap'}}>
+                    <span>{cMap[inv.clientId]||'—'}</span><span>·</span>
+                    <span>{(inv.videoIds||[]).length} {t('videos')}</span><span>·</span>
+                    <span style={{fontVariantNumeric:'tabular-nums'}}>{fmtD(inv.date)}</span>
+                  </div>
+                </div>
+                <div style={{textAlign:_lang==='ar'?'left':'right',flexShrink:0}}>
+                  <div style={{fontWeight:'900',fontSize:'1rem',color:B.text,fontVariantNumeric:'tabular-nums'}}>{fmt(total)}<span style={{fontSize:'0.6rem',color:B.muted}}> {CUR}</span></div>
+                </div>
+              </div>
+              <div style={{display:'flex',gap:'0.35rem',marginTop:'0.7rem',flexWrap:'wrap'}}>
+                <button onClick={()=>setViewing(inv)} style={{display:'flex',alignItems:'center',gap:'0.3rem',padding:'0.34rem 0.7rem',borderRadius:'9999px',border:`1px solid ${B.border}`,background:'transparent',color:B.textSub,fontWeight:'700',fontSize:'0.68rem',cursor:'pointer'}}>
+                  <Ic n="printer" size={12}/>{t('print_inv')}
+                </button>
+                {inv.status!=='paid'&&(
+                  <>
+                    {inv.status==='draft'&&<button onClick={()=>updInvoice(inv.id,{status:'sent'})} style={{padding:'0.34rem 0.7rem',borderRadius:'9999px',border:`1px solid ${B.blueSoft}`,background:B.blueSoft,color:B.blue,fontWeight:'700',fontSize:'0.68rem',cursor:'pointer'}}>{t('st_sent')}</button>}
+                    <button onClick={()=>payInvoice(inv.id)} style={{display:'flex',alignItems:'center',gap:'0.3rem',padding:'0.34rem 0.7rem',borderRadius:'9999px',border:`1px solid ${B.successSoft}`,background:B.successSoft,color:B.success,fontWeight:'700',fontSize:'0.68rem',cursor:'pointer'}}>
+                      <Ic n="check" size={12} color={B.success}/>{t('st_paid')}
+                    </button>
+                  </>
+                )}
+                <div style={{flex:1}}/>
+                <button onClick={()=>{setEditing(inv);setShowForm(true);}} style={{padding:'0.34rem',border:'none',background:'none',cursor:'pointer',color:B.muted,display:'flex'}}><Ic n="pencil" size={13}/></button>
+                <button onClick={()=>delInvoice(inv.id)} style={{padding:'0.34rem',border:'none',background:'none',cursor:'pointer',display:'flex'}}><Ic n="trash" size={13} color={B.danger}/></button>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+      {showForm&&<InvoiceForm data={data} initial={editing}
+        onClose={()=>{setShowForm(false);setEditing(null);}}
+        onSave={f=>{if(editing)updInvoice(editing.id,f);else addInvoice(f);setShowForm(false);setEditing(null);}}/>}
+      {viewing&&<InvoiceSheet inv={viewing} data={data} agency={agency} onClose={()=>setViewing(null)}/>}
+    </div>
+  );
+}
+
+// ─── TASKS ────────────────────────────────────────────────
+function TaskForm({editors,clients,initial,solo,onClose,onSave}){
+  const[f,setF]=useState(initial||{title:'',editorId:'',clientId:'',due:'',priority:'normal',notes:'',status:'todo'});
+  const[err,setErr]=useState('');
+  const submit=()=>{if(!f.title.trim())return setErr(t('task_title'));onSave({...f,title:f.title.trim()});};
+  return(
+    <Modal onClose={onClose} title={initial?t('edit'):t('new_task')}>
+      <div style={{display:'flex',flexDirection:'column',gap:'1rem'}}>
+        <Field label={t('task_title')}>
+          <input value={f.title} onChange={e=>setF({...f,title:e.target.value})} placeholder={t('task_title_ph')} style={INP} autoFocus/>
+        </Field>
+        <div style={{display:'grid',gridTemplateColumns:solo?'1fr':'1fr 1fr',gap:'0.75rem'}}>
+          {!solo&&<Field label={t('assigned_to')}>
+            <select value={f.editorId} onChange={e=>setF({...f,editorId:e.target.value})} style={INP}>
+              <option value="">{t('unassigned')}</option>
+              {editors.map(e=><option key={e.id} value={e.id}>{e.name}</option>)}
+            </select>
+          </Field>}
+          <Field label={t('clients')}>
+            <select value={f.clientId} onChange={e=>setF({...f,clientId:e.target.value})} style={INP}>
+              <option value="">—</option>
+              {clients.map(c=><option key={c.id} value={c.id}>{c.name}</option>)}
+            </select>
+          </Field>
+        </div>
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0.75rem'}}>
+          <Field label={t('due_date')}><input type="date" value={f.due} onChange={e=>setF({...f,due:e.target.value})} style={INP}/></Field>
+          <Field label={t('priority')}>
+            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0.4rem'}}>
+              {[['normal',t('p_normal'),B.textSub],['high',t('p_high'),B.danger]].map(([v,l,c])=>(
+                <button key={v} onClick={()=>setF({...f,priority:v})}
+                  style={{padding:'0.72rem 0.3rem',borderRadius:'0.875rem',border:`2px solid ${f.priority===v?c:B.border}`,background:f.priority===v?`${c}1a`:'transparent',color:f.priority===v?c:B.textSub,fontWeight:'700',cursor:'pointer',fontSize:'0.75rem'}}>{l}</button>
+              ))}
+            </div>
+          </Field>
+        </div>
+        <Field label={t('status')}>
+          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:'0.4rem'}}>
+            {T_STATUS.map(s=>(
+              <button key={s} onClick={()=>setF({...f,status:s})}
+                style={{padding:'0.6rem 0.2rem',borderRadius:'0.875rem',border:`2px solid ${f.status===s?tStatusColor(s):B.border}`,background:f.status===s?`${tStatusColor(s)}1a`:'transparent',color:f.status===s?tStatusColor(s):B.textSub,fontWeight:'700',cursor:'pointer',fontSize:'0.72rem'}}>{tStatusLabel(s)}</button>
+            ))}
+          </div>
+        </Field>
+        <Field label={t('notes_opt')}>
+          <textarea value={f.notes} onChange={e=>setF({...f,notes:e.target.value})} style={{...INP,height:'64px',resize:'none'}}/>
+        </Field>
+        {err&&<div style={{fontSize:'0.75rem',color:B.danger,fontWeight:'700'}}>{err}</div>}
+        <button onClick={submit} style={{width:'100%',padding:'0.9rem',borderRadius:'0.875rem',background:`linear-gradient(135deg,${B.accent},#1652A2)`,color:'white',fontWeight:'800',border:'none',cursor:'pointer',boxShadow:`0 4px 16px ${B.accent}44`}}>{initial?t('save'):t('add')}</button>
+      </div>
+    </Modal>
+  );
+}
+
+function TasksTab({data,addTask,updTask,delTask,solo,readOnlyFor}){
+  const[showForm,setShowForm]=useState(false);const[editing,setEditing]=useState(null);
+  const[fS,setFS]=useState('open');
+  const eMap=Object.fromEntries(data.editors.map(e=>[e.id,e.name]));
+  const cMap=Object.fromEntries(data.clients.map(c=>[c.id,c.name]));
+  const td=today();
+  const list=useMemo(()=>{
+    let l=data.tasks;
+    if(readOnlyFor)l=l.filter(k=>k.editorId===readOnlyFor);
+    if(fS==='open')l=l.filter(k=>k.status!=='done');
+    else if(fS!=='all')l=l.filter(k=>k.status===fS);
+    // urgent and overdue float up, then nearest deadline
+    const rank=k=>(k.status==='doing'?0:1);
+    return [...l].sort((a,b)=>rank(a)-rank(b)||(b.priority==='high')-(a.priority==='high')||String(a.due||'9999').localeCompare(String(b.due||'9999')));
+  },[data.tasks,fS,readOnlyFor]);
+  const counts={open:data.tasks.filter(k=>k.status!=='done').length,done:data.tasks.filter(k=>k.status==='done').length};
+  const cycle=k=>updTask(k.id,{status:k.status==='todo'?'doing':k.status==='doing'?'done':'todo'});
+  const chips=[['open',t('open_tasks'),counts.open],['done',t('t_done'),counts.done],['all',t('all'),data.tasks.length]];
+  return(
+    <div style={{display:'flex',flexDirection:'column',gap:'1.25rem'}}>
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',gap:'0.75rem'}}>
+        <div>
+          <h2 style={{fontSize:'1.75rem',fontWeight:'900',color:B.text}}>{readOnlyFor?t('my_tasks'):t('tasks')}</h2>
+          <p style={{fontSize:'0.75rem',color:B.textSub,fontVariantNumeric:'tabular-nums'}}>{counts.open} {t('open_tasks')}</p>
+        </div>
+        <button onClick={()=>{setEditing(null);setShowForm(true);}} style={{display:'flex',alignItems:'center',gap:'0.4rem',padding:'0.65rem 1.1rem',borderRadius:'9999px',background:`linear-gradient(135deg,${B.accent},#1652A2)`,color:'white',fontWeight:'700',border:'none',cursor:'pointer',fontSize:'0.8rem',whiteSpace:'nowrap',boxShadow:`0 4px 16px ${B.accent}44`}}>
+          <Ic n="plus" size={15} color="white"/>{t('new_task')}
+        </button>
+      </div>
+      <div style={{display:'flex',gap:'0.4rem',flexWrap:'wrap'}}>
+        {chips.map(([v,l,n])=>(
+          <button key={v} onClick={()=>setFS(v)} style={{display:'flex',alignItems:'center',gap:'0.35rem',padding:'0.42rem 0.85rem',borderRadius:'9999px',border:`1px solid ${fS===v?B.accentBorder:B.border}`,background:fS===v?B.accentSoft:B.card,color:fS===v?B.accent:B.textSub,fontWeight:'700',fontSize:'0.75rem',cursor:'pointer'}}>
+            {l}<span style={{fontVariantNumeric:'tabular-nums',opacity:0.7}}>{n}</span>
+          </button>
+        ))}
+      </div>
+      <div style={{background:B.card,borderRadius:'1.25rem',border:`1px solid ${B.border}`,overflow:'hidden'}}>
+        {list.length===0?<div style={{padding:'3rem 1rem',textAlign:'center'}}>
+          <div style={{fontSize:'2.5rem',marginBottom:'0.75rem',opacity:0.5}}>🗒️</div>
+          <div style={{color:B.textSub,fontSize:'0.875rem'}}>{t('no_tasks')}</div>
+        </div>
+        :list.map(k=>{
+          const late=k.due&&k.status!=='done'&&k.due<td;
+          const dueToday=k.due===td&&k.status!=='done';
+          const sc=tStatusColor(k.status);
+          return(
+            <div key={k.id} style={{padding:'0.85rem 1rem',borderBottom:`1px solid ${B.border}`,display:'flex',alignItems:'flex-start',gap:'0.75rem',position:'relative'}}>
+              <div style={{position:'absolute',right:0,top:0,bottom:0,width:'3px',background:k.priority==='high'&&k.status!=='done'?B.danger:sc,opacity:k.status==='done'?0.4:1}}/>
+              <button onClick={()=>cycle(k)} title={tStatusLabel(k.status)} style={{marginTop:'2px',flexShrink:0,width:'1.4rem',height:'1.4rem',borderRadius:'0.5rem',border:`2px solid ${sc}`,background:k.status==='done'?sc:'transparent',cursor:'pointer',display:'grid',placeItems:'center',padding:0}}>
+                {k.status==='done'&&<Ic n="check" size={11} color={'#fff'}/>}
+                {k.status==='doing'&&<div style={{width:'6px',height:'6px',borderRadius:'50%',background:sc}}/>}
+              </button>
+              <div style={{flex:1,minWidth:0}}>
+                <div style={{display:'flex',alignItems:'center',gap:'0.4rem',flexWrap:'wrap'}}>
+                  <span style={{fontWeight:'700',color:k.status==='done'?B.muted:B.text,fontSize:'0.88rem',textDecoration:k.status==='done'?'line-through':'none'}}>{k.title}</span>
+                  {k.priority==='high'&&k.status!=='done'&&<span style={{fontSize:'0.56rem',fontWeight:'800',padding:'0.1rem 0.4rem',borderRadius:'9999px',background:B.dangerSoft,color:B.danger}}>{t('p_high')}</span>}
+                </div>
+                <div style={{fontSize:'0.68rem',color:B.muted,display:'flex',gap:'0.4rem',flexWrap:'wrap',marginTop:'2px',alignItems:'center'}}>
+                  <span style={{color:sc,fontWeight:'700'}}>{tStatusLabel(k.status)}</span>
+                  {!solo&&!readOnlyFor&&<><span>·</span><span>{eMap[k.editorId]||t('unassigned')}</span></>}
+                  {k.clientId&&<><span>·</span><span>{cMap[k.clientId]||'—'}</span></>}
+                  {k.due&&<><span>·</span><span style={{fontVariantNumeric:'tabular-nums',color:late?B.danger:dueToday?B.warning:B.muted,fontWeight:late||dueToday?'700':'400'}}>{late?`${t('overdue')} · `:dueToday?`${t('due_today')} · `:''}{fmtD(k.due)}</span></>}
+                </div>
+                {k.notes&&<div style={{fontSize:'0.68rem',color:B.muted,marginTop:'3px',opacity:0.8}}>{k.notes}</div>}
+              </div>
+              <div style={{display:'flex',gap:'0.1rem',flexShrink:0}}>
+                <button onClick={()=>{setEditing(k);setShowForm(true);}} style={{padding:'0.4rem',border:'none',background:'none',cursor:'pointer',color:B.muted,display:'flex'}}><Ic n="pencil" size={13}/></button>
+                <button onClick={()=>delTask(k.id)} style={{padding:'0.4rem',border:'none',background:'none',cursor:'pointer',display:'flex'}}><Ic n="trash" size={13} color={B.danger}/></button>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+      {showForm&&<TaskForm editors={data.editors} clients={data.clients} initial={editing} solo={solo}
+        onClose={()=>{setShowForm(false);setEditing(null);}}
+        onSave={f=>{if(editing)updTask(editing.id,f);else addTask(readOnlyFor?{...f,editorId:readOnlyFor}:f);setShowForm(false);setEditing(null);}}/>}
+    </div>
   );
 }
 
@@ -1682,7 +2287,7 @@ function ClientsTab({data,addClient,updClient,delClient,canAdd,limit,plan}){
       </div>
       <div style={{background:B.card,borderRadius:'1.25rem',border:`1px solid ${B.border}`,padding:'0.75rem',display:'flex',gap:'0.5rem'}}>
         <input value={name} onChange={e=>setName(e.target.value)} onKeyDown={e=>e.key==='Enter'&&doAdd()} placeholder="اسم الزبون..." style={{...INP,flex:1}}/>
-        <button onClick={doAdd} style={{display:'flex',alignItems:'center',gap:'0.4rem',padding:'0.75rem 1rem',borderRadius:'0.875rem',background:canAdd?`linear-gradient(135deg,${B.accent},#cc2f0f)`:'#333',color:'white',fontWeight:'700',border:'none',cursor:'pointer',flexShrink:0,boxShadow:canAdd?`0 4px 12px ${B.accent}44`:'none'}}>
+        <button onClick={doAdd} style={{display:'flex',alignItems:'center',gap:'0.4rem',padding:'0.75rem 1rem',borderRadius:'0.875rem',background:canAdd?`linear-gradient(135deg,${B.accent},#1652A2)`:'#333',color:'white',fontWeight:'700',border:'none',cursor:'pointer',flexShrink:0,boxShadow:canAdd?`0 4px 12px ${B.accent}44`:'none'}}>
           <Ic n="plus" size={16} color="white"/>{t('add')}
         </button>
       </div>
@@ -1692,7 +2297,7 @@ function ClientsTab({data,addClient,updClient,delClient,canAdd,limit,plan}){
           const s=stats[item.id]||{count:0,total:0};const isEd=edId===item.id;
           return(
             <div key={item.id} style={{padding:'0.875rem 1.25rem',display:'flex',alignItems:'center',gap:'0.75rem',borderBottom:`1px solid ${B.border}`}}>
-              <div style={{width:'2.5rem',height:'2.5rem',borderRadius:'50%',display:'grid',placeItems:'center',fontWeight:'700',flexShrink:0,background:'rgba(59,130,246,0.15)',color:'#60a5fa'}}>{item.name.charAt(0)}</div>
+              <div style={{width:'2.5rem',height:'2.5rem',borderRadius:'50%',display:'grid',placeItems:'center',fontWeight:'700',flexShrink:0,background:B.blueSoft,color:B.blue}}>{item.name.charAt(0)}</div>
               <div style={{flex:1,minWidth:0}}>
                 {isEd?<div style={{display:'flex',gap:'0.5rem'}}>
                   <input value={edName} onChange={e=>setEdName(e.target.value)} onKeyDown={e=>e.key==='Enter'&&(edName.trim()&&updClient(edId,edName.trim()),setEdId(null))}
