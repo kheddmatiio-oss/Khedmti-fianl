@@ -181,6 +181,8 @@ const TR={
     err_no_agency:'الوكالة غير موجودة',
     err_select:'اختار إيديتور وزبون',
     err_price:'دخل السعر',
+    err_session:'انتهت الجلسة — عاود دخول',
+    err_forbidden:'ما عندكش الصلاحية',
     // Toast
     toast_editor_added:'تم إضافة عضو الفريق ✅',
     toast_client_added:'تم إضافة الزبون ✅',
@@ -351,6 +353,8 @@ const TR={
     err_no_agency:'Agence introuvable',
     err_select:'Sélectionnez un membre et un client',
     err_price:'Entrez le prix',
+    err_session:'Session expirée — reconnectez-vous',
+    err_forbidden:"Vous n'avez pas la permission",
     toast_editor_added:'Membre ajouté ✅',
     toast_client_added:'Client ajouté ✅',
     toast_video_added:'Vidéo enregistrée ✅',
@@ -456,8 +460,6 @@ document.head.appendChild(styleEl);
 // ─── CONFIG ──────────────────────────────────────────────
 const SUPABASE_URL='https://ecfbttpssczgqcpekvhe.supabase.co';
 const SUPABASE_KEY='sb_publishable_khGkjigTRA5-0CwMRO9CFQ_d6cECbz8';
-const SUPER_EMAIL='admin@bghplatform.com';
-const SUPER_PASS='bgh@admin2024';
 const FREE_LIMITS={editors:2,clients:5,videos:20};
 
 const ROLES=['editor','filmmaker','designer'];
@@ -469,7 +471,6 @@ const fmt=n=>new Intl.NumberFormat('en-US').format(Math.round(Number(n)||0));
 const fmtD=iso=>iso?new Date(iso).toLocaleDateString('fr-FR'):'';
 const today=()=>new Date().toISOString().slice(0,10);
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,8);
-const hash=s=>{let h=0;for(let i=0;i<s.length;i++){h=((h<<5)-h)+s.charCodeAt(i);h|=0;}return'h'+Math.abs(h).toString(36)+'_'+s.length;};
 const EMPTY={editors:[],clients:[],videos:[],invoices:[],tasks:[]};
 // older rows may miss the newer collections — normalize on read
 const norm=d=>({...EMPTY,...(d||{}),editors:d?.editors||[],clients:d?.clients||[],videos:d?.videos||[],invoices:d?.invoices||[],tasks:d?.tasks||[]});
@@ -499,71 +500,56 @@ const sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY,{
 });
 
 // ─── DB ───────────────────────────────────────────────────
-// wrap fetch errors with friendly message
-const wrapFetch=async fn=>{
-  try{return await fn();}
-  catch(e){
-    const msg=e?.message||'';
-    if(msg.includes('Failed to fetch')||msg.includes('NetworkError')||msg.includes('fetch')){
-      throw new Error('❌ تعذّر الاتصال بالسيرفر. تحقق من الإنترنت أو حاول مجدداً.');
-    }
-    throw e;
-  }
+// Every call goes through a security-definer RPC. The anon key has no
+// direct table access, so a stolen key alone yields nothing — each call
+// carries a session token issued at login.
+let TOK=localStorage.getItem('_tok')||null;
+const setTok=t=>{TOK=t;t?localStorage.setItem('_tok',t):localStorage.removeItem('_tok');};
+
+const RPC_ERR={
+  not_found:'err_not_found', bad_password:'err_wrong_pw',
+  agency_not_found:'err_no_agency', duplicate_email:'err_duplicate',
+  weak_password:'err_pw', no_session:'err_session', forbidden:'err_forbidden',
 };
+const call=async(fn,args={})=>{
+  let res;
+  try{ res=await sb.rpc(fn,args); }
+  catch(e){ throw new Error('❌ تعذّر الاتصال بالسيرفر. تحقق من الإنترنت أو حاول مجدداً.'); }
+  const{data,error}=res;
+  if(error){
+    const raw=`${error.message||''}`;
+    const key=Object.keys(RPC_ERR).find(k=>raw.includes(k));
+    if(key==='no_session'){setTok(null);localStorage.removeItem('_session');}
+    throw new Error(key?t(RPC_ERR[key]):raw||'error');
+  }
+  return data;
+};
+
 const DB={
   async register(name,email,password,phone='',accType='agency'){
-    return wrapFetch(async()=>{
-      const{data,error}=await sb.from('agencies').insert({name,email,password_hash:hash(password),phone,account_type:accType}).select().single();
-      if(error)throw error;
-      await sb.from('app_data').insert({agency_id:data.id,data:EMPTY});
-      return data;
-    });
+    const r=await call('api_register',{p_name:name,p_email:email,p_password:password,p_phone:phone,p_type:accType});
+    setTok(r.token); return r.agency;
   },
   async loginAgency(email,password){
-    return wrapFetch(async()=>{
-      const{data,error}=await sb.from('agencies').select('*').eq('email',email).single();
-      if(error||!data)throw new Error(t('err_not_found'));
-      if(data.password_hash!==hash(password))throw new Error(t('err_wrong_pw'));
-      return data;
-    });
+    const r=await call('api_login',{p_email:email,p_password:password});
+    setTok(r.token); return r.agency;
   },
   async loginWorker(agencyEmail,workerPassword){
-    return wrapFetch(async()=>{
-      const{data:ag,error:agErr}=await sb.from('agencies').select('*').eq('email',agencyEmail.toLowerCase().trim()).single();
-      if(agErr||!ag)throw new Error(t('err_no_agency'));
-      const{data:appData}=await sb.from('app_data').select('data').eq('agency_id',ag.id).single();
-      const d=norm(appData?.data);
-      const worker=d.editors.find(e=>e.password===hash(workerPassword));
-      if(!worker)throw new Error(t('err_wrong_pw'));
-      return{agency:ag,worker,appData:d};
-    });
+    const r=await call('api_login_worker',{p_agency_email:agencyEmail,p_password:workerPassword});
+    setTok(r.token);
+    return{agency:r.agency,worker:r.worker,appData:norm(r.data)};
   },
-  async loadData(agencyId){
-    return wrapFetch(async()=>{
-      const{data}=await sb.from('app_data').select('data').eq('agency_id',agencyId).single();
-      return norm(data?.data);
-    });
-  },
-  async saveData(agencyId,data){
-    const{data:updated,error}=await sb.from('app_data').update({data,updated_at:new Date().toISOString()}).eq('agency_id',agencyId).select();
-    if(error)throw error;
-    if(!updated||updated.length===0){
-      await sb.from('app_data').insert({agency_id:agencyId,data});
-    }
-  },
-  async getAllAgencies(){
-    const{data}=await sb.from('agencies').select('*').order('created_at',{ascending:false});
-    return data||[];
-  },
-  async getAgencyData(agencyId){
-    const{data}=await sb.from('app_data').select('data').eq('agency_id',agencyId).single();
-    return norm(data?.data);
-  },
-  async updateAgency(id,patch){await sb.from('agencies').update(patch).eq('id',id);},
-  async deleteAgency(id){
-    await sb.from('app_data').delete().eq('agency_id',id);
-    await sb.from('agencies').delete().eq('id',id);
-  }
+  async loadData(){ return norm(await call('api_load',{p_token:TOK})); },
+  async saveData(_agencyId,data){ await call('api_save',{p_token:TOK,p_data:data}); },
+  // worker passwords are bcrypted server-side; the plaintext never lands in the row
+  async hashPassword(pw){ return call('api_hash_password',{p_token:TOK,p_password:pw}); },
+  async logout(){ if(TOK)try{await call('api_logout',{p_token:TOK});}catch(e){} setTok(null); },
+  // super-admin — the RPCs verify is_super themselves
+  async getAllAgencies(){ return await call('api_admin_agencies',{p_token:TOK})||[]; },
+  async getAgencyData(agencyId){ return norm(await call('api_admin_data',{p_token:TOK,p_agency:agencyId})); },
+  async updateAgency(id,patch){ await call('api_admin_update',{p_token:TOK,p_agency:id,p_patch:patch}); },
+  async deleteAgency(id){ await call('api_admin_delete',{p_token:TOK,p_agency:id}); },
+  hasSession(){ return !!TOK; },
 };
 
 // ─── LOGO ─────────────────────────────────────────────────
@@ -857,11 +843,11 @@ function Login({onBack,onAgencyLogin,onWorkerLogin,onSuperAdmin}){
   const submit=async()=>{
     if(!pw)return setErr(t('password'));
     setLoading(true);setErr('');
-    if(email===SUPER_EMAIL&&pw===SUPER_PASS){setLoading(false);onSuperAdmin();return;}
     try{
       if(role==='agency'){
         if(!email.includes('@'))return setErr(t('err_email'));
         const ag=await DB.loginAgency(email.toLowerCase().trim(),pw);
+        if(ag.is_super){onSuperAdmin();return;}
         onAgencyLogin(ag);
       } else {
         if(!agEmail.includes('@'))return setErr(t('err_email'));
@@ -1210,7 +1196,7 @@ function AgencyApp({agency,onLogout}){
   const[isMobile,setIsMobile]=useState(window.innerWidth<640);
   useEffect(()=>{const fn=()=>setIsMobile(window.innerWidth<640);window.addEventListener('resize',fn);return()=>window.removeEventListener('resize',fn);},[]);
 
-  useEffect(()=>{DB.loadData(agency.id).then(d=>{setData(d);setLoading(false);});},[agency.id]);
+  useEffect(()=>{DB.loadData().then(d=>{setData(d);setLoading(false);}).catch(()=>setLoading(false));},[agency.id]);
 
   const persist=async next=>{
     setData(next);setSaving(true);
@@ -1242,9 +1228,13 @@ function AgencyApp({agency,onLogout}){
   ].filter(tt=>!(solo&&tt.id==='editors'));
   const tabs=[...primaryTabs,...secondaryTabs];
 
-  const addEditor=(name,pw,role='editor')=>{
+  const addEditor=async(name,pw,role='editor')=>{
     if(!canAdd('editor'))return showToast(t('toast_limit',FREE_LIMITS.editors),'error');
-    persist({...data,editors:[...data.editors,{id:uid(),name,password:hash(pw),role}]});showToast(t('toast_editor_added'));
+    try{
+      const pwh=await DB.hashPassword(pw);
+      persist({...data,editors:[...data.editors,{id:uid(),name,pw:pwh,role}]});
+      showToast(t('toast_editor_added'));
+    }catch(e){showToast(e.message,'error');}
   };
   const updEditor=(id,patch)=>persist({...data,editors:data.editors.map(e=>e.id===id?{...e,...patch}:e)});
   const delEditor=id=>{if(!confirm(t('confirm_delete')))return;persist({...data,editors:data.editors.filter(e=>e.id!==id),videos:data.videos.filter(v=>v.editorId!==id),tasks:data.tasks.map(k=>k.editorId===id?{...k,editorId:''}:k)});showToast(t('toast_deleted'));};
@@ -2270,7 +2260,7 @@ function TeamTab({data,addEditor,updEditor,delEditor,canAdd,limit,plan}){
           );
         })}
       </div>
-      {showForm&&<WorkerForm initial={editing} onClose={()=>{setShowForm(false);setEditing(null);}} onSave={(name,pw,role)=>{if(editing){const p={name,role};if(pw)p.password=hash(pw);updEditor(editing.id,p);}else addEditor(name,pw,role);setShowForm(false);setEditing(null);}}/>}
+      {showForm&&<WorkerForm initial={editing} onClose={()=>{setShowForm(false);setEditing(null);}} onSave={async(name,pw,role)=>{if(editing){const p={name,role};if(pw)p.pw=await DB.hashPassword(pw);updEditor(editing.id,p);}else await addEditor(name,pw,role);setShowForm(false);setEditing(null);}}/>}
     </div>
   );
 }
@@ -2325,22 +2315,24 @@ function App(){
   const[worker,setWorker]=useState(null);
   const[workerData,setWorkerData]=useState(null);
 
+  // A cached session is only a hint — the token decides. Without one we
+  // land on the marketing page rather than a shell with no data behind it.
   useEffect(()=>{
     const s=localStorage.getItem('_session');
-    if(s){
-      try{
-        const p=JSON.parse(s);
-        if(p.type==='superadmin')setScreen('superadmin');
-        else if(p.type==='agency'&&p.agency){
-          if(isSuspended(p.agency)||isExpired(p.agency)&&p.agency.plan!=='free'){setAgency(p.agency);setScreen('expired');}
-          else{setAgency(p.agency);setScreen('agency');}
-        }
-        else if(p.type==='worker'&&p.agency&&p.worker){
-          if(isSuspended(p.agency)||isExpired(p.agency)&&p.agency.plan!=='free'){setAgency(p.agency);setScreen('expired');}
-          else{setAgency(p.agency);setWorker(p.worker);setWorkerData(p.workerData);setScreen('worker');}
-        }
-      }catch(e){}
-    }
+    if(!s||!DB.hasSession())return;
+    try{
+      const p=JSON.parse(s);
+      const dead=ag=>isSuspended(ag)||(isExpired(ag)&&ag.plan!=='free');
+      if(p.type==='superadmin')setScreen('superadmin');
+      else if(p.type==='agency'&&p.agency){
+        setAgency(p.agency);setScreen(dead(p.agency)?'expired':'agency');
+      }
+      else if(p.type==='worker'&&p.agency&&p.worker){
+        setAgency(p.agency);
+        if(dead(p.agency))setScreen('expired');
+        else{setWorker(p.worker);setWorkerData(p.workerData);setScreen('worker');}
+      }
+    }catch(e){}
   },[]);
 
   const save=s=>localStorage.setItem('_session',JSON.stringify(s));
@@ -2354,7 +2346,11 @@ function App(){
     setAgency(ag);setWorker(w);setWorkerData(d);save({type:'worker',agency:ag,worker:w,workerData:d});setScreen('worker');
   };
   const onSuper=()=>{save({type:'superadmin'});setScreen('superadmin');};
-  const logout=()=>{localStorage.removeItem('_session');setAgency(null);setWorker(null);setWorkerData(null);setScreen('landing');};
+  const logout=async()=>{
+    await DB.logout();
+    localStorage.removeItem('_session');
+    setAgency(null);setWorker(null);setWorkerData(null);setScreen('landing');
+  };
 
   const isConnErr=s=>s&&(s.includes('Failed to fetch')||s.includes('تعذّر الاتصال'));
 

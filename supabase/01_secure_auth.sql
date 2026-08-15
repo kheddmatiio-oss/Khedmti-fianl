@@ -175,11 +175,69 @@ grant execute on function api_load(uuid)                          to anon;
 grant execute on function api_save(uuid,jsonb)                    to anon;
 grant execute on function api_logout(uuid)                        to anon;
 
--- ── 11. المدير العام ──────────────────────────────────────────
+
+-- ── 11. لوحة المدير العام ─────────────────────────────────────
+create or replace function is_super_session(p_token uuid)
+returns boolean language sql stable security definer set search_path = public as $$
+  select coalesce(a.is_super,false)
+    from sessions s join agencies a on a.id = s.agency_id
+   where s.token = p_token and s.expires_at > now() and s.worker_id is null;
+$$;
+
+create or replace function api_admin_agencies(p_token uuid)
+returns jsonb language plpgsql security definer set search_path = public as $$
+declare r jsonb;
+begin
+  if not is_super_session(p_token) then raise exception 'forbidden'; end if;
+  select coalesce(jsonb_agg(agency_public(a) order by a.created_at desc),'[]'::jsonb)
+    into r from agencies a;
+  return r;
+end $$;
+
+create or replace function api_admin_data(p_token uuid, p_agency uuid)
+returns jsonb language plpgsql security definer set search_path = public as $$
+declare d jsonb;
+begin
+  if not is_super_session(p_token) then raise exception 'forbidden'; end if;
+  select data into d from app_data where agency_id = p_agency;
+  return coalesce(d,'{"editors":[],"clients":[],"videos":[],"invoices":[],"tasks":[]}'::jsonb);
+end $$;
+
+create or replace function api_admin_update(p_token uuid, p_agency uuid, p_patch jsonb)
+returns void language plpgsql security definer set search_path = public as $$
+begin
+  if not is_super_session(p_token) then raise exception 'forbidden'; end if;
+  update agencies set
+    plan            = coalesce(p_patch->>'plan', plan),
+    is_active       = coalesce((p_patch->>'is_active')::boolean, is_active),
+    notes           = coalesce(p_patch->>'notes', notes),
+    plan_expires_at = case when p_patch ? 'plan_expires_at'
+                           then (p_patch->>'plan_expires_at')::timestamptz
+                           else plan_expires_at end
+  where id = p_agency;
+end $$;
+
+create or replace function api_admin_delete(p_token uuid, p_agency uuid)
+returns void language plpgsql security definer set search_path = public as $$
+begin
+  if not is_super_session(p_token) then raise exception 'forbidden'; end if;
+  -- المدير ما يقدرش يمسح روحو
+  if p_agency = session_agency(p_token) then raise exception 'cannot_delete_self'; end if;
+  delete from app_data where agency_id = p_agency;
+  delete from agencies where id = p_agency;
+end $$;
+
+revoke all on function is_super_session(uuid) from anon, authenticated;
+grant execute on function api_admin_agencies(uuid)             to anon;
+grant execute on function api_admin_data(uuid,uuid)            to anon;
+grant execute on function api_admin_update(uuid,uuid,jsonb)    to anon;
+grant execute on function api_admin_delete(uuid,uuid)          to anon;
+
+-- ── 12. تفعيل المدير العام ──────────────────────────────────────────
 -- بدّل الإيميل لإيميلك وشغّل السطر، بعدها امسح الحساب المكتوب في الكود
 -- update agencies set is_super = true where email = 'kheddmati.io@gmail.com';
 
--- ── 12. الحسابات الموجودة ─────────────────────────────────────
+-- ── 13. الحسابات الموجودة ─────────────────────────────────────
 -- الهاش القديم ما يتحوّلش لـ bcrypt، فلازم تعيّن كلمة سر جديدة
 -- لكل حساب موجود. بدّل القيم وشغّل:
 --
