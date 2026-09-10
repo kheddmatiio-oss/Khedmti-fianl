@@ -525,7 +525,7 @@ const call=async(fn,args={})=>{
   return data;
 };
 
-const DB={
+const RemoteDB={
   async register(name,email,password,phone='',accType='agency'){
     const r=await call('api_register',{p_name:name,p_email:email,p_password:password,p_phone:phone,p_type:accType});
     setTok(r.token); return r.agency;
@@ -551,6 +551,82 @@ const DB={
   async deleteAgency(id){ await call('api_admin_delete',{p_token:TOK,p_agency:id}); },
   hasSession(){ return !!TOK; },
 };
+
+// ─── LOCAL MODE ───────────────────────────────────────────
+// A self-contained backend in localStorage so the platform stays fully
+// usable — and demo-able — when Supabase is unreachable. Data never
+// leaves this browser and is kept apart from the real account.
+let LOCAL=localStorage.getItem('_local')==='1';
+const setLocal=v=>{v?localStorage.setItem('_local','1'):localStorage.removeItem('_local');LOCAL=v;};
+const LKEY='_localdb';
+const lread=()=>{try{return JSON.parse(localStorage.getItem(LKEY))||{agencies:[],data:{},session:null};}
+                 catch(e){return{agencies:[],data:{},session:null};}};
+const lwrite=db=>localStorage.setItem(LKEY,JSON.stringify(db));
+// real hashing via SubtleCrypto — no home-made digest
+const sha=async(pw,salt)=>{
+  const buf=new TextEncoder().encode(`${salt}:${pw}`);
+  const d=await crypto.subtle.digest('SHA-256',buf);
+  return salt+'$'+[...new Uint8Array(d)].map(b=>b.toString(16).padStart(2,'0')).join('');
+};
+const shaMake=pw=>sha(pw,uid());
+const shaCheck=async(pw,stored)=>{
+  if(!stored||!stored.includes('$'))return false;
+  return (await sha(pw,stored.split('$')[0]))===stored;
+};
+const lfail=key=>{throw new Error(t(key));};
+
+const LocalDB={
+  async register(name,email,password,phone='',accType='agency'){
+    const db=lread(); email=email.toLowerCase().trim();
+    if(db.agencies.some(a=>a.email===email))lfail('err_duplicate');
+    const ag={id:uid(),name:name.trim(),email,phone,plan:'free',account_type:accType,
+              is_active:true,plan_expires_at:null,notes:'',is_super:db.agencies.length===0,
+              created_at:new Date().toISOString(),pw:await shaMake(password)};
+    db.agencies.push(ag); db.data[ag.id]={...EMPTY};
+    db.session={agencyId:ag.id}; lwrite(db);
+    const{pw,...pub}=ag; return pub;
+  },
+  async loginAgency(email,password){
+    const db=lread(); const ag=db.agencies.find(a=>a.email===email.toLowerCase().trim());
+    if(!ag)lfail('err_not_found');
+    if(!await shaCheck(password,ag.pw))lfail('err_wrong_pw');
+    db.session={agencyId:ag.id}; lwrite(db);
+    const{pw,...pub}=ag; return pub;
+  },
+  async loginWorker(agencyEmail,workerPassword){
+    const db=lread(); const ag=db.agencies.find(a=>a.email===agencyEmail.toLowerCase().trim());
+    if(!ag)lfail('err_no_agency');
+    const d=norm(db.data[ag.id]);
+    let found=null;
+    for(const w of d.editors){ if(await shaCheck(workerPassword,w.pw)){found=w;break;} }
+    if(!found)lfail('err_wrong_pw');
+    db.session={agencyId:ag.id,workerId:found.id}; lwrite(db);
+    const{pw,...pub}=ag; const{pw:_,...wpub}=found;
+    return{agency:pub,worker:wpub,appData:d};
+  },
+  async loadData(){
+    const db=lread(); if(!db.session)lfail('err_session');
+    return norm(db.data[db.session.agencyId]);
+  },
+  async saveData(_id,data){
+    const db=lread(); if(!db.session)lfail('err_session');
+    db.data[db.session.agencyId]=data; lwrite(db);
+  },
+  async hashPassword(pw){ return shaMake(pw); },
+  async logout(){ const db=lread(); db.session=null; lwrite(db); },
+  async getAllAgencies(){ return lread().agencies.map(({pw,...a})=>a); },
+  async getAgencyData(id){ return norm(lread().data[id]); },
+  async updateAgency(id,patch){
+    const db=lread(); db.agencies=db.agencies.map(a=>a.id===id?{...a,...patch}:a); lwrite(db);
+  },
+  async deleteAgency(id){
+    const db=lread(); db.agencies=db.agencies.filter(a=>a.id!==id); delete db.data[id]; lwrite(db);
+  },
+  hasSession(){ return !!lread().session; },
+};
+
+// One surface for the app; the mode decides which backend answers.
+const DB=new Proxy({},{get:(_,k)=>(LOCAL?LocalDB:RemoteDB)[k]});
 
 // ─── LOGO ─────────────────────────────────────────────────
 const LOGO_URI='data:image/png;base64,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';
@@ -926,9 +1002,17 @@ function ConnError({onRetry}){
         <button onClick={onRetry} style={{width:'100%',padding:'0.875rem',borderRadius:'0.875rem',background:`linear-gradient(135deg,${B.accent},#1652A2)`,color:'white',fontWeight:'800',border:'none',cursor:'pointer',boxShadow:`0 4px 16px ${B.accent}44`,marginBottom:'0.75rem'}}>
           🔄 إعادة المحاولة
         </button>
-        <button onClick={()=>window.location.reload()} style={{width:'100%',padding:'0.75rem',borderRadius:'0.875rem',background:'none',color:B.muted,fontWeight:'600',border:`1px solid ${B.border}`,cursor:'pointer',fontSize:'0.85rem'}}>
+        <button onClick={()=>window.location.reload()} style={{width:'100%',padding:'0.75rem',borderRadius:'0.875rem',background:'none',color:B.muted,fontWeight:'600',border:`1px solid ${B.border}`,cursor:'pointer',fontSize:'0.85rem',marginBottom:'1.25rem'}}>
           تحديث الصفحة
         </button>
+        <div style={{paddingTop:'1.25rem',borderTop:`1px solid ${B.border}`}}>
+          <div style={{fontSize:'0.72rem',color:B.muted,marginBottom:'0.65rem',lineHeight:1.6}}>
+            ولا جرّب المنصة دروك بلا سيرفر — البيانات تتخزن في المتصفح تاعك فقط
+          </div>
+          <button onClick={()=>{setLocal(true);location.reload();}} style={{width:'100%',padding:'0.8rem',borderRadius:'0.875rem',background:B.accentSoft,color:B.accent,fontWeight:'800',border:`1px solid ${B.accentBorder}`,cursor:'pointer',fontSize:'0.85rem'}}>
+            🧪 وضع تجريبي محلي
+          </button>
+        </div>
       </div>
     </div>
   );
@@ -2354,6 +2438,7 @@ function App(){
 
   const isConnErr=s=>s&&(s.includes('Failed to fetch')||s.includes('تعذّر الاتصال'));
 
+  const screenEl=(()=>{
   if(screen==='landing')return<Landing onLogin={()=>setScreen('login')} onRegister={()=>setScreen('register')}/>;
   if(screen==='register')return<Register onBack={()=>setScreen('landing')} onSuccess={onAgency}/>;
   if(screen==='login')return<Login onBack={()=>setScreen('landing')} onAgencyLogin={onAgency} onWorkerLogin={onWorker} onSuperAdmin={onSuper}/>;
@@ -2362,6 +2447,24 @@ function App(){
   if(screen==='agency'&&agency)return<AgencyApp agency={agency} onLogout={logout}/>;
   if(screen==='worker'&&worker&&agency)return<WorkerApp agency={agency} worker={worker} initialData={workerData} onLogout={logout}/>;
   return null;
+  })();
+  return <>{screenEl}{LOCAL&&<LocalBadge/>}</>;
+}
+
+// Local data must never be mistaken for the real account.
+function LocalBadge(){
+  const leave=()=>{
+    if(!confirm('ترجع للسيرفر؟ البيانات المحلية تبقى محفوظة.'))return;
+    setLocal(false);localStorage.removeItem('_session');location.reload();
+  };
+  return(
+    <div style={{position:'fixed',bottom:'0.7rem',left:'0.7rem',zIndex:70,display:'flex',alignItems:'center',gap:'0.5rem',padding:'0.4rem 0.5rem 0.4rem 0.8rem',borderRadius:'9999px',background:B.card,border:`1px solid ${B.accentBorder}`,boxShadow:'0 6px 20px rgba(0,0,0,0.35)',fontSize:'0.66rem',fontWeight:'800',color:B.accent}}>
+      🧪 وضع تجريبي محلي
+      <button onClick={leave} title="ارجع للسيرفر" style={{display:'flex',padding:'0.25rem',borderRadius:'50%',border:'none',background:B.accentSoft,color:B.accent,cursor:'pointer'}}>
+        <Ic n="x" size={11}/>
+      </button>
+    </div>
+  );
 }
 
 ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
