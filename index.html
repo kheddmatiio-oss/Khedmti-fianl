@@ -129,7 +129,7 @@ const TR={
     video_title:'عنوان الفيديو',
     video_title_ph:'مثال: إعلان منتج جديد',
     date:'التاريخ',
-    price:'السعر (دج)',
+    price:'السعر',
     mark_paid:'علم خلصت',
     paid:'✓ خلص',
     unpaid:'✗ ما خلصش',
@@ -219,7 +219,7 @@ const TR={
     due_date:'أجل الدفع',
     items:'البنود',
     subtotal:'المجموع الفرعي',
-    discount:'تخفيض (دج)',
+    discount:'تخفيض',
     grand_total:'الإجمالي',
     status:'الحالة',
     st_draft:'مسودة',
@@ -491,6 +491,9 @@ const curRate=(code,st)=>{const c=curList(st).find(x=>x.code===code);return Numb
 const toBase=(n,code,st)=>Number(n||0)*curRate(code,st)/curRate(curBase(st),st);
 const money=(n,code)=>`${fmt(n)} ${curSym(code)}`;
 // { DZD: 1200, USD: 40 } — each currency kept separate instead of faked into one
+// "1 200 DA · 40 $" — never a blended number
+const showCur=m=>{const k=Object.keys(m||{}).filter(c=>m[c]);return k.length?k.map(c=>money(m[c],c)).join(' · '):'—';};
+const addCurMap=(m,code,n)=>{m[code]=(m[code]||0)+Number(n||0);return m;};
 const sumByCur=(rows,pick,st)=>{
   const out={};
   (rows||[]).forEach(r=>{const c=r.currency||curBase(st);out[c]=(out[c]||0)+Number(pick(r)||0);});
@@ -502,9 +505,9 @@ const INV_STATUS={draft:{k:'st_draft',c:'muted'},sent:{k:'st_sent',c:'blue'},pai
 const T_STATUS=['todo','doing','done'];
 const tStatusLabel=s=>({todo:t('t_todo'),doing:t('t_doing'),done:t('t_done')}[s]||t('t_todo'));
 const tStatusColor=s=>({todo:B.textSub,doing:B.accent,done:B.success}[s]||B.textSub);
-const invNumber=list=>{
+const invNumber=(list,prefix)=>{
   const n=(list||[]).reduce((m,i)=>{const x=parseInt(String(i.number||'').replace(/\D/g,''),10);return Number.isFinite(x)&&x>m?x:m;},0);
-  return 'F-'+String(n+1).padStart(4,'0');
+  return `${prefix||'F'}-${String(n+1).padStart(4,'0')}`;
 };
 
 const isExpired=ag=>{if(!ag?.plan_expires_at)return false;return new Date(ag.plan_expires_at)<new Date();};
@@ -1189,7 +1192,7 @@ function SuperAdmin({onLogout}){
                           <div style={{fontWeight:'600',fontSize:'0.8rem',color:B.text}}>{v.title||'—'}</div>
                           <div style={{fontSize:'0.65rem',color:B.muted}}>{eMap[v.editorId]||'—'} · {cMap[v.clientId]||'—'}</div>
                         </div>
-                        <span style={{fontWeight:'700',fontSize:'0.8rem',color:B.text,fontVariantNumeric:'tabular-nums'}}>{fmt(v.price)}<span style={{fontSize:'0.6rem',color:B.muted}}> دج</span></span>
+                        <span style={{fontWeight:'700',fontSize:'0.8rem',color:B.text,fontVariantNumeric:'tabular-nums'}}>{fmt(v.price)}<span style={{fontSize:'0.62rem',color:B.muted}}> {curSym(v.currency||curBase(data.settings))}</span></span>
                       </div>
                     );
                   })}
@@ -1345,11 +1348,11 @@ function AgencyApp({agency,onLogout}){
   };
   const updEditor=(id,patch)=>persist({...data,editors:data.editors.map(e=>e.id===id?{...e,...patch}:e)});
   const delEditor=id=>{if(!confirm(t('confirm_delete')))return;persist({...data,editors:data.editors.filter(e=>e.id!==id),videos:data.videos.filter(v=>v.editorId!==id),tasks:data.tasks.map(k=>k.editorId===id?{...k,editorId:''}:k)});showToast(t('toast_deleted'));};
-  const addClient=name=>{
+  const addClient=c=>{
     if(!canAdd('client'))return showToast(t('toast_limit',FREE_LIMITS.clients),'error');
-    persist({...data,clients:[...data.clients,{id:uid(),name}]});showToast(t('toast_client_added'));
+    persist({...data,clients:[...data.clients,{id:uid(),...c}]});showToast(t('toast_client_added'));
   };
-  const updClient=(id,name)=>persist({...data,clients:data.clients.map(c=>c.id===id?{...c,name}:c)});
+  const updClient=(id,patch)=>persist({...data,clients:data.clients.map(c=>c.id===id?{...c,...patch}:c)});
   const delClient=id=>{if(!confirm(t('confirm_delete')))return;persist({...data,clients:data.clients.filter(c=>c.id!==id),videos:data.videos.filter(v=>v.clientId!==id),invoices:data.invoices.filter(i=>i.clientId!==id),tasks:data.tasks.filter(k=>k.clientId!==id)});showToast(t('toast_deleted'));};
   const addVideo=v=>{
     if(!canAdd('video'))return showToast(t('toast_limit',FREE_LIMITS.videos),'error');
@@ -1361,7 +1364,7 @@ function AgencyApp({agency,onLogout}){
 
   // ── invoices ──
   const addInvoice=inv=>{
-    persist({...data,invoices:[{id:uid(),number:invNumber(data.invoices),status:'draft',createdAt:new Date().toISOString(),...inv},...data.invoices]});
+    persist({...data,invoices:[{id:uid(),number:invNumber(data.invoices,data.settings.invoice.prefix),status:'draft',createdAt:new Date().toISOString(),...inv},...data.invoices]});
     showToast(t('toast_invoice_added'));
   };
   const updInvoice=(id,patch)=>persist({...data,invoices:data.invoices.map(x=>x.id===id?{...x,...patch}:x)});
@@ -1369,7 +1372,7 @@ function AgencyApp({agency,onLogout}){
   // marking an invoice paid settles every video it covers
   const payInvoice=id=>{
     const inv=data.invoices.find(x=>x.id===id);if(!inv)return;
-    const ids=new Set(inv.videoIds||[]);
+    const ids=new Set(invLines(inv,data.videos).filter(l=>l.videoId).map(l=>l.videoId));
     persist({...data,
       invoices:data.invoices.map(x=>x.id===id?{...x,status:'paid',paidAt:new Date().toISOString()}:x),
       videos:data.videos.map(v=>ids.has(v.id)?{...v,paid:true}:v)});
@@ -1503,8 +1506,10 @@ function WorkerApp({agency,worker,initialData,onLogout}){
     persist({...data,tasks:data.tasks.filter(x=>x.id!==id)});showToast(t('toast_deleted'));
   };
 
-  const total=myVideos.reduce((s,v)=>s+Number(v.price||0),0);
-  const paid=myVideos.filter(v=>v.paid).reduce((s,v)=>s+Number(v.price||0),0);
+  const bc=curBase(data.settings);
+  const total=sumByCur(myVideos,v=>v.price,data.settings);
+  const paid=sumByCur(myVideos.filter(v=>v.paid),v=>v.price,data.settings);
+  const owed=sumByCur(myVideos.filter(v=>!v.paid),v=>v.price,data.settings);
   const ms=new Date();ms.setDate(1);ms.setHours(0,0,0,0);
   const mv=myVideos.filter(v=>new Date(v.date)>=ms);
 
@@ -1553,16 +1558,16 @@ function WorkerApp({agency,worker,initialData,onLogout}){
               <p style={{fontSize:'0.875rem',color:B.muted}}>{roleLabel(wRole)} · {agency.name}</p>
             </div>
             <div style={{display:'grid',gridTemplateColumns:'repeat(2,1fr)',gap:'0.75rem'}}>
-              <StatCard label={t('my_total')} value={`${fmt(total)} دج`} ic="trending"/>
+              <StatCard label={t('my_total')} value={showCur(total)} ic="trending"/>
               <StatCard label={t('video_count')} value={myVideos.length} ic="film"/>
-              <StatCard label={t('total_paid')} value={`${fmt(paid)} دج`} ic="checkCircle"/>
-              <StatCard label={t('my_remaining')} value={`${fmt(total-paid)} دج`} ic="alertCircle"/>
+              <StatCard label={t('total_paid')} value={showCur(paid)} ic="checkCircle"/>
+              <StatCard label={t('my_remaining')} value={showCur(owed)} ic="alertCircle"/>
             </div>
             <div style={{borderRadius:'1.5rem',padding:'1.5rem',background:`linear-gradient(135deg,${roleColor(wRole)} 0%,${roleColor(wRole)}88 100%)`,color:'white',position:'relative',overflow:'hidden'}}>
               <div style={{position:'absolute',top:'-2rem',left:'-2rem',width:'7rem',height:'7rem',borderRadius:'50%',background:'rgba(255,255,255,0.08)'}}/>
               <div style={{position:'relative'}}>
                 <div style={{fontSize:'0.72rem',opacity:0.75,fontWeight:'600',letterSpacing:'0.05em',marginBottom:'0.4rem'}}>{t('this_month')} · {mv.length} {t('videos')}</div>
-                <div style={{fontSize:'2.2rem',fontWeight:'900',fontVariantNumeric:'tabular-nums',lineHeight:1}}>{fmt(mv.reduce((s,v)=>s+Number(v.price||0),0))}<span style={{fontSize:'0.9rem',opacity:0.65,marginRight:'0.3rem'}}> دج</span></div>
+                <div style={{fontSize:'1.9rem',fontWeight:'900',fontVariantNumeric:'tabular-nums',lineHeight:1.15}}>{showCur(sumByCur(mv,v=>v.price,data.settings))}</div>
               </div>
             </div>
             <div style={{background:B.card,borderRadius:'1rem',border:`1px solid ${B.border}`,overflow:'hidden'}}>
@@ -1578,7 +1583,7 @@ function WorkerApp({agency,worker,initialData,onLogout}){
                     </div>
                     <div style={{display:'flex',alignItems:'center',gap:'0.5rem',flexShrink:0}}>
                       <span style={{fontSize:'0.65rem',fontWeight:'700',padding:'0.15rem 0.5rem',borderRadius:'9999px',background:v.paid?B.successSoft:B.card2,color:v.paid?B.success:B.textSub}}>{v.paid?t('paid'):t('unpaid')}</span>
-                      <span style={{fontWeight:'700',fontSize:'0.875rem',color:B.text,fontVariantNumeric:'tabular-nums'}}>{fmt(v.price)}<span style={{fontSize:'0.65rem',color:B.muted}}> دج</span></span>
+                      <span style={{fontWeight:'700',fontSize:'0.875rem',color:B.text,fontVariantNumeric:'tabular-nums'}}>{fmt(v.price)}<span style={{fontSize:'0.62rem',color:B.muted}}> {curSym(v.currency||curBase(data.settings))}</span></span>
                     </div>
                   </div>
                 );
@@ -1597,20 +1602,30 @@ function WorkerApp({agency,worker,initialData,onLogout}){
 
 // ─── AGENCY DASHBOARD ─────────────────────────────────────
 function AgencyDash({data,setTab,agency,solo}){
+  const st=data.settings;
   const stats=useMemo(()=>{
-    const tot=data.videos.reduce((s,v)=>s+Number(v.price||0),0);
-    const pd=data.videos.filter(v=>v.paid).reduce((s,v)=>s+Number(v.price||0),0);
+    const base=curBase(st);
+    const cur=v=>v.currency||base;
+    const tot={},pd={},owed={},mTot={};
     const ms=new Date();ms.setDate(1);ms.setHours(0,0,0,0);
-    const mv=data.videos.filter(v=>new Date(v.date)>=ms);
+    let mCnt=0;
     const be={};
     data.videos.forEach(v=>{
-      if(!be[v.editorId])be[v.editorId]={total:0,owed:0,count:0};
-      be[v.editorId].total+=Number(v.price||0);be[v.editorId].count++;
-      if(!v.paid)be[v.editorId].owed+=Number(v.price||0);
+      const c=cur(v),p=Number(v.price||0);
+      addCurMap(tot,c,p);
+      v.paid?addCurMap(pd,c,p):addCurMap(owed,c,p);
+      if(new Date(v.date)>=ms){addCurMap(mTot,c,p);mCnt++;}
+      if(!be[v.editorId])be[v.editorId]={count:0,total:{},owed:{}};
+      be[v.editorId].count++; addCurMap(be[v.editorId].total,c,p);
+      if(!v.paid)addCurMap(be[v.editorId].owed,c,p);
     });
-    return{tot,pd,owed:tot-pd,mTot:mv.reduce((s,v)=>s+Number(v.price||0),0),mCnt:mv.length,
-      edRows:data.editors.map(e=>({...e,...(be[e.id]||{total:0,owed:0,count:0})})).sort((a,b)=>b.owed-a.owed)};
-  },[data]);
+    // editors ranked by what they are owed, measured in the base currency
+    const owedBase=m=>Object.keys(m).reduce((n,c)=>n+toBase(m[c],c,st),0);
+    return{tot,pd,owed,mTot,mCnt,
+      edRows:data.editors.map(e=>({...e,...(be[e.id]||{count:0,total:{},owed:{}})}))
+        .sort((a,b)=>owedBase(b.owed)-owedBase(a.owed))};
+  },[data,st]);
+
   const eMap=Object.fromEntries(data.editors.map(e=>[e.id,e.name]));
   const cMap=Object.fromEntries(data.clients.map(c=>[c.id,c.name]));
 
@@ -1640,17 +1655,17 @@ function AgencyDash({data,setTab,agency,solo}){
         <div style={{position:'absolute',bottom:'-2rem',left:'-1.5rem',width:'7rem',height:'7rem',borderRadius:'50%',background:'radial-gradient(circle,rgba(255,255,255,0.08),transparent 70%)'}} className="floaty"/>
         <div style={{position:'relative'}}>
           <div style={{fontSize:'0.72rem',opacity:0.7,fontWeight:'600',letterSpacing:'0.05em',marginBottom:'0.4rem'}}>{t('this_month')} · {stats.mCnt} {t('videos')}</div>
-          <div style={{fontSize:'2.4rem',fontWeight:'900',fontVariantNumeric:'tabular-nums',lineHeight:1,marginBottom:'0.25rem'}}>{fmt(stats.mTot)}<span style={{fontSize:'1rem',opacity:0.6,marginRight:'0.3rem'}}>دج</span></div>
+          <div style={{fontSize:Object.keys(stats.mTot).length>1?'1.5rem':'2.4rem',fontWeight:'900',fontVariantNumeric:'tabular-nums',lineHeight:1.15,marginBottom:'0.25rem'}}>{showCur(stats.mTot)}</div>
           <div style={{display:'flex',gap:'1rem',marginTop:'0.75rem',fontSize:'0.72rem',opacity:0.8}}>
-            <span>✓ {fmt(stats.pd)} دج</span>
-            <span>⏳ {fmt(stats.owed)} دج</span>
+            <span>✓ {showCur(stats.pd)}</span>
+            <span>⏳ {showCur(stats.owed)}</span>
           </div>
         </div>
       </div>
       <div style={{display:'grid',gridTemplateColumns:'repeat(2,1fr)',gap:'0.65rem'}}>
-        <StatCard label={t('total')} value={`${fmt(stats.tot)} دج`} ic="trending" color={B.accent}/>
-        <StatCard label={t('total_paid')} value={`${fmt(stats.pd)} دج`} ic="checkCircle" color={B.success}/>
-        <StatCard label={t('remaining')} value={`${fmt(stats.owed)} دج`} ic="clock" color={B.textSub}/>
+        <StatCard label={t('total')} value={showCur(stats.tot)} ic="trending" color={B.accent}/>
+        <StatCard label={t('total_paid')} value={showCur(stats.pd)} ic="checkCircle" color={B.success}/>
+        <StatCard label={t('remaining')} value={showCur(stats.owed)} ic="clock" color={B.textSub}/>
         <StatCard label={t('video_count')} value={data.videos.length} ic="film" color={B.purple}/>
       </div>
       {/* quick pulse on the two things that need action */}
@@ -1669,7 +1684,8 @@ function AgencyDash({data,setTab,agency,solo}){
               <span style={{fontSize:'0.68rem',color:B.textSub,fontWeight:'600'}}>{t('awaiting')}</span>
             </div>
             <div style={{fontSize:'1.4rem',fontWeight:'900',color:B.text,fontVariantNumeric:'tabular-nums'}}>
-              {fmt(data.invoices.filter(i=>i.status!=='paid').reduce((s,i)=>s+invTotal(i,data.videos).total,0))}<span style={{fontSize:'0.65rem',color:B.muted}}> {CUR}</span>
+              {(()=>{const m={};data.invoices.filter(i=>i.status!=='paid').forEach(i=>{const c=i.currency||curBase(data.settings);m[c]=(m[c]||0)+invTotals(i,data.videos).ttc;});
+                const k=Object.keys(m);return k.length?k.map(c=>money(m[c],c)).join(' · '):money(0,curBase(data.settings));})()}
             </div>
           </button>
         </div>
@@ -1691,12 +1707,12 @@ function AgencyDash({data,setTab,agency,solo}){
                   <span style={{fontWeight:'700',color:B.text,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',fontSize:'0.875rem'}}>{e.name}</span>
                   <span style={{fontSize:'0.58rem',fontWeight:'700',padding:'0.1rem 0.4rem',borderRadius:'9999px',background:roleBg(e.role||'editor'),color:rc,flexShrink:0}}>{roleLabel(e.role||'editor')}</span>
                 </div>
-                <div style={{fontSize:'0.68rem',color:B.muted,marginTop:'1px'}}>{e.count} {t('videos')} · {fmt(e.total)} دج</div>
+                <div style={{fontSize:'0.68rem',color:B.muted,marginTop:'1px'}}>{e.count} {t('videos')} · {showCur(e.total)}</div>
               </div>
             </div>
             <div style={{textAlign:'left',flexShrink:0}}>
               <div style={{fontSize:'0.62rem',color:B.muted,marginBottom:'1px'}}>{t('remaining')}</div>
-              <div style={{fontWeight:'900',color:e.owed>0?B.accent:B.muted,fontVariantNumeric:'tabular-nums',fontSize:'0.95rem'}}>{fmt(e.owed)}<span style={{fontSize:'0.6rem'}}> دج</span></div>
+              <div style={{fontWeight:'900',color:Object.keys(e.owed).length?B.accent:B.muted,fontVariantNumeric:'tabular-nums',fontSize:'0.9rem'}}>{showCur(e.owed)}</div>
             </div>
           </div>
         )})}
@@ -1715,7 +1731,7 @@ function AgencyDash({data,setTab,agency,solo}){
             </div>
             <div style={{display:'flex',alignItems:'center',gap:'0.5rem',flexShrink:0}}>
               <span style={{fontSize:'0.62rem',fontWeight:'700',padding:'0.15rem 0.5rem',borderRadius:'9999px',background:v.paid?B.successSoft:B.card2,color:v.paid?B.success:B.textSub}}>{v.paid?t('paid'):t('unpaid')}</span>
-              <span style={{fontWeight:'800',fontSize:'0.875rem',color:B.text,fontVariantNumeric:'tabular-nums'}}>{fmt(v.price)}<span style={{fontSize:'0.62rem',color:B.muted}}> دج</span></span>
+              <span style={{fontWeight:'800',fontSize:'0.875rem',color:B.text,fontVariantNumeric:'tabular-nums'}}>{fmt(v.price)}<span style={{fontSize:'0.62rem',color:B.muted}}> {curSym(v.currency||curBase(data.settings))}</span></span>
             </div>
           </div>
         ))}
@@ -1736,8 +1752,8 @@ function VideosTab({data,addVideo,updVideo,delVideo,togglePaid,solo,selfName}){
     if(search){const q=search.toLowerCase();if(!(v.title||'').toLowerCase().includes(q)&&!(eMap[v.editorId]||'').toLowerCase().includes(q)&&!(cMap[v.clientId]||'').toLowerCase().includes(q))return false;}
     return true;
   }),[data.videos,fE,fC,fS,search,eMap,cMap]);
-  const tot=filt.reduce((s,v)=>s+Number(v.price||0),0);
-  const owed=filt.filter(v=>!v.paid).reduce((s,v)=>s+Number(v.price||0),0);
+  const tot=sumByCur(filt,v=>v.price,data.settings);
+  const owed=sumByCur(filt.filter(v=>!v.paid),v=>v.price,data.settings);
   const SI={width:'100%',padding:'0.5rem 0.75rem',background:B.inputBg,border:`1px solid ${B.border}`,borderRadius:'0.75rem',outline:'none',fontSize:'0.8rem',color:B.text};
   if(data.clients.length===0)return<div style={{background:B.card,border:`1px solid ${B.border}`,borderRadius:'1.25rem',padding:'2.5rem 1.5rem',textAlign:'center',fontSize:'0.875rem',color:B.textSub}}>{t('no_data')}</div>;
   return(
@@ -1745,7 +1761,7 @@ function VideosTab({data,addVideo,updVideo,delVideo,togglePaid,solo,selfName}){
       <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',gap:'0.75rem'}}>
         <div>
           <h2 style={{fontSize:'1.75rem',fontWeight:'900',color:B.text}}>{t('videos')}</h2>
-          <p style={{fontSize:'0.75rem',color:B.muted,fontVariantNumeric:'tabular-nums'}}>{filt.length} · {fmt(tot)} دج · {fmt(owed)} دج</p>
+          <p style={{fontSize:'0.75rem',color:B.muted,fontVariantNumeric:'tabular-nums'}}>{filt.length} · {showCur(tot)} · {showCur(owed)}</p>
         </div>
         <button onClick={()=>{setEditing(null);setShowForm(true);}} style={{display:'flex',alignItems:'center',gap:'0.4rem',padding:'0.65rem 1.1rem',borderRadius:'9999px',background:`linear-gradient(135deg,${B.accent},${ACC2})`,color:'white',fontWeight:'700',border:'none',cursor:'pointer',fontSize:'0.8rem',whiteSpace:'nowrap',boxShadow:`0 4px 16px ${B.accent}44`}}>
           <Ic n="plus" size={15} color="white"/>{t('new_video')}
@@ -1782,7 +1798,7 @@ function VideosTab({data,addVideo,updVideo,delVideo,togglePaid,solo,selfName}){
                 </div>
               </div>
               <div style={{display:'flex',alignItems:'center',gap:'0.2rem',flexShrink:0}}>
-                <span style={{fontWeight:'900',fontSize:'0.95rem',color:B.text,fontVariantNumeric:'tabular-nums'}}>{fmt(v.price)}<span style={{fontSize:'0.6rem',color:B.muted}}> دج</span></span>
+                <span style={{fontWeight:'900',fontSize:'0.95rem',color:B.text,fontVariantNumeric:'tabular-nums'}}>{fmt(v.price)}<span style={{fontSize:'0.62rem',color:B.muted}}> {curSym(v.currency||curBase(data.settings))}</span></span>
                 <button onClick={()=>{setEditing(v);setShowForm(true);}} style={{padding:'0.4rem',border:'none',background:'none',cursor:'pointer',color:B.muted,display:'flex'}}><Ic n="pencil" size={13}/></button>
                 <button onClick={()=>delVideo(v.id)} style={{padding:'0.4rem',border:'none',background:'none',cursor:'pointer',display:'flex'}}><Ic n="trash" size={13} color={B.danger}/></button>
               </div>
@@ -1790,7 +1806,7 @@ function VideosTab({data,addVideo,updVideo,delVideo,togglePaid,solo,selfName}){
           </div>
         ))}
       </div>
-      {showForm&&<VideoForm editors={solo?[{id:'self',name:selfName,role:'editor'}]:data.editors} clients={data.clients} initial={editing} lockedEditor={solo} onClose={()=>{setShowForm(false);setEditing(null);}} onSave={f=>{if(editing)updVideo(editing.id,f);else addVideo(solo?{...f,editorId:'self'}:f);setShowForm(false);setEditing(null);}}/>}
+      {showForm&&<VideoForm editors={solo?[{id:'self',name:selfName,role:'editor'}]:data.editors} clients={data.clients} initial={editing} lockedEditor={solo} settings={data.settings} onClose={()=>{setShowForm(false);setEditing(null);}} onSave={f=>{if(editing)updVideo(editing.id,f);else addVideo(solo?{...f,editorId:'self'}:f);setShowForm(false);setEditing(null);}}/>}
     </div>
   );
 }
@@ -1804,7 +1820,7 @@ function WorkerVideosTab({data,worker,myVideos,addVideo,updVideo,delVideo}){
     if(search&&!(v.title||'').toLowerCase().includes(search.toLowerCase())&&!(cMap[v.clientId]||'').toLowerCase().includes(search.toLowerCase()))return false;
     return true;
   }),[myVideos,fS,search,cMap]);
-  const tot=filt.reduce((s,v)=>s+Number(v.price||0),0);
+  const tot=sumByCur(filt,v=>v.price,data.settings);
   const SI={width:'100%',padding:'0.5rem 0.75rem',background:B.inputBg,border:`1px solid ${B.border}`,borderRadius:'0.75rem',outline:'none',fontSize:'0.8rem',color:B.text};
   if(data.clients.length===0)return<div style={{background:B.card,border:`1px solid ${B.border}`,borderRadius:'1.25rem',padding:'2.5rem 1.5rem',textAlign:'center',fontSize:'0.875rem',color:B.textSub}}>{t('no_clients')}</div>;
   return(
@@ -1812,7 +1828,7 @@ function WorkerVideosTab({data,worker,myVideos,addVideo,updVideo,delVideo}){
       <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',gap:'0.75rem'}}>
         <div>
           <h2 style={{fontSize:'1.75rem',fontWeight:'900',color:B.text}}>{t('my_videos')}</h2>
-          <p style={{fontSize:'0.75rem',color:B.muted,fontVariantNumeric:'tabular-nums'}}>{filt.length} · {fmt(tot)} دج</p>
+          <p style={{fontSize:'0.75rem',color:B.muted,fontVariantNumeric:'tabular-nums'}}>{filt.length} · {showCur(tot)}</p>
         </div>
         <button onClick={()=>{setEditing(null);setShowForm(true);}} style={{display:'flex',alignItems:'center',gap:'0.4rem',padding:'0.625rem 1rem',borderRadius:'9999px',background:B.accent,color:'white',fontWeight:'700',border:'none',cursor:'pointer',fontSize:'0.8rem',whiteSpace:'nowrap'}}>
           <Ic n="plus" size={16} color="white"/>{t('new_video')}
@@ -1842,7 +1858,7 @@ function WorkerVideosTab({data,worker,myVideos,addVideo,updVideo,delVideo}){
                 <div style={{fontSize:'0.7rem',color:B.muted,display:'flex',gap:'0.5rem'}}><span>{cMap[v.clientId]||'—'}</span><span>{fmtD(v.date)}</span></div>
               </div>
               <div style={{display:'flex',alignItems:'center',gap:'0.25rem',flexShrink:0}}>
-                <span style={{fontWeight:'900',fontSize:'1rem',color:B.text,fontVariantNumeric:'tabular-nums'}}>{fmt(v.price)}<span style={{fontSize:'0.65rem',color:B.muted}}> دج</span></span>
+                <span style={{fontWeight:'900',fontSize:'1rem',color:B.text,fontVariantNumeric:'tabular-nums'}}>{fmt(v.price)}<span style={{fontSize:'0.62rem',color:B.muted}}> {curSym(v.currency||curBase(data.settings))}</span></span>
                 {!v.paid&&<>
                   <button onClick={()=>{setEditing(v);setShowForm(true);}} style={{padding:'0.4rem',border:'none',background:'none',cursor:'pointer',color:B.muted,display:'flex'}}><Ic n="pencil" size={14}/></button>
                   <button onClick={()=>delVideo(v.id)} style={{padding:'0.4rem',border:'none',background:'none',cursor:'pointer',color:B.danger,display:'flex'}}><Ic n="trash" size={14} color={B.danger}/></button>
@@ -1852,13 +1868,13 @@ function WorkerVideosTab({data,worker,myVideos,addVideo,updVideo,delVideo}){
           </div>
         ))}
       </div>
-      {showForm&&<VideoForm editors={[worker]} clients={data.clients} initial={editing} lockedEditor={true} onClose={()=>{setShowForm(false);setEditing(null);}} onSave={f=>{if(editing)updVideo(editing.id,f);else addVideo(f);setShowForm(false);setEditing(null);}}/>}
+      {showForm&&<VideoForm editors={[worker]} clients={data.clients} initial={editing} lockedEditor={true} settings={data.settings} onClose={()=>{setShowForm(false);setEditing(null);}} onSave={f=>{if(editing)updVideo(editing.id,f);else addVideo(f);setShowForm(false);setEditing(null);}}/>}
     </div>
   );
 }
 
-function VideoForm({editors,clients,initial,lockedEditor,onClose,onSave}){
-  const[f,setF]=useState(initial||{title:'',editorId:editors[0]?.id||'',clientId:clients[0]?.id||'',date:today(),price:'',paid:false});
+function VideoForm({editors,clients,initial,lockedEditor,settings,onClose,onSave}){
+  const[f,setF]=useState(initial||{title:'',editorId:editors[0]?.id||'',clientId:clients[0]?.id||'',date:today(),price:'',currency:curBase(settings),paid:false});
   const submit=()=>{
     if(!f.editorId||!f.clientId)return alert(t('err_select'));
     if(!f.price||Number(f.price)<=0)return alert(t('err_price'));
@@ -1878,7 +1894,14 @@ function VideoForm({editors,clients,initial,lockedEditor,onClose,onSave}){
         )}
         <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0.75rem'}}>
           <Field label={t('date')}><input type="date" value={f.date} onChange={e=>setF({...f,date:e.target.value})} style={INP}/></Field>
-          <Field label={t('price')}><input type="number" inputMode="numeric" value={f.price} onChange={e=>setF({...f,price:e.target.value})} placeholder="0" style={{...INP,fontWeight:'700'}}/></Field>
+          <Field label={t('price')}>
+            <div style={{display:'flex',gap:'0.4rem'}}>
+              <input type="number" inputMode="decimal" value={f.price} onChange={e=>setF({...f,price:e.target.value})} placeholder="0" style={{...INP,fontWeight:'700',flex:1}}/>
+              <select value={f.currency||curBase(settings)} onChange={e=>setF({...f,currency:e.target.value})} style={{...INP,width:'5.5rem',padding:'0.8rem 0.4rem'}}>
+                {curList(settings).map(c=><option key={c.code} value={c.code}>{c.code}</option>)}
+              </select>
+            </div>
+          </Field>
         </div>
         {initial&&!lockedEditor&&(
           <label style={{display:'flex',alignItems:'center',gap:'0.5rem',cursor:'pointer',padding:'0.75rem',background:B.inputBg,borderRadius:'0.75rem',border:`1px solid ${B.border}`}}>
@@ -2098,21 +2121,39 @@ function SettingsTab({data,saveSettings,showToast}){
 }
 
 // ─── INVOICES ─────────────────────────────────────────────
-const CUR=_lang==='fr'?'DA':'دج';
-const invTotal=(inv,vids)=>{
-  const map=Object.fromEntries(vids.map(v=>[v.id,v]));
-  const sub=(inv.videoIds||[]).reduce((s,id)=>s+Number(map[id]?.price||0),0);
-  return{sub,total:Math.max(0,sub-Number(inv.discount||0))};
+// A line is the unit of billing. Older invoices stored videoIds only, so they
+// are projected into lines on read and keep working untouched.
+const invLines=(inv,videos)=>{
+  if(inv.lines?.length)return inv.lines;
+  const map=Object.fromEntries((videos||[]).map(v=>[v.id,v]));
+  return (inv.videoIds||[]).map((id,k)=>{
+    const v=map[id]; if(!v)return null;
+    return{id:v.id,ref:String(k+1),desc:v.title||'—',qty:1,pu:Number(v.price||0),videoId:v.id,date:v.date};
+  }).filter(Boolean);
 };
+const invTotals=(inv,videos)=>{
+  const lines=invLines(inv,videos);
+  const gross=lines.reduce((s,l)=>s+Number(l.qty||0)*Number(l.pu||0),0);
+  const ht=Math.max(0,gross-Number(inv.discount||0));
+  const vat=ht*(Number(inv.vat||0)/100);
+  return{lines,gross,ht,vat,ttc:ht+vat};
+};
+const invCur=(inv,st)=>inv.currency||curBase(st);
 
-// Printable document. Ink-on-paper regardless of the app theme.
+// Printable document — ink on paper, independent of the app theme.
 function InvoiceSheet({inv,data,agency,onClose}){
-  const client=data.clients.find(c=>c.id===inv.clientId);
-  const map=Object.fromEntries(data.videos.map(v=>[v.id,v]));
-  const rows=(inv.videoIds||[]).map(id=>map[id]).filter(Boolean);
-  const{sub,total}=invTotal(inv,data.videos);
+  const st=data.settings, C=st.company;
+  const client=data.clients.find(c=>c.id===inv.clientId)||{};
+  const{lines,ht,vat,ttc}=invTotals(inv,data.videos);
+  const cur=invCur(inv,st);
   const rtl=_lang==='ar';
-  const cell={padding:'0.7rem 0.5rem',fontSize:'0.82rem'};
+  const start=rtl?'right':'left', end=rtl?'left':'right';
+  const ink=st.theme.accent||'#101223';
+  const cell={padding:'0.55rem 0.5rem',fontSize:'0.8rem'};
+  const lab={fontSize:'0.58rem',letterSpacing:'0.14em',textTransform:'uppercase',color:'#8a8fa8',fontWeight:'700'};
+  const seller=[[t('tax_id'),C.nif],[t('stat_id'),C.nis],[t('rc'),C.rc],[t('art'),C.art],[t('rip'),C.rip]].filter(x=>x[1]);
+  const buyer=[[t('tax_id'),client.nif],[t('stat_id'),client.nis],[t('rc'),client.rc]].filter(x=>x[1]);
+
   return(
     <div className="inv-sheet" style={{position:'fixed',inset:0,zIndex:60,background:_theme==='dark'?'rgba(0,0,6,0.8)':'rgba(20,22,40,0.5)',backdropFilter:'blur(6px)',overflowY:'auto',padding:'1.25rem 1rem 4rem'}}>
       <div className="no-print" style={{display:'flex',gap:'0.5rem',justifyContent:'center',marginBottom:'1rem',position:'sticky',top:0,zIndex:2}}>
@@ -2121,70 +2162,108 @@ function InvoiceSheet({inv,data,agency,onClose}){
         </button>
         <button onClick={onClose} style={{padding:'0.7rem 1.1rem',borderRadius:'9999px',background:B.card,color:B.text,fontWeight:'700',border:`1px solid ${B.border}`,cursor:'pointer',fontSize:'0.82rem'}}>{t('cancel')}</button>
       </div>
-      <div className="inv-paper" style={{background:'#fff',color:'#101223',maxWidth:'46rem',margin:'0 auto',borderRadius:'0.5rem',boxShadow:'0 24px 70px rgba(0,0,0,0.4)',overflow:'hidden'}}>
+
+      <div className="inv-paper" style={{background:'#fff',color:'#101223',maxWidth:'48rem',margin:'0 auto',borderRadius:'0.5rem',boxShadow:'0 24px 70px rgba(0,0,0,0.4)',overflow:'hidden'}}>
         {/* masthead */}
-        <div className="inv-ink" style={{background:'#101223',color:'#fff',padding:'1.6rem 1.75rem',display:'flex',justifyContent:'space-between',alignItems:'flex-start',gap:'1rem'}}>
-          <div>
-            <div style={{fontSize:'1.35rem',fontWeight:'900',letterSpacing:'-0.01em'}}>{agency.name}</div>
-            {agency.phone&&<div style={{fontSize:'0.72rem',opacity:0.65,marginTop:'2px'}}>{agency.phone}</div>}
-            <div style={{fontSize:'0.72rem',opacity:0.65}}>{agency.email}</div>
+        <div className="inv-ink" style={{background:ink,color:'#fff',padding:'1.5rem 1.75rem',display:'flex',justifyContent:'space-between',alignItems:'flex-start',gap:'1rem'}}>
+          <div style={{display:'flex',alignItems:'center',gap:'0.9rem',minWidth:0}}>
+            {C.logo&&<img src={C.logo} alt="" style={{width:'3.2rem',height:'3.2rem',objectFit:'contain',background:'#fff',borderRadius:'0.5rem',padding:'0.25rem',flexShrink:0}}/>}
+            <div style={{minWidth:0}}>
+              <div style={{fontSize:'1.2rem',fontWeight:'900'}}>{C.name||agency.name}</div>
+              {C.address&&<div style={{fontSize:'0.68rem',opacity:0.7,whiteSpace:'pre-wrap'}}>{C.address}</div>}
+              <div style={{fontSize:'0.68rem',opacity:0.7}}>
+                {[C.phone,C.email||agency.email].filter(Boolean).join(' · ')}
+              </div>
+            </div>
           </div>
-          <div style={{textAlign:rtl?'left':'right'}}>
-            <div style={{fontSize:'0.62rem',letterSpacing:'0.22em',textTransform:'uppercase',opacity:0.55}}>{t('invoice')}</div>
-            <div style={{fontSize:'1.15rem',fontWeight:'800',fontVariantNumeric:'tabular-nums',marginTop:'2px'}}>{inv.number}</div>
+          <div style={{textAlign:end,flexShrink:0}}>
+            <div style={{...lab,color:'rgba(255,255,255,0.55)'}}>{t('invoice')}</div>
+            <div style={{fontSize:'1.1rem',fontWeight:'800',fontVariantNumeric:'tabular-nums'}}>{inv.number}</div>
           </div>
         </div>
-        <div style={{padding:'1.75rem'}}>
-          {/* parties + dates */}
-          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'1rem',marginBottom:'1.75rem'}}>
+
+        <div style={{padding:'1.5rem 1.75rem'}}>
+          {/* fiscal identity of both parties */}
+          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'1.5rem',marginBottom:'1.25rem'}}>
             <div>
-              <div style={{fontSize:'0.6rem',letterSpacing:'0.18em',textTransform:'uppercase',color:'#8a8fa8',marginBottom:'0.3rem'}}>{t('billed_to')}</div>
-              <div style={{fontWeight:'800',fontSize:'1rem'}}>{client?.name||'—'}</div>
+              <div style={{...lab,marginBottom:'0.35rem'}}>{t('issued_by')}</div>
+              <div style={{fontWeight:'800',fontSize:'0.92rem'}}>{C.name||agency.name}</div>
+              {seller.map(([k,v])=><div key={k} style={{fontSize:'0.68rem',color:'#5c6185',fontVariantNumeric:'tabular-nums'}}>{k} : {v}</div>)}
             </div>
-            <div style={{textAlign:rtl?'left':'right'}}>
-              <div style={{fontSize:'0.72rem',color:'#8a8fa8'}}>{t('issue_date')}: <span style={{color:'#101223',fontWeight:'700',fontVariantNumeric:'tabular-nums'}}>{fmtD(inv.date)}</span></div>
-              {inv.due&&<div style={{fontSize:'0.72rem',color:'#8a8fa8',marginTop:'2px'}}>{t('due_date')}: <span style={{color:'#101223',fontWeight:'700',fontVariantNumeric:'tabular-nums'}}>{fmtD(inv.due)}</span></div>}
+            <div>
+              <div style={{...lab,marginBottom:'0.35rem'}}>{t('billed_to')}</div>
+              <div style={{fontWeight:'800',fontSize:'0.92rem'}}>{client.name||'—'}</div>
+              {client.address&&<div style={{fontSize:'0.68rem',color:'#5c6185',whiteSpace:'pre-wrap'}}>{client.address}</div>}
+              {buyer.map(([k,v])=><div key={k} style={{fontSize:'0.68rem',color:'#5c6185',fontVariantNumeric:'tabular-nums'}}>{k} : {v}</div>)}
             </div>
           </div>
-          {/* line items */}
+
+          {/* headline strip */}
+          <div className="inv-rule" style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:'1px',background:'#e6e8f0',border:'1px solid #e6e8f0',borderRadius:'0.4rem',overflow:'hidden',marginBottom:'1.25rem'}}>
+            {[[t('invoice_no'),inv.number],[t('period'),inv.period||fmtD(inv.date)],[t('amount_ttc'),money(ttc,cur)]].map(([k,v],n)=>(
+              <div key={k} style={{background:'#fff',padding:'0.6rem 0.7rem',textAlign:'center'}}>
+                <div style={{...lab,fontSize:'0.52rem'}}>{k}</div>
+                <div style={{fontWeight:n===2?'900':'700',fontSize:n===2?'0.95rem':'0.82rem',fontVariantNumeric:'tabular-nums',marginTop:'2px',color:n===2?ink:'#101223'}}>{v}</div>
+              </div>
+            ))}
+          </div>
+
+          {/* lines */}
           <table style={{width:'100%',borderCollapse:'collapse'}}>
             <thead>
-              <tr className="inv-rule" style={{borderBottom:'2px solid #101223'}}>
-                <th style={{...cell,textAlign:rtl?'right':'left',fontSize:'0.6rem',letterSpacing:'0.16em',textTransform:'uppercase',color:'#8a8fa8',fontWeight:'700'}}>{t('video_title')}</th>
-                <th style={{...cell,textAlign:'center',fontSize:'0.6rem',letterSpacing:'0.16em',textTransform:'uppercase',color:'#8a8fa8',fontWeight:'700',width:'7rem'}}>{t('date')}</th>
-                <th style={{...cell,textAlign:rtl?'left':'right',fontSize:'0.6rem',letterSpacing:'0.16em',textTransform:'uppercase',color:'#8a8fa8',fontWeight:'700',width:'8rem'}}>{t('price')}</th>
+              <tr className="inv-rule" style={{borderBottom:`2px solid ${ink}`}}>
+                <th style={{...cell,...lab,textAlign:start,width:'2.5rem'}}>{t('ref')}</th>
+                <th style={{...cell,...lab,textAlign:start}}>{t('designation')}</th>
+                <th style={{...cell,...lab,textAlign:'center',width:'3.5rem'}}>{t('qty')}</th>
+                <th style={{...cell,...lab,textAlign:end,width:'6rem'}}>{t('unit_price')}</th>
+                <th style={{...cell,...lab,textAlign:end,width:'7rem'}}>{t('line_total')}</th>
               </tr>
             </thead>
             <tbody>
-              {rows.map(v=>(
-                <tr key={v.id} className="inv-rule" style={{borderBottom:'1px solid #e6e8f0'}}>
-                  <td style={{...cell,textAlign:rtl?'right':'left',fontWeight:'600'}}>{v.title||'—'}</td>
-                  <td style={{...cell,textAlign:'center',color:'#8a8fa8',fontVariantNumeric:'tabular-nums',fontSize:'0.75rem'}}>{fmtD(v.date)}</td>
-                  <td style={{...cell,textAlign:rtl?'left':'right',fontWeight:'700',fontVariantNumeric:'tabular-nums'}}>{fmt(v.price)}</td>
+              {lines.map((l,n)=>(
+                <tr key={l.id||n} className="inv-rule" style={{borderBottom:'1px solid #e6e8f0'}}>
+                  <td style={{...cell,textAlign:start,color:'#8a8fa8',fontVariantNumeric:'tabular-nums'}}>{l.ref||n+1}</td>
+                  <td style={{...cell,textAlign:start,fontWeight:'600'}}>{l.desc||'—'}</td>
+                  <td style={{...cell,textAlign:'center',fontVariantNumeric:'tabular-nums'}}>{l.qty}</td>
+                  <td style={{...cell,textAlign:end,fontVariantNumeric:'tabular-nums'}}>{fmt(l.pu)}</td>
+                  <td style={{...cell,textAlign:end,fontWeight:'700',fontVariantNumeric:'tabular-nums'}}>{fmt(Number(l.qty||0)*Number(l.pu||0))}</td>
                 </tr>
               ))}
             </tbody>
           </table>
+
           {/* totals */}
-          <div style={{display:'flex',justifyContent:rtl?'flex-start':'flex-end',marginTop:'1.25rem'}}>
-            <div style={{minWidth:'15rem'}}>
-              <div style={{display:'flex',justifyContent:'space-between',padding:'0.35rem 0.5rem',fontSize:'0.8rem',color:'#5c6185'}}>
-                <span>{t('subtotal')}</span><span style={{fontVariantNumeric:'tabular-nums'}}>{fmt(sub)} {CUR}</span>
-              </div>
+          <div style={{display:'flex',justifyContent:rtl?'flex-start':'flex-end',marginTop:'1.1rem'}}>
+            <div style={{minWidth:'16rem'}}>
               {Number(inv.discount||0)>0&&(
-                <div style={{display:'flex',justifyContent:'space-between',padding:'0.35rem 0.5rem',fontSize:'0.8rem',color:'#5c6185'}}>
-                  <span>{t('discount')}</span><span style={{fontVariantNumeric:'tabular-nums'}}>− {fmt(inv.discount)} {CUR}</span>
+                <div style={{display:'flex',justifyContent:'space-between',padding:'0.3rem 0.5rem',fontSize:'0.78rem',color:'#5c6185'}}>
+                  <span>{t('discount')}</span><span style={{fontVariantNumeric:'tabular-nums'}}>− {fmt(inv.discount)}</span>
                 </div>
               )}
-              <div className="inv-rule" style={{display:'flex',justifyContent:'space-between',padding:'0.7rem 0.5rem',borderTop:'2px solid #101223',marginTop:'0.35rem',fontWeight:'900',fontSize:'1.05rem'}}>
-                <span>{t('grand_total')}</span><span style={{fontVariantNumeric:'tabular-nums'}}>{fmt(total)} {CUR}</span>
+              <div style={{display:'flex',justifyContent:'space-between',padding:'0.3rem 0.5rem',fontSize:'0.78rem',color:'#5c6185'}}>
+                <span>{t('amount_ht')}</span><span style={{fontVariantNumeric:'tabular-nums'}}>{money(ht,cur)}</span>
+              </div>
+              <div style={{display:'flex',justifyContent:'space-between',padding:'0.3rem 0.5rem',fontSize:'0.78rem',color:'#5c6185'}}>
+                <span>{t('amount_vat')} {Number(inv.vat||0)>0?`(${inv.vat}%)`:''}</span>
+                <span style={{fontVariantNumeric:'tabular-nums'}}>{money(vat,cur)}</span>
+              </div>
+              <div className="inv-rule" style={{display:'flex',justifyContent:'space-between',padding:'0.65rem 0.5rem',borderTop:`2px solid ${ink}`,marginTop:'0.3rem',fontWeight:'900',fontSize:'1rem'}}>
+                <span>{t('amount_ttc')}</span><span style={{fontVariantNumeric:'tabular-nums'}}>{money(ttc,cur)}</span>
               </div>
             </div>
           </div>
-          {inv.notes&&<div style={{marginTop:'1.5rem',fontSize:'0.75rem',color:'#5c6185',lineHeight:1.7,whiteSpace:'pre-wrap'}}>{inv.notes}</div>}
-          <div style={{marginTop:'2rem',paddingTop:'0.9rem',borderTop:'1px solid #e6e8f0',fontSize:'0.62rem',color:'#a3a8c5',display:'flex',justifyContent:'space-between',gap:'1rem'}}>
-            <span>{t('issued_by')} {agency.name}</span>
-            <span style={{fontVariantNumeric:'tabular-nums'}}>{inv.number}</span>
+
+          {/* footer facts */}
+          <div style={{marginTop:'1.5rem',display:'flex',flexDirection:'column',gap:'0.3rem',fontSize:'0.74rem',color:'#5c6185'}}>
+            {(inv.object||st.invoice.object)&&<div><b style={{color:'#101223'}}>{t('invoice_object')} :</b> {inv.object||st.invoice.object}</div>}
+            {(inv.paymentMode||st.invoice.paymentMode)&&<div><b style={{color:'#101223'}}>{t('payment_mode')} :</b> {inv.paymentMode||st.invoice.paymentMode}</div>}
+            {inv.due&&<div><b style={{color:'#101223'}}>{t('due_date')} :</b> {fmtD(inv.due)}</div>}
+            {inv.notes&&<div style={{whiteSpace:'pre-wrap',marginTop:'0.3rem'}}>{inv.notes}</div>}
+          </div>
+
+          <div style={{marginTop:'1.75rem',paddingTop:'0.8rem',borderTop:'1px solid #e6e8f0',fontSize:'0.6rem',color:'#a3a8c5',display:'flex',justifyContent:'space-between',gap:'1rem'}}>
+            <span>{C.name||agency.name}</span>
+            <span style={{fontVariantNumeric:'tabular-nums'}}>{inv.number} · {fmtD(inv.date)}</span>
           </div>
         </div>
       </div>
@@ -2193,65 +2272,122 @@ function InvoiceSheet({inv,data,agency,onClose}){
 }
 
 function InvoiceForm({data,initial,onClose,onSave}){
-  const[f,setF]=useState(initial||{clientId:data.clients[0]?.id||'',videoIds:[],date:today(),due:'',discount:'',notes:''});
+  const st=data.settings;
+  const[f,setF]=useState(()=>initial?{...initial,lines:invLines(initial,data.videos)}:{
+    clientId:data.clients[0]?.id||'',lines:[],date:today(),due:'',period:'',
+    currency:curBase(st),vat:Number(st.invoice.vat||0),discount:'',
+    object:st.invoice.object||'',paymentMode:st.invoice.paymentMode||'',notes:''});
   const[err,setErr]=useState('');
-  // a video belongs to at most one invoice — hide the ones already billed elsewhere
+  const[pick,setPick]=useState(false);
+
+  // a video belongs to at most one invoice
   const billed=useMemo(()=>{
     const s=new Set();
-    data.invoices.forEach(i=>{if(!initial||i.id!==initial.id)(i.videoIds||[]).forEach(v=>s.add(v));});
+    data.invoices.forEach(i=>{if(!initial||i.id!==initial.id)invLines(i,data.videos).forEach(l=>l.videoId&&s.add(l.videoId));});
     return s;
-  },[data.invoices,initial]);
+  },[data.invoices,data.videos,initial]);
   const pool=useMemo(()=>data.videos.filter(v=>v.clientId===f.clientId&&!billed.has(v.id)),[data.videos,f.clientId,billed]);
-  const sel=new Set(f.videoIds);
-  const sub=pool.filter(v=>sel.has(v.id)).reduce((s,v)=>s+Number(v.price||0),0);
-  const total=Math.max(0,sub-Number(f.discount||0));
-  const toggle=id=>setF(p=>({...p,videoIds:p.videoIds.includes(id)?p.videoIds.filter(x=>x!==id):[...p.videoIds,id]}));
+  const taken=new Set(f.lines.filter(l=>l.videoId).map(l=>l.videoId));
+
+  const setLine=(id,k,v)=>setF(p=>({...p,lines:p.lines.map(l=>l.id===id?{...l,[k]:v}:l)}));
+  const delLine=id=>setF(p=>({...p,lines:p.lines.filter(l=>l.id!==id)}));
+  const addBlank=()=>setF(p=>({...p,lines:[...p.lines,{id:uid(),ref:String(p.lines.length+1),desc:'',qty:1,pu:''}]}));
+  const addVideo=v=>setF(p=>({...p,lines:[...p.lines,{id:uid(),ref:String(p.lines.length+1),desc:v.title||'—',qty:1,pu:Number(v.price||0),videoId:v.id,date:v.date}]}));
+
+  const gross=f.lines.reduce((s,l)=>s+Number(l.qty||0)*Number(l.pu||0),0);
+  const ht=Math.max(0,gross-Number(f.discount||0));
+  const vat=ht*(Number(f.vat||0)/100);
+  const cur=f.currency;
+
   const submit=()=>{
     if(!f.clientId)return setErr(t('err_no_client'));
-    if(!f.videoIds.length)return setErr(t('err_no_items'));
-    onSave({...f,discount:Number(f.discount||0),total});
+    if(!f.lines.length)return setErr(t('err_no_items'));
+    onSave({...f,discount:Number(f.discount||0),vat:Number(f.vat||0),
+      videoIds:f.lines.filter(l=>l.videoId).map(l=>l.videoId),
+      lines:f.lines.map(l=>({...l,qty:Number(l.qty||0),pu:Number(l.pu||0)}))});
   };
+  const mini={...INP,padding:'0.45rem 0.55rem',fontSize:'0.78rem'};
+
   return(
     <Modal onClose={onClose} title={initial?t('edit'):t('new_invoice')}>
       <div style={{display:'flex',flexDirection:'column',gap:'1rem'}}>
-        <Field label={t('clients')}>
-          <select value={f.clientId} onChange={e=>setF({...f,clientId:e.target.value,videoIds:[]})} style={INP}>
-            {data.clients.map(c=><option key={c.id} value={c.id}>{c.name}</option>)}
-          </select>
-        </Field>
-        <Field label={`${t('select_videos')} · ${t('unbilled_only')}`}>
-          <div style={{border:`1.5px solid ${B.border}`,borderRadius:'0.875rem',maxHeight:'13rem',overflowY:'auto',background:B.inputBg}}>
-            {pool.length===0?<div style={{padding:'1.5rem',textAlign:'center',color:B.muted,fontSize:'0.8rem'}}>{t('no_unbilled')}</div>
-            :pool.map(v=>{
-              const on=sel.has(v.id);
-              return(
-                <label key={v.id} style={{display:'flex',alignItems:'center',gap:'0.65rem',padding:'0.6rem 0.75rem',borderBottom:`1px solid ${B.border}`,cursor:'pointer',background:on?B.accentSoft:'transparent'}}>
-                  <input type="checkbox" checked={on} onChange={()=>toggle(v.id)} style={{width:'1.05rem',height:'1.05rem',accentColor:B.accent,flexShrink:0}}/>
-                  <div style={{flex:1,minWidth:0}}>
-                    <div style={{fontSize:'0.8rem',fontWeight:'600',color:B.text,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{v.title||'—'}</div>
-                    <div style={{fontSize:'0.65rem',color:B.muted,fontVariantNumeric:'tabular-nums'}}>{fmtD(v.date)}</div>
-                  </div>
-                  <span style={{fontSize:'0.8rem',fontWeight:'800',color:on?B.accent:B.textSub,fontVariantNumeric:'tabular-nums',flexShrink:0}}>{fmt(v.price)}</span>
-                </label>
-              );
-            })}
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0.75rem'}}>
+          <Field label={t('clients')}>
+            <select value={f.clientId} onChange={e=>setF({...f,clientId:e.target.value})} style={INP}>
+              {data.clients.map(c=><option key={c.id} value={c.id}>{c.name}</option>)}
+            </select>
+          </Field>
+          <Field label={t('currency')}>
+            <select value={f.currency} onChange={e=>setF({...f,currency:e.target.value})} style={INP}>
+              {curList(st).map(c=><option key={c.code} value={c.code}>{c.code}</option>)}
+            </select>
+          </Field>
+        </div>
+
+        {/* line editor */}
+        <Field label={t('items')}>
+          <div style={{display:'flex',flexDirection:'column',gap:'0.4rem'}}>
+            {f.lines.map((l,n)=>(
+              <div key={l.id} style={{background:B.inputBg,border:`1px solid ${B.border}`,borderRadius:'0.875rem',padding:'0.6rem'}}>
+                <div style={{display:'flex',alignItems:'center',gap:'0.4rem',marginBottom:'0.4rem'}}>
+                  <span style={{fontSize:'0.62rem',color:B.muted,fontWeight:'800',width:'1.1rem'}}>{n+1}</span>
+                  <input value={l.desc} onChange={e=>setLine(l.id,'desc',e.target.value)} placeholder={t('designation')} style={{...mini,flex:1}}/>
+                  <button onClick={()=>delLine(l.id)} style={{padding:'0.3rem',border:'none',background:'none',cursor:'pointer',display:'flex',flexShrink:0}}><Ic n="trash" size={12} color={B.danger}/></button>
+                </div>
+                <div style={{display:'grid',gridTemplateColumns:'4rem 1fr auto',gap:'0.4rem',alignItems:'center'}}>
+                  <input type="number" inputMode="decimal" value={l.qty} onChange={e=>setLine(l.id,'qty',e.target.value)} placeholder={t('qty')} style={{...mini,textAlign:'center'}}/>
+                  <input type="number" inputMode="decimal" value={l.pu} onChange={e=>setLine(l.id,'pu',e.target.value)} placeholder={t('unit_price')} style={mini}/>
+                  <span style={{fontSize:'0.78rem',fontWeight:'800',color:B.text,fontVariantNumeric:'tabular-nums',minWidth:'4.5rem',textAlign:_lang==='ar'?'left':'right'}}>
+                    {fmt(Number(l.qty||0)*Number(l.pu||0))}
+                  </span>
+                </div>
+              </div>
+            ))}
+            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0.4rem'}}>
+              <button onClick={addBlank} style={{padding:'0.55rem',borderRadius:'0.75rem',border:`1px dashed ${B.border}`,background:'transparent',color:B.textSub,fontWeight:'700',fontSize:'0.74rem',cursor:'pointer'}}>+ {t('custom_line')}</button>
+              <button onClick={()=>setPick(p=>!p)} style={{padding:'0.55rem',borderRadius:'0.75rem',border:`1px dashed ${pick?B.accentBorder:B.border}`,background:pick?B.accentSoft:'transparent',color:pick?B.accent:B.textSub,fontWeight:'700',fontSize:'0.74rem',cursor:'pointer'}}>+ {t('from_videos')}</button>
+            </div>
+            {pick&&(
+              <div style={{border:`1px solid ${B.border}`,borderRadius:'0.875rem',maxHeight:'10rem',overflowY:'auto',background:B.inputBg}}>
+                {pool.filter(v=>!taken.has(v.id)).length===0
+                  ?<div style={{padding:'1rem',textAlign:'center',color:B.muted,fontSize:'0.75rem'}}>{t('no_unbilled')}</div>
+                  :pool.filter(v=>!taken.has(v.id)).map(v=>(
+                    <button key={v.id} onClick={()=>addVideo(v)} style={{width:'100%',display:'flex',alignItems:'center',gap:'0.5rem',padding:'0.55rem 0.7rem',borderBottom:`1px solid ${B.border}`,background:'none',border:'none',cursor:'pointer',textAlign:_lang==='ar'?'right':'left'}}>
+                      <div style={{flex:1,minWidth:0}}>
+                        <div style={{fontSize:'0.76rem',fontWeight:'600',color:B.text,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{v.title||'—'}</div>
+                        <div style={{fontSize:'0.62rem',color:B.muted,fontVariantNumeric:'tabular-nums'}}>{fmtD(v.date)}</div>
+                      </div>
+                      <span style={{fontSize:'0.76rem',fontWeight:'800',color:B.accent,fontVariantNumeric:'tabular-nums'}}>{fmt(v.price)}</span>
+                    </button>
+                  ))}
+              </div>
+            )}
           </div>
         </Field>
+
         <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0.75rem'}}>
           <Field label={t('issue_date')}><input type="date" value={f.date} onChange={e=>setF({...f,date:e.target.value})} style={INP}/></Field>
           <Field label={t('due_date')}><input type="date" value={f.due} onChange={e=>setF({...f,due:e.target.value})} style={INP}/></Field>
         </div>
-        <Field label={t('discount')}><input type="number" inputMode="numeric" value={f.discount} onChange={e=>setF({...f,discount:e.target.value})} placeholder="0" style={INP}/></Field>
-        <Field label={t('notes_opt')}><textarea value={f.notes} onChange={e=>setF({...f,notes:e.target.value})} style={{...INP,height:'58px',resize:'none'}}/></Field>
-        {/* running total */}
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0.75rem'}}>
+          <Field label={t('discount')}><input type="number" inputMode="decimal" value={f.discount} onChange={e=>setF({...f,discount:e.target.value})} placeholder="0" style={INP}/></Field>
+          <Field label={t('vat_rate')}><input type="number" inputMode="decimal" value={f.vat} onChange={e=>setF({...f,vat:e.target.value})} style={INP}/></Field>
+        </div>
+        <Field label={t('period')}><input value={f.period} onChange={e=>setF({...f,period:e.target.value})} placeholder={_lang==='ar'?'سبتمبر 2026':'September 2026'} style={INP}/></Field>
+        <Field label={t('invoice_object')}><input value={f.object} onChange={e=>setF({...f,object:e.target.value})} placeholder={t('invoice_object_ph')} style={INP}/></Field>
+        <Field label={t('payment_mode')}><input value={f.paymentMode} onChange={e=>setF({...f,paymentMode:e.target.value})} placeholder={t('payment_mode_ph')} style={INP}/></Field>
+
         <div style={{background:B.inputBg,border:`1px solid ${B.border}`,borderRadius:'0.875rem',padding:'0.85rem 1rem'}}>
-          <div style={{display:'flex',justifyContent:'space-between',fontSize:'0.75rem',color:B.textSub}}>
-            <span>{t('subtotal')} · {f.videoIds.length}</span><span style={{fontVariantNumeric:'tabular-nums'}}>{fmt(sub)} {CUR}</span>
-          </div>
-          <div style={{display:'flex',justifyContent:'space-between',marginTop:'0.45rem',paddingTop:'0.45rem',borderTop:`1px solid ${B.border}`,fontWeight:'900',color:B.text}}>
-            <span>{t('grand_total')}</span><span style={{fontVariantNumeric:'tabular-nums',color:B.accent}}>{fmt(total)} {CUR}</span>
+          {[[t('amount_ht'),ht],[`${t('amount_vat')} ${Number(f.vat||0)>0?`(${f.vat}%)`:''}`,vat]].map(([k,v])=>(
+            <div key={k} style={{display:'flex',justifyContent:'space-between',fontSize:'0.75rem',color:B.textSub,marginBottom:'0.3rem'}}>
+              <span>{k}</span><span style={{fontVariantNumeric:'tabular-nums'}}>{money(v,cur)}</span>
+            </div>
+          ))}
+          <div style={{display:'flex',justifyContent:'space-between',paddingTop:'0.45rem',borderTop:`1px solid ${B.border}`,fontWeight:'900',color:B.text}}>
+            <span>{t('amount_ttc')}</span><span style={{fontVariantNumeric:'tabular-nums',color:B.accent}}>{money(ht+vat,cur)}</span>
           </div>
         </div>
+
         {err&&<div style={{fontSize:'0.75rem',color:B.danger,fontWeight:'700',padding:'0.5rem 0.75rem',background:B.dangerSoft,borderRadius:'0.5rem'}}>{err}</div>}
         <button onClick={submit} style={{width:'100%',padding:'0.9rem',borderRadius:'0.875rem',background:`linear-gradient(135deg,${B.accent},${ACC2})`,color:'white',fontWeight:'800',border:'none',cursor:'pointer',boxShadow:`0 4px 16px ${B.accent}44`}}>{initial?t('save'):t('new_invoice')}</button>
       </div>
@@ -2260,17 +2396,24 @@ function InvoiceForm({data,initial,onClose,onSave}){
 }
 
 function InvoicesTab({data,agency,addInvoice,updInvoice,delInvoice,payInvoice}){
+  const st=data.settings;
   const[showForm,setShowForm]=useState(false);const[editing,setEditing]=useState(null);const[viewing,setViewing]=useState(null);
   const[fS,setFS]=useState('');
   const cMap=Object.fromEntries(data.clients.map(c=>[c.id,c.name]));
   const list=useMemo(()=>fS?data.invoices.filter(i=>i.status===fS):data.invoices,[data.invoices,fS]);
+  // totals stay split by currency — a single blended number would be a lie
   const totals=useMemo(()=>{
-    let all=0,open=0;
-    data.invoices.forEach(i=>{const{total}=invTotal(i,data.videos);all+=total;if(i.status!=='paid')open+=total;});
+    const all={},open={};
+    data.invoices.forEach(i=>{
+      const c=invCur(i,st), v=invTotals(i,data.videos).ttc;
+      all[c]=(all[c]||0)+v;
+      if(i.status!=='paid')open[c]=(open[c]||0)+v;
+    });
     return{all,open};
-  },[data.invoices,data.videos]);
+  },[data.invoices,data.videos,st]);
   const statusColor=s=>({draft:B.textSub,sent:B.blue,paid:B.success}[s]||B.textSub);
   const statusBg=s=>({draft:_theme==='dark'?'rgba(255,255,255,0.06)':'rgba(0,0,0,0.05)',sent:B.blueSoft,paid:B.successSoft}[s]);
+  const show=m=>{const k=Object.keys(m);return k.length?k.map(c=>money(m[c],c)).join(' · '):money(0,curBase(st));};
 
   if(data.clients.length===0)return(
     <div style={{background:B.card,border:`1px solid ${B.border}`,borderRadius:'1.25rem',padding:'3rem 1.5rem',textAlign:'center'}}>
@@ -2284,15 +2427,15 @@ function InvoicesTab({data,agency,addInvoice,updInvoice,delInvoice,payInvoice}){
       <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',gap:'0.75rem'}}>
         <div>
           <h2 style={{fontSize:'1.75rem',fontWeight:'900',color:B.text}}>{t('invoices')}</h2>
-          <p style={{fontSize:'0.75rem',color:B.textSub,fontVariantNumeric:'tabular-nums'}}>{data.invoices.length} · {fmt(totals.all)} {CUR}</p>
+          <p style={{fontSize:'0.75rem',color:B.textSub,fontVariantNumeric:'tabular-nums'}}>{data.invoices.length}</p>
         </div>
         <button onClick={()=>{setEditing(null);setShowForm(true);}} style={{display:'flex',alignItems:'center',gap:'0.4rem',padding:'0.65rem 1.1rem',borderRadius:'9999px',background:`linear-gradient(135deg,${B.accent},${ACC2})`,color:'white',fontWeight:'700',border:'none',cursor:'pointer',fontSize:'0.8rem',whiteSpace:'nowrap',boxShadow:`0 4px 16px ${B.accent}44`}}>
           <Ic n="plus" size={15} color="white"/>{t('new_invoice')}
         </button>
       </div>
       <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0.65rem'}}>
-        <StatCard label={t('total_invoiced')} value={`${fmt(totals.all)} ${CUR}`} ic="receipt" color={B.accent}/>
-        <StatCard label={t('awaiting')} value={`${fmt(totals.open)} ${CUR}`} ic="clock" color={B.textSub}/>
+        <StatCard label={t('total_invoiced')} value={show(totals.all)} ic="receipt" color={B.accent}/>
+        <StatCard label={t('awaiting')} value={show(totals.open)} ic="clock" color={B.textSub}/>
       </div>
       <div style={{display:'flex',gap:'0.4rem',flexWrap:'wrap'}}>
         {[['',t('all')],['draft',t('st_draft')],['sent',t('st_sent')],['paid',t('st_paid')]].map(([v,l])=>(
@@ -2305,7 +2448,7 @@ function InvoicesTab({data,agency,addInvoice,updInvoice,delInvoice,payInvoice}){
           <div style={{color:B.textSub,fontSize:'0.875rem'}}>{t('no_invoices')}</div>
         </div>
         :list.map(inv=>{
-          const{total}=invTotal(inv,data.videos);
+          const{ttc,lines}=invTotals(inv,data.videos);
           const late=inv.due&&inv.status!=='paid'&&inv.due<today();
           return(
             <div key={inv.id} style={{padding:'0.9rem 1rem',borderBottom:`1px solid ${B.border}`,position:'relative'}}>
@@ -2319,12 +2462,12 @@ function InvoicesTab({data,agency,addInvoice,updInvoice,delInvoice,payInvoice}){
                   </div>
                   <div style={{fontSize:'0.68rem',color:B.muted,marginTop:'3px',display:'flex',gap:'0.4rem',flexWrap:'wrap'}}>
                     <span>{cMap[inv.clientId]||'—'}</span><span>·</span>
-                    <span>{(inv.videoIds||[]).length} {t('videos')}</span><span>·</span>
+                    <span>{lines.length} {t('items')}</span><span>·</span>
                     <span style={{fontVariantNumeric:'tabular-nums'}}>{fmtD(inv.date)}</span>
                   </div>
                 </div>
                 <div style={{textAlign:_lang==='ar'?'left':'right',flexShrink:0}}>
-                  <div style={{fontWeight:'900',fontSize:'1rem',color:B.text,fontVariantNumeric:'tabular-nums'}}>{fmt(total)}<span style={{fontSize:'0.6rem',color:B.muted}}> {CUR}</span></div>
+                  <div style={{fontWeight:'900',fontSize:'1rem',color:B.text,fontVariantNumeric:'tabular-nums'}}>{money(ttc,invCur(inv,st))}</div>
                 </div>
               </div>
               <div style={{display:'flex',gap:'0.35rem',marginTop:'0.7rem',flexWrap:'wrap'}}>
@@ -2491,7 +2634,12 @@ function TasksTab({data,addTask,updTask,delTask,solo,readOnlyFor}){
 
 function TeamTab({data,addEditor,updEditor,delEditor,canAdd,limit,plan}){
   const[showForm,setShowForm]=useState(false);const[editing,setEditing]=useState(null);
-  const stats=useMemo(()=>{const m={};data.videos.forEach(v=>{if(!m[v.editorId])m[v.editorId]={count:0,total:0,owed:0};m[v.editorId].count++;m[v.editorId].total+=Number(v.price||0);if(!v.paid)m[v.editorId].owed+=Number(v.price||0);});return m;},[data.videos]);
+  const stats=useMemo(()=>{const m={},bc=curBase(data.settings);
+    data.videos.forEach(v=>{const c=v.currency||bc;
+      if(!m[v.editorId])m[v.editorId]={count:0,total:{},owed:{}};
+      m[v.editorId].count++; addCurMap(m[v.editorId].total,c,v.price);
+      if(!v.paid)addCurMap(m[v.editorId].owed,c,v.price);});
+    return m;},[data.videos,data.settings]);
   return(
     <div style={{display:'flex',flexDirection:'column',gap:'1.25rem'}}>
       <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
@@ -2509,7 +2657,7 @@ function TeamTab({data,addEditor,updEditor,delEditor,canAdd,limit,plan}){
       <div style={{background:B.card,borderRadius:'1rem',border:`1px solid ${B.border}`,overflow:'hidden'}}>
         {data.editors.length===0?<div style={{padding:'2.5rem',textAlign:'center',color:B.muted,fontSize:'0.875rem'}}>{t('no_team')}</div>
         :data.editors.map(item=>{
-          const s=stats[item.id]||{count:0,total:0,owed:0};
+          const s=stats[item.id]||{count:0,total:{},owed:{}};
           const r=item.role||'editor';
           const rc=roleColor(r);
           return(
@@ -2525,8 +2673,8 @@ function TeamTab({data,addEditor,updEditor,delEditor,canAdd,limit,plan}){
                 <div style={{fontSize:'0.7rem',color:B.muted,display:'flex',gap:'0.5rem',alignItems:'center'}}>
                   <span>{s.count} {t('videos')}</span>
                   <span style={{color:B.border}}>·</span>
-                  <span>{fmt(s.total)} دج</span>
-                  {s.owed>0&&<><span style={{color:B.border}}>·</span><span style={{color:B.accent,fontWeight:'700'}}>{fmt(s.owed)} دج ⏳</span></>}
+                  <span>{showCur(s.total)}</span>
+                  {Object.keys(s.owed).length>0&&<><span style={{color:B.border}}>·</span><span style={{color:B.accent,fontWeight:'700'}}>{showCur(s.owed)} ⏳</span></>}
                 </div>
               </div>
               <div style={{display:'flex',gap:'0.1rem',flexShrink:0}}>
@@ -2542,45 +2690,76 @@ function TeamTab({data,addEditor,updEditor,delEditor,canAdd,limit,plan}){
   );
 }
 
+function ClientForm({initial,onClose,onSave}){
+  const[f,setF]=useState(initial||{name:'',address:'',nif:'',nis:'',rc:''});
+  const[err,setErr]=useState('');
+  const submit=()=>{if(!f.name.trim())return setErr(t('err_name'));onSave({...f,name:f.name.trim()});};
+  return(
+    <Modal onClose={onClose} title={initial?t('edit'):t('clients')}>
+      <div style={{display:'flex',flexDirection:'column',gap:'1rem'}}>
+        <Field label={t('company_name')}><input value={f.name} onChange={e=>setF({...f,name:e.target.value})} style={INP} autoFocus/></Field>
+        <Field label={t('address')}><textarea value={f.address} onChange={e=>setF({...f,address:e.target.value})} style={{...INP,height:'58px',resize:'none'}}/></Field>
+        <div style={{fontSize:'0.68rem',color:B.muted,marginTop:'-0.3rem'}}>{t('fiscal_hint')}</div>
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:'0.5rem'}}>
+          {[['nif',t('tax_id')],['nis',t('stat_id')],['rc',t('rc')]].map(([k,l])=>(
+            <Field key={k} label={l}><input value={f[k]} onChange={e=>setF({...f,[k]:e.target.value})} style={INP}/></Field>
+          ))}
+        </div>
+        {err&&<div style={{fontSize:'0.75rem',color:B.danger,fontWeight:'700'}}>{err}</div>}
+        <button onClick={submit} style={{width:'100%',padding:'0.9rem',borderRadius:'0.875rem',background:`linear-gradient(135deg,${B.accent},${ACC2})`,color:'white',fontWeight:'800',border:'none',cursor:'pointer',boxShadow:`0 4px 16px ${B.accent}44`}}>{initial?t('save'):t('add')}</button>
+      </div>
+    </Modal>
+  );
+}
+
 function ClientsTab({data,addClient,updClient,delClient,canAdd,limit,plan}){
-  const[name,setName]=useState('');const[edId,setEdId]=useState(null);const[edName,setEdName]=useState('');
-  const stats=useMemo(()=>{const m={};data.videos.forEach(v=>{if(!m[v.clientId])m[v.clientId]={count:0,total:0};m[v.clientId].count++;m[v.clientId].total+=Number(v.price||0);});return m;},[data.videos]);
-  const doAdd=()=>{if(name.trim()){addClient(name);setName('');}};
+  const[showForm,setShowForm]=useState(false);const[editing,setEditing]=useState(null);
+  const st=data.settings;
+  const stats=useMemo(()=>{const m={};data.videos.forEach(v=>{const c=v.currency||curBase(st);
+    if(!m[v.clientId])m[v.clientId]={count:0,byCur:{}};
+    m[v.clientId].count++;m[v.clientId].byCur[c]=(m[v.clientId].byCur[c]||0)+Number(v.price||0);});return m;},[data.videos,st]);
   return(
     <div style={{display:'flex',flexDirection:'column',gap:'1.25rem'}}>
-      <div>
-        <h2 style={{fontSize:'1.75rem',fontWeight:'900',color:B.text}}>{t('clients')}</h2>
-        {plan==='free'&&<div style={{fontSize:'0.75rem',color:B.muted}}>{data.clients.length}/{limit}</div>}
-      </div>
-      <div style={{background:B.card,borderRadius:'1.25rem',border:`1px solid ${B.border}`,padding:'0.75rem',display:'flex',gap:'0.5rem'}}>
-        <input value={name} onChange={e=>setName(e.target.value)} onKeyDown={e=>e.key==='Enter'&&doAdd()} placeholder="اسم الزبون..." style={{...INP,flex:1}}/>
-        <button onClick={doAdd} style={{display:'flex',alignItems:'center',gap:'0.4rem',padding:'0.75rem 1rem',borderRadius:'0.875rem',background:canAdd?`linear-gradient(135deg,${B.accent},${ACC2})`:'#333',color:'white',fontWeight:'700',border:'none',cursor:'pointer',flexShrink:0,boxShadow:canAdd?`0 4px 12px ${B.accent}44`:'none'}}>
-          <Ic n="plus" size={16} color="white"/>{t('add')}
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',gap:'0.75rem'}}>
+        <div>
+          <h2 style={{fontSize:'1.75rem',fontWeight:'900',color:B.text}}>{t('clients')}</h2>
+          {plan==='free'&&<div style={{fontSize:'0.75rem',color:B.textSub}}>{data.clients.length}/{limit}</div>}
+        </div>
+        <button onClick={()=>{setEditing(null);setShowForm(true);}} style={{display:'flex',alignItems:'center',gap:'0.4rem',padding:'0.65rem 1.1rem',borderRadius:'9999px',background:canAdd?`linear-gradient(135deg,${B.accent},${ACC2})`:B.border,color:'white',fontWeight:'700',border:'none',cursor:'pointer',fontSize:'0.8rem',whiteSpace:'nowrap',boxShadow:canAdd?`0 4px 16px ${B.accent}44`:'none'}}>
+          <Ic n="plus" size={15} color="white"/>{t('add')}
         </button>
       </div>
-      <div style={{background:B.card,borderRadius:'1rem',border:`1px solid ${B.border}`,overflow:'hidden'}}>
-        {data.clients.length===0?<div style={{padding:'2.5rem',textAlign:'center',color:B.muted,fontSize:'0.875rem'}}>{t('no_clients')}</div>
+      <div style={{background:B.card,borderRadius:'1.25rem',border:`1px solid ${B.border}`,overflow:'hidden'}}>
+        {data.clients.length===0?<div style={{padding:'3rem 1rem',textAlign:'center'}}>
+          <div style={{fontSize:'2.5rem',marginBottom:'0.75rem',opacity:0.5}}>💼</div>
+          <div style={{color:B.textSub,fontSize:'0.875rem'}}>{t('no_clients')}</div>
+        </div>
         :data.clients.map(item=>{
-          const s=stats[item.id]||{count:0,total:0};const isEd=edId===item.id;
+          const s=stats[item.id]||{count:0,byCur:{}};
+          const sums=Object.keys(s.byCur);
           return(
-            <div key={item.id} style={{padding:'0.875rem 1.25rem',display:'flex',alignItems:'center',gap:'0.75rem',borderBottom:`1px solid ${B.border}`}}>
-              <div style={{width:'2.5rem',height:'2.5rem',borderRadius:'50%',display:'grid',placeItems:'center',fontWeight:'700',flexShrink:0,background:B.blueSoft,color:B.blue}}>{item.name.charAt(0)}</div>
+            <div key={item.id} style={{padding:'0.875rem 1rem',display:'flex',alignItems:'center',gap:'0.75rem',borderBottom:`1px solid ${B.border}`}}>
+              <div style={{width:'2.6rem',height:'2.6rem',borderRadius:'50%',display:'grid',placeItems:'center',fontWeight:'800',flexShrink:0,background:B.blueSoft,color:B.blue,fontSize:'1rem'}}>{item.name.charAt(0)}</div>
               <div style={{flex:1,minWidth:0}}>
-                {isEd?<div style={{display:'flex',gap:'0.5rem'}}>
-                  <input value={edName} onChange={e=>setEdName(e.target.value)} onKeyDown={e=>e.key==='Enter'&&(edName.trim()&&updClient(edId,edName.trim()),setEdId(null))}
-                    style={{flex:1,padding:'0.375rem 0.75rem',border:`1px solid ${B.border}`,borderRadius:'0.5rem',outline:'none',fontSize:'0.875rem',background:B.inputBg,color:B.text}} autoFocus/>
-                  <button onClick={()=>{if(edName.trim())updClient(edId,edName.trim());setEdId(null);}} style={{padding:'0.4rem',border:'none',background:'none',cursor:'pointer',color:B.success,display:'flex'}}><Ic n="check" size={16} color={B.success}/></button>
-                  <button onClick={()=>setEdId(null)} style={{padding:'0.4rem',border:'none',background:'none',cursor:'pointer',color:B.muted,display:'flex'}}><Ic n="x" size={16}/></button>
-                </div>:<><div style={{fontWeight:'700',color:B.text}}>{item.name}</div><div style={{fontSize:'0.75rem',color:B.muted}}>{s.count} {t('videos')} · {fmt(s.total)} دج</div></>}
+                <div style={{fontWeight:'700',color:B.text,fontSize:'0.9rem'}}>{item.name}</div>
+                <div style={{fontSize:'0.68rem',color:B.muted,marginTop:'1px'}}>
+                  {s.count} {t('videos')}{sums.length?' · '+sums.map(c=>money(s.byCur[c],c)).join(' · '):''}
+                </div>
+                {(item.nif||item.rc)&&<div style={{fontSize:'0.6rem',color:B.muted,opacity:0.75,fontVariantNumeric:'tabular-nums'}}>
+                  {[item.nif&&`${t('tax_id')} ${item.nif}`,item.rc&&`${t('rc')} ${item.rc}`].filter(Boolean).join(' · ')}
+                </div>}
               </div>
-              {!isEd&&<div style={{display:'flex',gap:'0.15rem',flexShrink:0}}>
-                <button onClick={()=>{setEdId(item.id);setEdName(item.name);}} style={{padding:'0.4rem',border:'none',background:'none',cursor:'pointer',color:B.muted,display:'flex'}}><Ic n="pencil" size={14}/></button>
-                <button onClick={()=>delClient(item.id)} style={{padding:'0.4rem',border:'none',background:'none',cursor:'pointer',color:B.danger,display:'flex'}}><Ic n="trash" size={14} color={B.danger}/></button>
-              </div>}
+              <div style={{display:'flex',gap:'0.1rem',flexShrink:0}}>
+                <button onClick={()=>{setEditing(item);setShowForm(true);}} style={{padding:'0.4rem',border:'none',background:'none',cursor:'pointer',color:B.muted,display:'flex'}}><Ic n="pencil" size={14}/></button>
+                <button onClick={()=>delClient(item.id)} style={{padding:'0.4rem',border:'none',background:'none',cursor:'pointer',display:'flex'}}><Ic n="trash" size={14} color={B.danger}/></button>
+              </div>
             </div>
           );
         })}
       </div>
+      {showForm&&<ClientForm initial={editing}
+        onClose={()=>{setShowForm(false);setEditing(null);}}
+        onSave={f=>{editing?updClient(editing.id,f):addClient(f);setShowForm(false);setEditing(null);}}/>}
     </div>
   );
 }
