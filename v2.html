@@ -40,11 +40,17 @@
     .card-hover{transition:transform 0.2s,box-shadow 0.2s,border-color 0.2s;}
     .card-hover:hover{transform:translateY(-2px);border-color:rgba(13,124,251,0.30) !important;}
     @media print{
-      @page{margin:14mm;}
+      @page{size:A4;margin:14mm;}
       body{background:#fff !important;}
       .no-print{display:none !important;}
       .inv-sheet{position:static !important;inset:auto !important;padding:0 !important;background:#fff !important;color:#000 !important;overflow:visible !important;}
-      .inv-paper{box-shadow:none !important;border:none !important;border-radius:0 !important;max-width:100% !important;margin:0 !important;padding:0 !important;background:#fff !important;color:#000 !important;}
+      /* the on-screen sheet is a scaled A4; printing uses the real page box */
+      .inv-paper{box-shadow:none !important;border:none !important;border-radius:0 !important;width:auto !important;min-height:0 !important;max-width:100% !important;margin:0 !important;padding:0 !important;transform:none !important;background:#fff !important;color:#000 !important;}
+      .inv-scale{height:auto !important;width:auto !important;}
+      table{page-break-inside:auto;}
+      tr{page-break-inside:avoid;}
+      thead{display:table-header-group;}
+      .inv-keep{page-break-inside:avoid;}
       .inv-paper *{color:#000 !important;}
       .inv-ink{background:#111 !important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
       .inv-ink *{color:#fff !important;}
@@ -55,7 +61,7 @@
 <body>
 <div id="root"></div>
 <script type="text/babel">
-const {useState,useEffect,useMemo}=React;
+const {useState,useEffect,useMemo,useRef}=React;
 
 // ─── LANG & THEME (persisted in localStorage, reload on change) ───
 let _lang=localStorage.getItem('_lang')||'ar';
@@ -2143,7 +2149,10 @@ function SettingsTab({data,saveSettings,showToast}){
 // A line is the unit of billing. Older invoices stored videoIds only, so they
 // are projected into lines on read and keep working untouched.
 const invLines=(inv,videos)=>{
-  if(inv.lines?.length)return inv.lines;
+  // drop blanks on read as well as on save, so invoices stored before the
+  // filter existed do not print an empty row
+  const live=l=>String(l.desc||'').trim()||Number(l.qty||0)*Number(l.pu||0);
+  if(inv.lines?.length)return inv.lines.filter(live);
   const map=Object.fromEntries((videos||[]).map(v=>[v.id,v]));
   return (inv.videoIds||[]).map((id,k)=>{
     const v=map[id]; if(!v)return null;
@@ -2160,7 +2169,27 @@ const invTotals=(inv,videos)=>{
 const invCur=(inv,st)=>inv.currency||curBase(st);
 
 // Printable document — ink on paper, independent of the app theme.
+// A4 at 96dpi. The sheet is laid out at real page size and scaled down to fit
+// the viewport, so what you see on screen is what comes out of the printer.
+const A4_W=794, A4_H=1123;
 function InvoiceSheet({inv,data,agency,onClose}){
+  const wrapRef=useRef(null), paperRef=useRef(null);
+  const[scale,setScale]=useState(1);
+  const[boxH,setBoxH]=useState(A4_H);
+  useEffect(()=>{
+    const fit=()=>{
+      const avail=wrapRef.current?.clientWidth||A4_W;
+      const k=Math.min(1,avail/A4_W);
+      setScale(k);
+      const h=Math.max(A4_H,paperRef.current?.scrollHeight||A4_H);
+      setBoxH(h*k);
+    };
+    fit();
+    const ro=new ResizeObserver(fit);
+    if(paperRef.current)ro.observe(paperRef.current);
+    window.addEventListener('resize',fit);
+    return()=>{ro.disconnect();window.removeEventListener('resize',fit);};
+  },[inv]);
   const st=data.settings, C=st.company;
   const client=data.clients.find(c=>c.id===inv.clientId)||{};
   const{lines,ht,vat,ttc}=invTotals(inv,data.videos);
@@ -2174,7 +2203,7 @@ function InvoiceSheet({inv,data,agency,onClose}){
   const buyer=[[t('tax_id'),client.nif],[t('stat_id'),client.nis],[t('rc'),client.rc]].filter(x=>x[1]);
 
   return(
-    <div className="inv-sheet" style={{position:'fixed',inset:0,zIndex:60,background:_theme==='dark'?'rgba(0,0,6,0.8)':'rgba(20,22,40,0.5)',backdropFilter:'blur(6px)',overflowY:'auto',padding:'1.25rem 1rem 4rem'}}>
+    <div className="inv-sheet" style={{position:'fixed',inset:0,zIndex:60,background:_theme==='dark'?'rgba(0,0,6,0.8)':'rgba(20,22,40,0.5)',backdropFilter:'blur(6px)',overflowY:'auto',overflowX:'hidden',padding:'1.25rem 1rem 4rem'}}>
       <div className="no-print" style={{display:'flex',gap:'0.5rem',justifyContent:'center',marginBottom:'1rem',position:'sticky',top:0,zIndex:2,padding:'0.5rem',borderRadius:'9999px',background:_theme==='dark'?'rgba(4,6,14,0.72)':'rgba(20,22,40,0.35)',backdropFilter:'blur(10px)',width:'fit-content',marginInline:'auto'}}>
         <button onClick={()=>window.print()} style={{display:'flex',alignItems:'center',gap:'0.45rem',padding:'0.7rem 1.3rem',borderRadius:'9999px',background:`linear-gradient(135deg,${B.accent},${ACC2})`,color:'white',fontWeight:'800',border:'none',cursor:'pointer',fontSize:'0.82rem',boxShadow:`0 6px 22px ${B.accent}55`}}>
           <Ic n="printer" size={15} color="white"/>{t('print_inv')}
@@ -2182,7 +2211,9 @@ function InvoiceSheet({inv,data,agency,onClose}){
         <button onClick={onClose} style={{padding:'0.7rem 1.1rem',borderRadius:'9999px',background:B.card,color:B.text,fontWeight:'700',border:`1px solid ${B.border}`,cursor:'pointer',fontSize:'0.82rem'}}>{t('cancel')}</button>
       </div>
 
-      <div className="inv-paper" style={{background:'#fff',color:'#101223',maxWidth:'48rem',margin:'0 auto',borderRadius:'0.5rem',boxShadow:'0 24px 70px rgba(0,0,0,0.4)',overflow:'hidden'}}>
+      <div ref={wrapRef} style={{maxWidth:`${A4_W}px`,margin:'0 auto'}}>
+       <div className="inv-scale" style={{height:boxH,width:'100%',overflow:'hidden'}}>
+        <div ref={paperRef} className="inv-paper" style={{background:'#fff',color:'#101223',width:`${A4_W}px`,minHeight:`${A4_H}px`,transform:`scale(${scale})`,transformOrigin:'top left',borderRadius:'0.5rem',boxShadow:'0 24px 70px rgba(0,0,0,0.4)',display:'flex',flexDirection:'column'}}>
         {/* masthead */}
         <div className="inv-ink" style={{background:ink,color:'#fff',padding:'1.5rem 1.75rem',display:'flex',justifyContent:'space-between',alignItems:'flex-start',gap:'1rem'}}>
           <div style={{display:'flex',alignItems:'center',gap:'0.9rem',minWidth:0}}>
@@ -2201,7 +2232,7 @@ function InvoiceSheet({inv,data,agency,onClose}){
           </div>
         </div>
 
-        <div style={{padding:'1.5rem 1.75rem'}}>
+        <div style={{padding:'1.5rem 1.75rem',flex:1,display:'flex',flexDirection:'column'}}>
           {/* fiscal identity of both parties */}
           <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'1.5rem',marginBottom:'1.25rem'}}>
             <div>
@@ -2252,7 +2283,7 @@ function InvoiceSheet({inv,data,agency,onClose}){
           </table>
 
           {/* totals */}
-          <div style={{display:'flex',justifyContent:rtl?'flex-start':'flex-end',marginTop:'1.1rem'}}>
+          <div className="inv-keep" style={{display:'flex',justifyContent:rtl?'flex-start':'flex-end',marginTop:'1.1rem'}}>
             <div style={{minWidth:'16rem'}}>
               {Number(inv.discount||0)>0&&(
                 <div style={{display:'flex',justifyContent:'space-between',padding:'0.3rem 0.5rem',fontSize:'0.78rem',color:'#5c6185'}}>
@@ -2273,18 +2304,20 @@ function InvoiceSheet({inv,data,agency,onClose}){
           </div>
 
           {/* footer facts */}
-          <div style={{marginTop:'1.5rem',display:'flex',flexDirection:'column',gap:'0.3rem',fontSize:'0.74rem',color:'#5c6185'}}>
+          <div className="inv-keep" style={{marginTop:'1.5rem',display:'flex',flexDirection:'column',gap:'0.3rem',fontSize:'0.74rem',color:'#5c6185'}}>
             {(inv.object||st.invoice.object)&&<div><b style={{color:'#101223'}}>{t('invoice_object')} :</b> {inv.object||st.invoice.object}</div>}
             {(inv.paymentMode||st.invoice.paymentMode)&&<div><b style={{color:'#101223'}}>{t('payment_mode')} :</b> {inv.paymentMode||st.invoice.paymentMode}</div>}
             {inv.due&&<div><b style={{color:'#101223'}}>{t('due_date')} :</b> {fmtD(inv.due)}</div>}
             {inv.notes&&<div style={{whiteSpace:'pre-wrap',marginTop:'0.3rem'}}>{inv.notes}</div>}
           </div>
 
-          <div style={{marginTop:'1.75rem',paddingTop:'0.8rem',borderTop:'1px solid #e6e8f0',fontSize:'0.6rem',color:'#a3a8c5',display:'flex',justifyContent:'space-between',gap:'1rem'}}>
+          <div style={{marginTop:'auto',paddingTop:'0.8rem',borderTop:'1px solid #e6e8f0',fontSize:'0.6rem',color:'#a3a8c5',display:'flex',justifyContent:'space-between',gap:'1rem'}}>
             <span>{C.name||agency.name}</span>
             <span style={{fontVariantNumeric:'tabular-nums'}}>{inv.number} · {fmtD(inv.date)}</span>
           </div>
         </div>
+        </div>
+       </div>
       </div>
     </div>
   );
