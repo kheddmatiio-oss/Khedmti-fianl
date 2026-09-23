@@ -778,6 +778,14 @@ function Toast({toast}){
     </div>
   );
 }
+function Pill({label,value,tone}){
+  return(
+    <span style={{display:'inline-flex',alignItems:'baseline',gap:'0.3rem',padding:'0.22rem 0.6rem',borderRadius:'9999px',background:B.card,border:`1px solid ${B.border}`,fontSize:'0.68rem'}}>
+      <span style={{color:B.muted}}>{label}</span>
+      <b style={{color:tone||B.text,fontVariantNumeric:'tabular-nums',fontWeight:'800'}}>{value}</b>
+    </span>
+  );
+}
 function StatCard({label,value,ic,color,sub}){
   const c=color||B.accent;
   return(
@@ -1761,7 +1769,11 @@ function VideosTab({data,addVideo,updVideo,delVideo,togglePaid,solo,selfName}){
       <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',gap:'0.75rem'}}>
         <div>
           <h2 style={{fontSize:'1.75rem',fontWeight:'900',color:B.text}}>{t('videos')}</h2>
-          <p style={{fontSize:'0.75rem',color:B.muted,fontVariantNumeric:'tabular-nums'}}>{filt.length} · {showCur(tot)} · {showCur(owed)}</p>
+          <div style={{display:'flex',gap:'0.4rem',flexWrap:'wrap',marginTop:'0.3rem'}}>
+            <Pill label={t('video_count')} value={filt.length}/>
+            <Pill label={t('total')} value={showCur(tot)}/>
+            <Pill label={t('remaining')} value={showCur(owed)} tone={B.accent}/>
+          </div>
         </div>
         <button onClick={()=>{setEditing(null);setShowForm(true);}} style={{display:'flex',alignItems:'center',gap:'0.4rem',padding:'0.65rem 1.1rem',borderRadius:'9999px',background:`linear-gradient(135deg,${B.accent},${ACC2})`,color:'white',fontWeight:'700',border:'none',cursor:'pointer',fontSize:'0.8rem',whiteSpace:'nowrap',boxShadow:`0 4px 16px ${B.accent}44`}}>
           <Ic n="plus" size={15} color="white"/>{t('new_video')}
@@ -1828,7 +1840,10 @@ function WorkerVideosTab({data,worker,myVideos,addVideo,updVideo,delVideo}){
       <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',gap:'0.75rem'}}>
         <div>
           <h2 style={{fontSize:'1.75rem',fontWeight:'900',color:B.text}}>{t('my_videos')}</h2>
-          <p style={{fontSize:'0.75rem',color:B.muted,fontVariantNumeric:'tabular-nums'}}>{filt.length} · {showCur(tot)}</p>
+          <div style={{display:'flex',gap:'0.4rem',flexWrap:'wrap',marginTop:'0.3rem'}}>
+            <Pill label={t('video_count')} value={filt.length}/>
+            <Pill label={t('total')} value={showCur(tot)}/>
+          </div>
         </div>
         <button onClick={()=>{setEditing(null);setShowForm(true);}} style={{display:'flex',alignItems:'center',gap:'0.4rem',padding:'0.625rem 1rem',borderRadius:'9999px',background:B.accent,color:'white',fontWeight:'700',border:'none',cursor:'pointer',fontSize:'0.8rem',whiteSpace:'nowrap'}}>
           <Ic n="plus" size={16} color="white"/>{t('new_video')}
@@ -2156,7 +2171,7 @@ function InvoiceSheet({inv,data,agency,onClose}){
 
   return(
     <div className="inv-sheet" style={{position:'fixed',inset:0,zIndex:60,background:_theme==='dark'?'rgba(0,0,6,0.8)':'rgba(20,22,40,0.5)',backdropFilter:'blur(6px)',overflowY:'auto',padding:'1.25rem 1rem 4rem'}}>
-      <div className="no-print" style={{display:'flex',gap:'0.5rem',justifyContent:'center',marginBottom:'1rem',position:'sticky',top:0,zIndex:2}}>
+      <div className="no-print" style={{display:'flex',gap:'0.5rem',justifyContent:'center',marginBottom:'1rem',position:'sticky',top:0,zIndex:2,padding:'0.5rem',borderRadius:'9999px',background:_theme==='dark'?'rgba(4,6,14,0.72)':'rgba(20,22,40,0.35)',backdropFilter:'blur(10px)',width:'fit-content',marginInline:'auto'}}>
         <button onClick={()=>window.print()} style={{display:'flex',alignItems:'center',gap:'0.45rem',padding:'0.7rem 1.3rem',borderRadius:'9999px',background:`linear-gradient(135deg,${B.accent},${ACC2})`,color:'white',fontWeight:'800',border:'none',cursor:'pointer',fontSize:'0.82rem',boxShadow:`0 6px 22px ${B.accent}55`}}>
           <Ic n="printer" size={15} color="white"/>{t('print_inv')}
         </button>
@@ -2304,7 +2319,9 @@ function InvoiceForm({data,initial,onClose,onSave}){
     if(!f.lines.length)return setErr(t('err_no_items'));
     onSave({...f,discount:Number(f.discount||0),vat:Number(f.vat||0),
       videoIds:f.lines.filter(l=>l.videoId).map(l=>l.videoId),
-      lines:f.lines.map(l=>({...l,qty:Number(l.qty||0),pu:Number(l.pu||0)}))});
+      lines:f.lines
+        .filter(l=>String(l.desc||'').trim()||Number(l.qty||0)*Number(l.pu||0))
+        .map((l,n)=>({...l,ref:String(n+1),qty:Number(l.qty||0),pu:Number(l.pu||0)}))});
   };
   const mini={...INP,padding:'0.45rem 0.55rem',fontSize:'0.78rem'};
 
@@ -2427,7 +2444,9 @@ function InvoicesTab({data,agency,addInvoice,updInvoice,delInvoice,payInvoice}){
       <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',gap:'0.75rem'}}>
         <div>
           <h2 style={{fontSize:'1.75rem',fontWeight:'900',color:B.text}}>{t('invoices')}</h2>
-          <p style={{fontSize:'0.75rem',color:B.textSub,fontVariantNumeric:'tabular-nums'}}>{data.invoices.length}</p>
+          <div style={{display:'flex',gap:'0.4rem',flexWrap:'wrap',marginTop:'0.3rem'}}>
+            <Pill label={t('invoices')} value={data.invoices.length}/>
+          </div>
         </div>
         <button onClick={()=>{setEditing(null);setShowForm(true);}} style={{display:'flex',alignItems:'center',gap:'0.4rem',padding:'0.65rem 1.1rem',borderRadius:'9999px',background:`linear-gradient(135deg,${B.accent},${ACC2})`,color:'white',fontWeight:'700',border:'none',cursor:'pointer',fontSize:'0.8rem',whiteSpace:'nowrap',boxShadow:`0 4px 16px ${B.accent}44`}}>
           <Ic n="plus" size={15} color="white"/>{t('new_invoice')}
