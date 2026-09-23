@@ -305,6 +305,8 @@ const TR={
     toast_settings_saved:'تم حفظ الإعدادات ✅',
     err_logo_big:'الشعار كبير — أقل من 500 كيلو',
     period:'الفترة',
+    local_mode:'وضع تجريبي محلي',
+    back_to_server:'ترجع للسيرفر؟ البيانات المحلية تبقى محفوظة.',
     lang_name:'العربية',
   },
   en:{
@@ -398,6 +400,8 @@ const TR={
     client_details:'Client details', toast_settings_saved:'Settings saved ✅',
     err_logo_big:'Logo too large — under 500 KB please',
     period:'Period', lang_name:'English',
+    local_mode:'Local demo mode',
+    back_to_server:'Back to the server? Your local data stays saved.',
   }
 };
 
@@ -2845,14 +2849,15 @@ function App(){
 // Local data must never be mistaken for the real account.
 function LocalBadge(){
   const leave=()=>{
-    if(!confirm('ترجع للسيرفر؟ البيانات المحلية تبقى محفوظة.'))return;
+    if(!confirm(t('back_to_server')))return;
     setLocal(false);localStorage.removeItem('_session');location.reload();
   };
   return(
-    <div style={{position:'fixed',bottom:'0.7rem',left:'0.7rem',zIndex:70,display:'flex',alignItems:'center',gap:'0.5rem',padding:'0.4rem 0.5rem 0.4rem 0.8rem',borderRadius:'9999px',background:B.card,border:`1px solid ${B.accentBorder}`,boxShadow:'0 6px 20px rgba(0,0,0,0.35)',fontSize:'0.66rem',fontWeight:'800',color:B.accent}}>
-      🧪 وضع تجريبي محلي
-      <button onClick={leave} title="ارجع للسيرفر" style={{display:'flex',padding:'0.25rem',borderRadius:'50%',border:'none',background:B.accentSoft,color:B.accent,cursor:'pointer'}}>
-        <Ic n="x" size={11}/>
+    // sits above the bottom dock so it never covers a nav item
+    <div style={{position:'fixed',bottom:'calc(4.6rem + env(safe-area-inset-bottom))',insetInlineStart:'0.9rem',zIndex:39,display:'flex',alignItems:'center',gap:'0.4rem',padding:'0.3rem 0.4rem 0.3rem 0.7rem',borderRadius:'9999px',background:B.card,border:`1px solid ${B.accentBorder}`,boxShadow:'0 6px 20px rgba(0,0,0,0.35)',fontSize:'0.62rem',fontWeight:'800',color:B.accent}}>
+      🧪 {t('local_mode')}
+      <button onClick={leave} title={t('back_to_server')} style={{display:'flex',padding:'0.22rem',borderRadius:'50%',border:'none',background:B.accentSoft,color:B.accent,cursor:'pointer'}}>
+        <Ic n="x" size={10}/>
       </button>
     </div>
   );
