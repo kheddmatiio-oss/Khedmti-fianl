@@ -66,7 +66,7 @@ document.documentElement.dir=_lang==='ar'?'rtl':'ltr';
 document.documentElement.lang=_lang;
 
 function toggleLang(){
-  const nl=_lang==='ar'?'fr':'ar';
+  const nl=_lang==='ar'?'en':'ar';
   localStorage.setItem('_lang',nl);
   window.location.reload();
 }
@@ -260,172 +260,144 @@ const TR={
     notes_opt:'ملاحظات (اختياري)',
     more:'المزيد',
     all:'الكل',
+    // الإعدادات
+    settings:'الإعدادات',
+    sec_company:'معلوماتي',
+    sec_invoice:'الفوترة',
+    sec_currency:'العملات',
+    sec_appearance:'المظهر',
+    company_name:'اسم النشاط',
+    company_logo:'الشعار',
+    logo_hint:'PNG ولا JPG، أقل من 500 كيلو',
+    upload_logo:'حمّل الشعار',
+    remove_logo:'حيّد',
+    address:'العنوان',
+    tax_id:'NIF',
+    stat_id:'NIS',
+    rc:'RC',
+    rip:'RIP / الحساب البنكي',
+    art:'ART',
+    fiscal_hint:'تظهر في فواتيرك — خلّي فارغ اللي ما تستعملوش',
+    vat_rate:'نسبة TVA (%)',
+    payment_mode:'طريقة الدفع',
+    payment_mode_ph:'مثال: تحويل بنكي',
+    invoice_object:'الموضوع',
+    invoice_object_ph:'مثال: إنتاج فيديوهات — أوت 2026',
+    accent_color:'لون المنصة',
+    reset_color:'رجّع الأصلي',
+    base_currency:'العملة الأساسية',
+    rate_to_base:'الصرف مقابل {0}',
+    add_currency:'زيد عملة',
+    currency:'العملة',
+    by_currency:'حسب العملة',
+    amount_ht:'المجموع خارج الرسم',
+    amount_vat:'TVA',
+    amount_ttc:'الإجمالي بالرسم',
+    qty:'الكمية',
+    unit_price:'سعر الوحدة',
+    line_total:'المبلغ',
+    designation:'البيان',
+    ref:'رقم',
+    add_line:'زيد سطر',
+    from_videos:'من الفيديوهات',
+    custom_line:'سطر حر',
+    client_details:'معلومات الزبون',
+    toast_settings_saved:'تم حفظ الإعدادات ✅',
+    err_logo_big:'الشعار كبير — أقل من 500 كيلو',
+    period:'الفترة',
+    lang_name:'العربية',
   },
-  fr:{
-    app_name:'Khedmti',
-    beta:'Bêta',
-    dashboard:'Tableau de bord',
-    my_dash:'Mon espace',
-    videos:'Vidéos',
-    my_videos:'Mes vidéos',
-    team:'Équipe',
-    clients:'Clients',
-    logout:'Déconnexion',
-    login:'Se connecter',
-    register:'Créer un compte',
-    agency:'Agence',
-    worker:"Membre d'équipe",
-    solo:'Éditeur freelance',
-    acc_type:'Type de compte',
-    solo_hint:'Compte perso — gérez votre travail avec vos clients',
-    agency_hint:'Agence avec une équipe',
-    your_name:'Votre nom',
-    agency_name:"Nom de l'agence",
-    email:'Email',
-    agency_email:"Email de l'agence",
-    password:'Mot de passe',
-    phone:'Téléphone / WhatsApp',
-    pw_hint:'4 caractères minimum',
-    pw_optional:'Laisser vide pour ne pas changer',
-    start_free:'Créer mon agence gratuitement',
-    have_account:'J\'ai déjà un compte — Connexion',
-    back:'← Retour',
-    editor:'Éditeur',
-    filmmaker:'Filmeur',
-    designer:'Designer',
-    role:'Rôle',
-    role_hint:'💡 Le mot de passe est défini par le gérant',
-    worker_email_hint:"Email de votre agence",
-    add:'Ajouter',
-    save:'Enregistrer',
-    delete:'Supprimer',
-    edit:'Modifier',
-    cancel:'Annuler',
-    confirm_delete:'Confirmer la suppression ?',
-    new_video:'Enregistrer une vidéo',
-    video_title:'Titre de la vidéo',
-    video_title_ph:'Ex: Publicité nouveau produit',
-    date:'Date',
-    price:'Prix (DA)',
-    mark_paid:'Marquer payé',
-    paid:'✓ Payé',
-    unpaid:'✗ Non payé',
-    total:'Total général',
-    total_paid:'Payé',
-    remaining:'Reste à payer',
-    this_month:'Ce mois',
-    my_total:'Mon total',
-    my_remaining:'Reste pour moi',
-    video_count:'Nombre de vidéos',
-    free_plan:'Gratuit',
-    days_left:'{0} jours restants',
-    free_warning:'⚡ Gratuit: {0}/{1} membres · {2}/{3} vidéos · Contactez-nous pour upgrader',
-    expiry_warning:"⚠️ Abonnement expire dans {0} jours — Contactez-nous pour renouveler",
-    no_data:'Commencez par ajouter votre équipe et vos clients',
-    no_team:'Aucun membre pour l\'instant',
-    no_clients:'Aucun client pour l\'instant',
-    no_videos:'Aucune vidéo pour l\'instant',
-    no_agencies:'Aucune agence pour l\'instant',
-    super_admin:'Super Admin',
-    admin_panel:'Tableau de bord Admin',
-    total_agencies:'Total agences',
-    active_agencies:'Agences actives',
-    paid_subs:'Abonnements payants',
-    manage:'Gérer',
-    opened:'Ouvert',
-    view:'Voir',
-    plan:'Forfait',
-    duration:"Durée de l'abonnement",
-    one_month:'1 mois',
-    three_months:'3 mois',
-    one_year:'1 an',
-    account_active:'✅ Compte actif',
-    account_suspended:'🚫 Compte suspendu',
-    notes:'Notes',
-    notes_ph:'Ex: Paiement reçu le 01/06/2025...',
-    save_changes:'Enregistrer les modifications',
-    err_name:"Entrez le nom de l'agence",
-    err_email:'Email invalide',
-    err_pw:'Le mot de passe doit contenir au moins 4 caractères',
-    err_duplicate:'Cet email est déjà utilisé',
-    err_not_found:'Email introuvable',
-    err_wrong_pw:'Mot de passe incorrect',
-    err_no_agency:'Agence introuvable',
-    err_select:'Sélectionnez un membre et un client',
-    err_price:'Entrez le prix',
-    err_session:'Session expirée — reconnectez-vous',
-    err_forbidden:"Vous n'avez pas la permission",
-    toast_editor_added:'Membre ajouté ✅',
-    toast_client_added:'Client ajouté ✅',
-    toast_video_added:'Vidéo enregistrée ✅',
-    toast_deleted:'Supprimé',
-    toast_saved:'Mis à jour ✅',
-    toast_save_failed:'Échec de sauvegarde — Vérifiez la connexion',
-    toast_limit:'Limite gratuite atteinte ({0}). Contactez-nous pour upgrader !',
-    toast_no_edit:'Vous ne pouvez pas modifier cette vidéo',
-    expired_title:'Abonnement expiré',
-    suspended_title:'Compte suspendu',
-    expired_msg:'Votre abonnement a expiré. Contactez-nous pour renouveler.',
-    suspended_msg:'Votre compte est temporairement suspendu. Contactez-nous.',
-    contact_us:'Contactez-nous sur WhatsApp',
+  en:{
+    app_name:'Khedmti', beta:'Beta',
+    dashboard:'Dashboard', my_dash:'My space', videos:'Videos', my_videos:'My videos',
+    team:'Team', clients:'Clients', logout:'Log out',
+    login:'Sign in', register:'Create account', agency:'Admin', worker:'Team member',
+    solo:'Freelance editor', acc_type:'Account type',
+    solo_hint:'Personal — track your work with your clients',
+    agency_hint:'Admin managing a team of editors',
+    your_name:'Your name', agency_name:'Workspace name',
+    email:'Email', agency_email:'Workspace email', password:'Password',
+    phone:'Phone / WhatsApp', pw_hint:'4 characters minimum',
+    pw_optional:'Leave blank to keep unchanged',
+    start_free:'Create my workspace free', have_account:'I have an account — Sign in',
+    back:'← Back',
+    editor:'Editor', filmmaker:'Filmmaker', designer:'Designer', role:'Role',
+    role_hint:'💡 Your password is set by the admin',
+    worker_email_hint:'Your workspace email',
+    add:'Add', save:'Save', delete:'Delete', edit:'Edit', cancel:'Cancel',
+    confirm_delete:'Delete this?',
+    new_video:'Log a video', video_title:'Video title',
+    video_title_ph:'e.g. Product launch ad', date:'Date', price:'Price',
+    mark_paid:'Mark as paid', paid:'✓ Paid', unpaid:'✗ Unpaid',
+    total:'Total', total_paid:'Paid', remaining:'Outstanding', this_month:'This month',
+    my_total:'My total', my_remaining:'Owed to me', video_count:'Videos',
+    free_plan:'Free', days_left:'{0} days left',
+    free_warning:'⚡ Free: {0}/{1} members · {2}/{3} videos · Contact us to upgrade',
+    expiry_warning:'⚠️ Subscription ends in {0} days — contact us to renew',
+    no_data:'Start by adding your clients', no_team:'No team members yet',
+    no_clients:'No clients yet', no_videos:'No videos yet', no_agencies:'No accounts yet',
+    super_admin:'Super Admin', admin_panel:'Super admin panel',
+    total_agencies:'Total accounts', active_agencies:'Active', paid_subs:'Paid plans',
+    manage:'Manage', opened:'Open', view:'View', plan:'Plan',
+    duration:'Subscription length', one_month:'1 month', three_months:'3 months',
+    one_year:'1 year', account_active:'✅ Account active', account_suspended:'🚫 Suspended',
+    notes:'Notes', notes_ph:'e.g. Paid on 01/06/2026...', save_changes:'Save changes',
+    err_name:'Enter a name', err_email:'Invalid email',
+    err_pw:'Password must be at least 4 characters', err_duplicate:'Email already in use',
+    err_not_found:'Email not found', err_wrong_pw:'Wrong password',
+    err_no_agency:'Workspace not found', err_select:'Pick a member and a client',
+    err_price:'Enter a price', err_session:'Session expired — sign in again',
+    err_forbidden:"You don't have permission",
+    toast_editor_added:'Member added ✅', toast_client_added:'Client added ✅',
+    toast_video_added:'Video logged ✅', toast_deleted:'Deleted', toast_saved:'Saved ✅',
+    toast_save_failed:'Save failed — check your connection',
+    toast_limit:'Free limit reached ({0}). Contact us to upgrade!',
+    toast_no_edit:"You can't edit this",
+    expired_title:'Subscription expired', suspended_title:'Account suspended',
+    expired_msg:'Your subscription has expired. Contact us to renew.',
+    suspended_msg:'Your account is temporarily suspended. Contact us.',
+    contact_us:'Contact us on WhatsApp',
     landing_title:'Khedmti',
-    landing_sub:'Plateforme de gestion pour freelancers, video editors et agences marketing — travail, tâches et facturation au même endroit',
-    free_now:'100% Gratuit maintenant',
-    free_sub:"Inscrivez-vous aujourd'hui et utilisez la plateforme gratuitement",
-    feat_1:'Enregistrement des vidéos',
-    feat_2:"Comptabilité de l'équipe",
-    feat_3:'Tableau de bord gérant & membres',
-    feat_4:'Compatible mobile et ordinateur',
-    no_card:'Aucune carte bancaire requise',
-    pw_info:"💡 Définissez un mot de passe pour chaque membre afin qu'il puisse se connecter",
-    invoices:'Factures',
-    invoice:'Facture',
-    new_invoice:'Nouvelle facture',
-    invoice_no:'N° de facture',
-    issue_date:"Date d'émission",
-    due_date:'Échéance',
-    items:'Lignes',
-    subtotal:'Sous-total',
-    discount:'Remise (DA)',
-    grand_total:'Total',
-    status:'Statut',
-    st_draft:'Brouillon',
-    st_sent:'Envoyée',
-    st_paid:'Payée',
-    select_videos:'Sélectionnez les vidéos',
-    unbilled_only:'Vidéos non facturées',
-    no_invoices:'Aucune facture',
-    no_unbilled:'Toutes les vidéos sont facturées',
-    print_inv:'Imprimer / PDF',
-    billed_to:'Facturé à',
-    issued_by:'Émis par',
-    toast_invoice_added:'Facture créée ✅',
-    toast_invoice_paid:'Marquée payée ✅',
-    err_no_items:'Sélectionnez au moins une vidéo',
-    err_no_client:'Sélectionnez un client',
-    total_invoiced:'Total facturé',
-    awaiting:'En attente de paiement',
-    tasks:'Tâches',
-    my_tasks:'Mes tâches',
-    new_task:'Nouvelle tâche',
-    task_title:'Titre de la tâche',
-    task_title_ph:'Ex: Montage reels pour le client',
-    assigned_to:'Assignée à',
-    unassigned:'Non assignée',
-    priority:'Priorité',
-    p_normal:'Normale',
-    p_high:'Urgente',
-    t_todo:'À faire',
-    t_doing:'En cours',
-    t_done:'Terminée',
-    no_tasks:'Aucune tâche',
-    toast_task_added:'Tâche ajoutée ✅',
-    overdue:'En retard',
-    due_today:"Aujourd'hui",
-    open_tasks:'Tâches ouvertes',
-    notes_opt:'Notes (optionnel)',
-    more:'Plus',
-    all:'Tout',
+    landing_sub:'Work tracking, tasks and invoicing for freelancers, video editors and marketing agencies — all in one place',
+    free_now:'100% free right now', free_sub:'Sign up today and use it free',
+    feat_1:'Log your work', feat_2:'Tasks & deadlines', feat_3:'Professional invoices',
+    feat_4:'Works on mobile and desktop', no_card:'No card required',
+    pw_info:'💡 Set a password for each member so they can sign in',
+    invoices:'Invoices', invoice:'Invoice', new_invoice:'New invoice',
+    invoice_no:'Invoice no.', issue_date:'Issue date', due_date:'Due date',
+    items:'Items', subtotal:'Subtotal', discount:'Discount', grand_total:'Total',
+    status:'Status', st_draft:'Draft', st_sent:'Sent', st_paid:'Paid',
+    select_videos:'Select videos', unbilled_only:'Unbilled videos',
+    no_invoices:'No invoices yet', no_unbilled:'All videos are invoiced',
+    print_inv:'Print / PDF', billed_to:'Billed to', issued_by:'Issued by',
+    toast_invoice_added:'Invoice created ✅', toast_invoice_paid:'Marked paid ✅',
+    err_no_items:'Add at least one line', err_no_client:'Pick a client',
+    total_invoiced:'Total invoiced', awaiting:'Awaiting payment',
+    tasks:'Tasks', my_tasks:'My tasks', new_task:'New task', task_title:'Task title',
+    task_title_ph:'e.g. Edit reels for client', assigned_to:'Assigned to',
+    unassigned:'Unassigned', priority:'Priority', p_normal:'Normal', p_high:'Urgent',
+    t_todo:'To do', t_doing:'In progress', t_done:'Done', no_tasks:'No tasks',
+    toast_task_added:'Task added ✅', overdue:'Overdue', due_today:'Today',
+    open_tasks:'Open tasks', notes_opt:'Notes (optional)', more:'More', all:'All',
+    // settings
+    settings:'Settings', sec_company:'My details', sec_invoice:'Invoicing',
+    sec_currency:'Currencies', sec_appearance:'Appearance',
+    company_name:'Business name', company_logo:'Logo', logo_hint:'PNG or JPG, under 500 KB',
+    upload_logo:'Upload logo', remove_logo:'Remove', address:'Address',
+    tax_id:'NIF', stat_id:'NIS', rc:'RC', rip:'RIP / Bank account', art:'ART',
+    fiscal_hint:'Appears on your invoices — leave blank what you do not use',
+    vat_rate:'VAT rate (%)', payment_mode:'Payment method',
+    payment_mode_ph:'e.g. Bank transfer', invoice_object:'Subject',
+    invoice_object_ph:'e.g. Video production — August 2026',
+    accent_color:'Accent colour', reset_color:'Reset',
+    base_currency:'Main currency', rate_to_base:'Rate to {0}',
+    add_currency:'Add currency', currency:'Currency', by_currency:'By currency',
+    amount_ht:'Subtotal excl. VAT', amount_vat:'VAT', amount_ttc:'Total incl. VAT',
+    qty:'Qty', unit_price:'Unit price', line_total:'Amount', designation:'Description',
+    ref:'Ref', add_line:'Add line', from_videos:'From videos', custom_line:'Custom line',
+    client_details:'Client details', toast_settings_saved:'Settings saved ✅',
+    err_logo_big:'Logo too large — under 500 KB please',
+    period:'Period', lang_name:'English',
   }
 };
 
@@ -444,7 +416,18 @@ function t(key,...args){
 const BRAND={blue:'#0D7CFB',electric:'#1652A2',navy:'#0B111A',charcoal:'#1A1D22',white:'#FFFFFF',soft:'#F4F7FB'};
 const DARK={bg:'#0B111A',card:'#1A1D22',card2:'#212530',border:'#2B303A',accent:'#0D7CFB',accentSoft:'rgba(13,124,251,0.14)',accentBorder:'rgba(13,124,251,0.32)',text:'#F4F7FB',textSub:'#8B93A3',muted:'#565E6D',success:'#0D7CFB',successSoft:'rgba(13,124,251,0.14)',warning:'#C8912F',danger:'#E5484D',dangerSoft:'rgba(229,72,77,0.12)',purple:'#7C9CE0',purpleSoft:'rgba(124,156,224,0.12)',blue:'#4E9CFC',blueSoft:'rgba(78,156,252,0.12)',inputBg:'#12161D',navBg:'rgba(11,17,26,0.92)',scrollThumb:'#333A47'};
 const LIGHT={bg:'#F4F7FB',card:'#FFFFFF',card2:'#F4F7FB',border:'#DDE4EE',accent:'#0D7CFB',accentSoft:'rgba(13,124,251,0.08)',accentBorder:'rgba(13,124,251,0.26)',text:'#0B111A',textSub:'#5A6473',muted:'#98A2B3',success:'#0D7CFB',successSoft:'rgba(13,124,251,0.09)',warning:'#96690F',danger:'#D32F2F',dangerSoft:'rgba(211,47,47,0.08)',purple:'#1652A2',purpleSoft:'rgba(22,82,162,0.08)',blue:'#1652A2',blueSoft:'rgba(22,82,162,0.08)',inputBg:'#F4F7FB',navBg:'rgba(244,247,251,0.94)',scrollThumb:'#C7D0DD'};
-const B=_theme==='dark'?DARK:LIGHT;
+let _accent=localStorage.getItem('_accent')||'';
+const shade=(hex,f)=>{ // darken/lighten for gradients
+  const h=hex.replace('#','');const n=parseInt(h.length===3?h.split('').map(c=>c+c).join(''):h,16);
+  const c=[(n>>16)&255,(n>>8)&255,n&255].map(v=>Math.max(0,Math.min(255,Math.round(v*f))));
+  return '#'+c.map(v=>v.toString(16).padStart(2,'0')).join('');
+};
+const withAccent=(pal,acc)=>acc?{...pal,accent:acc,
+  accentSoft:acc+ (_theme==='dark'?'24':'16'),
+  accentBorder:acc+(_theme==='dark'?'55':'44'),
+  success:acc, successSoft:acc+(_theme==='dark'?'24':'16')}:pal;
+const B=withAccent(_theme==='dark'?DARK:LIGHT,_accent);
+const ACC2=_accent?shade(_accent,0.62):'#1652A2'; // gradient partner
 
 // update body bg and scrollbar — layered ambient gradients
 const BODY_BG=_theme==='dark'
@@ -471,9 +454,48 @@ const fmt=n=>new Intl.NumberFormat('en-US').format(Math.round(Number(n)||0));
 const fmtD=iso=>iso?new Date(iso).toLocaleDateString('fr-FR'):'';
 const today=()=>new Date().toISOString().slice(0,10);
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,8);
-const EMPTY={editors:[],clients:[],videos:[],invoices:[],tasks:[]};
-// older rows may miss the newer collections — normalize on read
-const norm=d=>({...EMPTY,...(d||{}),editors:d?.editors||[],clients:d?.clients||[],videos:d?.videos||[],invoices:d?.invoices||[],tasks:d?.tasks||[]});
+const DEF_SETTINGS={
+  company:{name:'',logo:'',email:'',phone:'',address:'',nif:'',nis:'',rc:'',rip:'',art:''},
+  invoice:{vat:0,paymentMode:'',object:'',prefix:'F'},
+  currency:{base:'DZD',list:[{code:'DZD',rate:1},{code:'USD',rate:135},{code:'EUR',rate:150}]},
+  theme:{accent:''},
+};
+const EMPTY={editors:[],clients:[],videos:[],invoices:[],tasks:[],settings:DEF_SETTINGS};
+// older rows may miss newer collections — normalize on read
+const norm=d=>({...EMPTY,...(d||{}),
+  editors:d?.editors||[],clients:d?.clients||[],videos:d?.videos||[],
+  invoices:d?.invoices||[],tasks:d?.tasks||[],
+  settings:{
+    company:{...DEF_SETTINGS.company,...(d?.settings?.company||{})},
+    invoice:{...DEF_SETTINGS.invoice,...(d?.settings?.invoice||{})},
+    currency:{
+      base:d?.settings?.currency?.base||DEF_SETTINGS.currency.base,
+      list:(d?.settings?.currency?.list?.length?d.settings.currency.list:DEF_SETTINGS.currency.list),
+    },
+    theme:{...DEF_SETTINGS.theme,...(d?.settings?.theme||{})},
+  }});
+
+// ─── MONEY ────────────────────────────────────────────────
+// Amounts stay in the currency they were earned in; conversion to the base
+// currency happens only for headline totals, so changing a rate never
+// rewrites history.
+const CUR_META={
+  DZD:{ar:'دج',en:'DA'}, USD:{ar:'$',en:'$'}, EUR:{ar:'€',en:'€'},
+  MAD:{ar:'درهم',en:'MAD'}, TND:{ar:'د.ت',en:'TND'}, GBP:{ar:'£',en:'£'},
+  SAR:{ar:'ر.س',en:'SAR'}, AED:{ar:'د.إ',en:'AED'}, CAD:{ar:'C$',en:'C$'},
+};
+const curSym=code=>CUR_META[code]?.[_lang]||code;
+const curList=st=>st?.currency?.list||DEF_SETTINGS.currency.list;
+const curBase=st=>st?.currency?.base||'DZD';
+const curRate=(code,st)=>{const c=curList(st).find(x=>x.code===code);return Number(c?.rate)||1;};
+const toBase=(n,code,st)=>Number(n||0)*curRate(code,st)/curRate(curBase(st),st);
+const money=(n,code)=>`${fmt(n)} ${curSym(code)}`;
+// { DZD: 1200, USD: 40 } — each currency kept separate instead of faked into one
+const sumByCur=(rows,pick,st)=>{
+  const out={};
+  (rows||[]).forEach(r=>{const c=r.currency||curBase(st);out[c]=(out[c]||0)+Number(pick(r)||0);});
+  return out;
+};
 
 // ─── INVOICE / TASK CONSTANTS ────────────────────────────
 const INV_STATUS={draft:{k:'st_draft',c:'muted'},sent:{k:'st_sent',c:'blue'},paid:{k:'st_paid',c:'success'}};
@@ -692,9 +714,9 @@ function SettingsBar(){
   const bs={display:'flex',alignItems:'center',borderRadius:'9999px',border:`1px solid ${B.border}`,background:B.card2||B.card,cursor:'pointer',color:B.textSub||B.muted};
   return(
     <div style={{display:'flex',alignItems:'center',gap:'0.4rem'}}>
-      <button onClick={toggleLang} title={_lang==='ar'?'Français':'عربي'}
+      <button onClick={toggleLang} title={_lang==='ar'?'English':'العربية'}
         style={{...bs,gap:'0.3rem',padding:'0.3rem 0.7rem',fontSize:'0.7rem',fontWeight:'800'}}>
-        <Ic n="globe" size={12}/>{_lang==='ar'?'FR':'AR'}
+        <Ic n="globe" size={12}/>{_lang==='ar'?'EN':'AR'}
       </button>
       <button onClick={toggleTheme} style={{...bs,padding:'0.38rem 0.5rem'}}>
         <Ic n={_theme==='dark'?'sun':'moon'} size={14}/>
@@ -748,7 +770,7 @@ function Toast({toast}){
   if(!toast)return null;
   const isErr=toast.type==='error';
   return(
-    <div key={toast.msg} className="toast-ani" style={{position:'fixed',bottom:'5.5rem',left:'50%',transform:'translateX(-50%)',padding:'0.7rem 1.4rem',borderRadius:'9999px',color:'white',fontWeight:'700',fontSize:'0.82rem',boxShadow:`0 12px 32px rgba(0,0,0,0.5)`,zIndex:60,background:isErr?B.danger:`linear-gradient(135deg,${B.accent},#1652A2)`,whiteSpace:'nowrap',maxWidth:'88vw',textAlign:'center',display:'flex',alignItems:'center',gap:'0.5rem',border:`1px solid ${isErr?'rgba(229,72,77,0.35)':'rgba(255,255,255,0.15)'}`}}>
+    <div key={toast.msg} className="toast-ani" style={{position:'fixed',bottom:'5.5rem',left:'50%',transform:'translateX(-50%)',padding:'0.7rem 1.4rem',borderRadius:'9999px',color:'white',fontWeight:'700',fontSize:'0.82rem',boxShadow:`0 12px 32px rgba(0,0,0,0.5)`,zIndex:60,background:isErr?B.danger:`linear-gradient(135deg,${B.accent},${ACC2})`,whiteSpace:'nowrap',maxWidth:'88vw',textAlign:'center',display:'flex',alignItems:'center',gap:'0.5rem',border:`1px solid ${isErr?'rgba(229,72,77,0.35)':'rgba(255,255,255,0.15)'}`}}>
       <span>{isErr?'⚠️':'✓'}</span>{toast.msg}
     </div>
   );
@@ -827,7 +849,7 @@ function Landing({onLogin,onRegister}){
           ))}
         </div>
         <div style={{display:'flex',flexDirection:'column',gap:'0.75rem'}}>
-          <button onClick={onRegister} style={{width:'100%',padding:'1.05rem',borderRadius:'1rem',background:`linear-gradient(135deg,${B.accent},#1652A2)`,color:'white',fontWeight:'800',border:'none',cursor:'pointer',fontSize:'1rem',display:'flex',alignItems:'center',justifyContent:'center',gap:'0.6rem',boxShadow:`0 8px 24px ${B.accent}44`}}>
+          <button onClick={onRegister} style={{width:'100%',padding:'1.05rem',borderRadius:'1rem',background:`linear-gradient(135deg,${B.accent},${ACC2})`,color:'white',fontWeight:'800',border:'none',cursor:'pointer',fontSize:'1rem',display:'flex',alignItems:'center',justifyContent:'center',gap:'0.6rem',boxShadow:`0 8px 24px ${B.accent}44`}}>
             <Ic n="building" size={19} color="white"/>{t('start_free')}
           </button>
           <button onClick={onLogin} style={{width:'100%',padding:'1rem',borderRadius:'1rem',background:B.card,color:B.textSub||B.muted,fontWeight:'700',border:`1px solid ${B.border}`,cursor:'pointer',fontSize:'0.9rem'}}>
@@ -899,7 +921,7 @@ function Register({onBack,onSuccess}){
           <PwField value={pw} onChange={setPw} show={show} setShow={setShow} placeholder={t('pw_hint')} onEnter={submit}/>
         </Field>
         {err&&<div style={{fontSize:'0.75rem',color:B.danger,fontWeight:'700',padding:'0.5rem 0.75rem',background:`rgba(239,68,68,0.1)`,borderRadius:'0.5rem',border:`1px solid rgba(239,68,68,0.2)`}}>{err}</div>}
-        <button onClick={submit} disabled={loading} style={{width:'100%',padding:'0.9rem',borderRadius:'0.875rem',background:`linear-gradient(135deg,${B.accent},#1652A2)`,color:'white',fontWeight:'800',border:'none',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',gap:'0.5rem',opacity:loading?0.7:1,boxShadow:`0 6px 20px ${B.accent}44`,fontSize:'0.92rem'}}>
+        <button onClick={submit} disabled={loading} style={{width:'100%',padding:'0.9rem',borderRadius:'0.875rem',background:`linear-gradient(135deg,${B.accent},${ACC2})`,color:'white',fontWeight:'800',border:'none',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',gap:'0.5rem',opacity:loading?0.7:1,boxShadow:`0 6px 20px ${B.accent}44`,fontSize:'0.92rem'}}>
           {loading?<><span className="spin" style={{display:'inline-block'}}><Ic n="loader" size={16} color="white"/></span>{t('register')}...</>:t('start_free')}
         </button>
         <button onClick={onBack} style={{background:'none',border:'none',cursor:'pointer',color:B.muted,fontSize:'0.85rem',textAlign:'center',padding:'0.25rem'}}>{t('back')}</button>
@@ -972,7 +994,7 @@ function Login({onBack,onAgencyLogin,onWorkerLogin,onSuperAdmin}){
           <PwField value={pw} onChange={setPw} show={show} setShow={setShow} placeholder={t('password')} onEnter={submit}/>
         </Field>
         {err&&<div style={{fontSize:'0.75rem',color:B.danger,fontWeight:'700',padding:'0.5rem 0.75rem',background:`rgba(239,68,68,0.1)`,borderRadius:'0.5rem',border:`1px solid rgba(239,68,68,0.2)`}}>{err}</div>}
-        <button onClick={submit} disabled={loading} style={{width:'100%',padding:'0.9rem',borderRadius:'0.875rem',background:`linear-gradient(135deg,${B.accent},#1652A2)`,color:'white',fontWeight:'800',border:'none',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',gap:'0.5rem',opacity:loading?0.7:1,boxShadow:`0 6px 20px ${B.accent}44`,fontSize:'0.92rem'}}>
+        <button onClick={submit} disabled={loading} style={{width:'100%',padding:'0.9rem',borderRadius:'0.875rem',background:`linear-gradient(135deg,${B.accent},${ACC2})`,color:'white',fontWeight:'800',border:'none',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',gap:'0.5rem',opacity:loading?0.7:1,boxShadow:`0 6px 20px ${B.accent}44`,fontSize:'0.92rem'}}>
           {loading?<><span className="spin" style={{display:'inline-block'}}><Ic n="loader" size={16} color="white"/></span>{t('login')}...</>:t('login')}
         </button>
         <button onClick={onBack} style={{background:'none',border:'none',cursor:'pointer',color:B.muted,fontSize:'0.85rem',textAlign:'center',padding:'0.25rem'}}>{t('back')}</button>
@@ -999,7 +1021,7 @@ function ConnError({onRetry}){
           <div>• تأكد أن المشروع على Supabase نشط</div>
           <div>• افتح الملف من سيرفر محلي (لا file://)</div>
         </div>
-        <button onClick={onRetry} style={{width:'100%',padding:'0.875rem',borderRadius:'0.875rem',background:`linear-gradient(135deg,${B.accent},#1652A2)`,color:'white',fontWeight:'800',border:'none',cursor:'pointer',boxShadow:`0 4px 16px ${B.accent}44`,marginBottom:'0.75rem'}}>
+        <button onClick={onRetry} style={{width:'100%',padding:'0.875rem',borderRadius:'0.875rem',background:`linear-gradient(135deg,${B.accent},${ACC2})`,color:'white',fontWeight:'800',border:'none',cursor:'pointer',boxShadow:`0 4px 16px ${B.accent}44`,marginBottom:'0.75rem'}}>
           🔄 إعادة المحاولة
         </button>
         <button onClick={()=>window.location.reload()} style={{width:'100%',padding:'0.75rem',borderRadius:'0.875rem',background:'none',color:B.muted,fontWeight:'600',border:`1px solid ${B.border}`,cursor:'pointer',fontSize:'0.85rem',marginBottom:'1.25rem'}}>
@@ -1230,7 +1252,7 @@ function EditAgencyModal({ag,onClose,onSave}){
           <textarea value={notes} onChange={e=>setNotes(e.target.value)} placeholder={t('notes_ph')}
             style={{...INP,height:'70px',resize:'none'}}/>
         </Field>
-        <button onClick={save} style={{width:'100%',padding:'0.9rem',borderRadius:'0.875rem',background:`linear-gradient(135deg,${B.accent},#1652A2)`,color:'white',fontWeight:'800',border:'none',cursor:'pointer',boxShadow:`0 4px 16px ${B.accent}44`}}>
+        <button onClick={save} style={{width:'100%',padding:'0.9rem',borderRadius:'0.875rem',background:`linear-gradient(135deg,${B.accent},${ACC2})`,color:'white',fontWeight:'800',border:'none',cursor:'pointer',boxShadow:`0 4px 16px ${B.accent}44`}}>
           {t('save_changes')}
         </button>
       </div>
@@ -1309,6 +1331,7 @@ function AgencyApp({agency,onLogout}){
   const secondaryTabs=[
     {id:'editors',label:t('team'),ic:'users'},
     {id:'clients',label:t('clients'),ic:'briefcase'},
+    {id:'settings',label:t('settings'),ic:'sun'},
   ].filter(tt=>!(solo&&tt.id==='editors'));
   const tabs=[...primaryTabs,...secondaryTabs];
 
@@ -1352,6 +1375,8 @@ function AgencyApp({agency,onLogout}){
       videos:data.videos.map(v=>ids.has(v.id)?{...v,paid:true}:v)});
     showToast(t('toast_invoice_paid'));
   };
+
+  const saveSettings=st=>{persist({...data,settings:st});showToast(t('toast_settings_saved'));};
 
   // ── tasks ──
   const addTask=tk=>{persist({...data,tasks:[{id:uid(),status:'todo',createdAt:new Date().toISOString(),...tk},...data.tasks]});showToast(t('toast_task_added'));};
@@ -1420,6 +1445,7 @@ function AgencyApp({agency,onLogout}){
         {tab==='tasks'&&<TasksTab data={data} addTask={addTask} updTask={updTask} delTask={delTask} solo={solo}/>}
         {tab==='invoices'&&<InvoicesTab data={data} agency={agency} addInvoice={addInvoice} updInvoice={updInvoice} delInvoice={delInvoice} payInvoice={payInvoice}/>}
         {tab==='editors'&&<TeamTab data={data} addEditor={addEditor} updEditor={updEditor} delEditor={delEditor} canAdd={canAdd('editor')} limit={FREE_LIMITS.editors} plan={agency.plan}/>}
+        {tab==='settings'&&<SettingsTab data={data} saveSettings={saveSettings} showToast={showToast}/>}
         {tab==='clients'&&<ClientsTab data={data} addClient={addClient} updClient={updClient} delClient={delClient} canAdd={canAdd('client')} limit={FREE_LIMITS.clients} plan={agency.plan}/>}
       </main>
       {isMobile&&<BottomNav primary={primaryTabs} secondary={secondaryTabs} tab={tab} setTab={setTab}/>}
@@ -1596,10 +1622,10 @@ function AgencyDash({data,setTab,agency,solo}){
       <h2 style={{fontSize:'1.6rem',fontWeight:'900',color:B.text,marginBottom:'0.5rem'}}>👋 {agency.name}</h2>
       <p style={{color:B.muted,marginBottom:'2.5rem',fontSize:'0.9rem'}}>{t('no_data')}</p>
       <div style={{display:'flex',gap:'0.75rem',justifyContent:'center',flexWrap:'wrap'}}>
-        {!solo&&<button onClick={()=>setTab('editors')} style={{display:'flex',alignItems:'center',gap:'0.5rem',padding:'0.75rem 1.5rem',borderRadius:'9999px',background:`linear-gradient(135deg,${B.accent},#1652A2)`,color:'white',fontWeight:'700',border:'none',cursor:'pointer',boxShadow:`0 6px 20px ${B.accent}44`}}>
+        {!solo&&<button onClick={()=>setTab('editors')} style={{display:'flex',alignItems:'center',gap:'0.5rem',padding:'0.75rem 1.5rem',borderRadius:'9999px',background:`linear-gradient(135deg,${B.accent},${ACC2})`,color:'white',fontWeight:'700',border:'none',cursor:'pointer',boxShadow:`0 6px 20px ${B.accent}44`}}>
           <Ic n="users" size={16} color="white"/>{t('team')}
         </button>}
-        <button onClick={()=>setTab('clients')} style={{display:'flex',alignItems:'center',gap:'0.5rem',padding:'0.75rem 1.5rem',borderRadius:'9999px',background:solo?`linear-gradient(135deg,${B.accent},#1652A2)`:B.card,color:solo?'white':B.text,fontWeight:'700',border:solo?'none':`1px solid ${B.border}`,cursor:'pointer',boxShadow:solo?`0 6px 20px ${B.accent}44`:'none'}}>
+        <button onClick={()=>setTab('clients')} style={{display:'flex',alignItems:'center',gap:'0.5rem',padding:'0.75rem 1.5rem',borderRadius:'9999px',background:solo?`linear-gradient(135deg,${B.accent},${ACC2})`:B.card,color:solo?'white':B.text,fontWeight:'700',border:solo?'none':`1px solid ${B.border}`,cursor:'pointer',boxShadow:solo?`0 6px 20px ${B.accent}44`:'none'}}>
           <Ic n="briefcase" size={16} color={solo?'white':undefined}/>{t('clients')}
         </button>
       </div>
@@ -1609,7 +1635,7 @@ function AgencyDash({data,setTab,agency,solo}){
   return(
     <div style={{display:'flex',flexDirection:'column',gap:'1.25rem'}}>
       {/* Monthly hero card */}
-      <div style={{borderRadius:'1.75rem',padding:'1.6rem',background:`linear-gradient(130deg,${B.accent} 0%,#1157C4 55%,#1652A2 100%)`,color:'white',position:'relative',overflow:'hidden',boxShadow:`0 16px 48px ${B.accent}33, inset 0 1px 0 rgba(255,255,255,0.25)`}}>
+      <div style={{borderRadius:'1.75rem',padding:'1.6rem',background:`linear-gradient(130deg,${B.accent} 0%,${ACC2} 100%)`,color:'white',position:'relative',overflow:'hidden',boxShadow:`0 16px 48px ${B.accent}33, inset 0 1px 0 rgba(255,255,255,0.25)`}}>
         <div style={{position:'absolute',top:'-3rem',right:'-3rem',width:'11rem',height:'11rem',borderRadius:'50%',background:'radial-gradient(circle,rgba(255,255,255,0.14),transparent 70%)'}}/>
         <div style={{position:'absolute',bottom:'-2rem',left:'-1.5rem',width:'7rem',height:'7rem',borderRadius:'50%',background:'radial-gradient(circle,rgba(255,255,255,0.08),transparent 70%)'}} className="floaty"/>
         <div style={{position:'relative'}}>
@@ -1721,7 +1747,7 @@ function VideosTab({data,addVideo,updVideo,delVideo,togglePaid,solo,selfName}){
           <h2 style={{fontSize:'1.75rem',fontWeight:'900',color:B.text}}>{t('videos')}</h2>
           <p style={{fontSize:'0.75rem',color:B.muted,fontVariantNumeric:'tabular-nums'}}>{filt.length} · {fmt(tot)} دج · {fmt(owed)} دج</p>
         </div>
-        <button onClick={()=>{setEditing(null);setShowForm(true);}} style={{display:'flex',alignItems:'center',gap:'0.4rem',padding:'0.65rem 1.1rem',borderRadius:'9999px',background:`linear-gradient(135deg,${B.accent},#1652A2)`,color:'white',fontWeight:'700',border:'none',cursor:'pointer',fontSize:'0.8rem',whiteSpace:'nowrap',boxShadow:`0 4px 16px ${B.accent}44`}}>
+        <button onClick={()=>{setEditing(null);setShowForm(true);}} style={{display:'flex',alignItems:'center',gap:'0.4rem',padding:'0.65rem 1.1rem',borderRadius:'9999px',background:`linear-gradient(135deg,${B.accent},${ACC2})`,color:'white',fontWeight:'700',border:'none',cursor:'pointer',fontSize:'0.8rem',whiteSpace:'nowrap',boxShadow:`0 4px 16px ${B.accent}44`}}>
           <Ic n="plus" size={15} color="white"/>{t('new_video')}
         </button>
       </div>
@@ -1860,7 +1886,7 @@ function VideoForm({editors,clients,initial,lockedEditor,onClose,onSave}){
             <span style={{fontSize:'0.875rem',fontWeight:'600',color:B.text}}>{t('mark_paid')}</span>
           </label>
         )}
-        <button onClick={submit} style={{width:'100%',padding:'0.9rem',borderRadius:'0.875rem',background:`linear-gradient(135deg,${B.accent},#1652A2)`,color:'white',fontWeight:'800',border:'none',cursor:'pointer',boxShadow:`0 4px 16px ${B.accent}44`,fontSize:'0.9rem'}}>{initial?t('save'):t('new_video')}</button>
+        <button onClick={submit} style={{width:'100%',padding:'0.9rem',borderRadius:'0.875rem',background:`linear-gradient(135deg,${B.accent},${ACC2})`,color:'white',fontWeight:'800',border:'none',cursor:'pointer',boxShadow:`0 4px 16px ${B.accent}44`,fontSize:'0.9rem'}}>{initial?t('save'):t('new_video')}</button>
       </div>
     </Modal>
   );
@@ -1898,9 +1924,176 @@ function WorkerForm({initial,onClose,onSave}){
           <PwField value={pw} onChange={setPw} show={show} setShow={setShow} placeholder={initial?t('pw_optional'):t('pw_hint')} onEnter={submit}/>
         </Field>
         {err&&<div style={{fontSize:'0.75rem',color:B.danger,fontWeight:'700'}}>{err}</div>}
-        <button onClick={submit} style={{width:'100%',padding:'0.9rem',borderRadius:'0.875rem',background:`linear-gradient(135deg,${B.accent},#1652A2)`,color:'white',fontWeight:'800',border:'none',cursor:'pointer',boxShadow:`0 4px 16px ${B.accent}44`}}>{initial?t('save'):t('add')}</button>
+        <button onClick={submit} style={{width:'100%',padding:'0.9rem',borderRadius:'0.875rem',background:`linear-gradient(135deg,${B.accent},${ACC2})`,color:'white',fontWeight:'800',border:'none',cursor:'pointer',boxShadow:`0 4px 16px ${B.accent}44`}}>{initial?t('save'):t('add')}</button>
       </div>
     </Modal>
+  );
+}
+
+// ─── SETTINGS ─────────────────────────────────────────────
+function Section({title,children}){
+  return(
+    <div style={{background:B.card,border:`1px solid ${B.border}`,borderRadius:'1.25rem',overflow:'hidden'}}>
+      <div style={{padding:'0.9rem 1.1rem',borderBottom:`1px solid ${B.border}`,fontWeight:'800',fontSize:'0.92rem',color:B.text}}>{title}</div>
+      <div style={{padding:'1.1rem',display:'flex',flexDirection:'column',gap:'0.9rem'}}>{children}</div>
+    </div>
+  );
+}
+const PALETTE=['','#0D7CFB','#6366F1','#8B5CF6','#EC4899','#EF4444','#F59E0B','#10B981','#14B8A6','#0EA5E9'];
+
+function SettingsTab({data,saveSettings,showToast}){
+  const[st,setSt]=useState(data.settings);
+  const[tab,setTab]=useState('company');
+  const dirty=JSON.stringify(st)!==JSON.stringify(data.settings);
+  const set=(sec,k,v)=>setSt(p=>({...p,[sec]:{...p[sec],[k]:v}}));
+
+  const onLogo=e=>{
+    const f=e.target.files?.[0]; if(!f)return;
+    if(f.size>500*1024)return showToast(t('err_logo_big'),'error');
+    const rd=new FileReader();
+    rd.onload=()=>set('company','logo',rd.result);
+    rd.readAsDataURL(f);
+  };
+  const setRate=(code,rate)=>setSt(p=>({...p,currency:{...p.currency,
+    list:p.currency.list.map(c=>c.code===code?{...c,rate:Number(rate)||0}:c)}}));
+  const addCur=code=>{
+    if(!code||st.currency.list.some(c=>c.code===code))return;
+    setSt(p=>({...p,currency:{...p.currency,list:[...p.currency.list,{code,rate:1}]}}));
+  };
+  const delCur=code=>{
+    if(code===st.currency.base)return;
+    setSt(p=>({...p,currency:{...p.currency,list:p.currency.list.filter(c=>c.code!==code)}}));
+  };
+  const apply=()=>{
+    saveSettings(st);
+    // the accent lives outside React state so the whole palette can use it
+    if((st.theme.accent||'')!==(localStorage.getItem('_accent')||'')){
+      st.theme.accent?localStorage.setItem('_accent',st.theme.accent):localStorage.removeItem('_accent');
+      setTimeout(()=>location.reload(),350);
+    }
+  };
+  const tabs=[['company',t('sec_company'),'building'],['invoice',t('sec_invoice'),'receipt'],
+              ['currency',t('sec_currency'),'wallet'],['appearance',t('sec_appearance'),'sun']];
+  const C=st.company, I=st.invoice;
+
+  return(
+    <div style={{display:'flex',flexDirection:'column',gap:'1.25rem',paddingBottom:dirty?'4.5rem':0}}>
+      <h2 style={{fontSize:'1.75rem',fontWeight:'900',color:B.text}}>{t('settings')}</h2>
+
+      <div style={{display:'flex',gap:'0.4rem',flexWrap:'wrap'}}>
+        {tabs.map(([v,l,ic])=>(
+          <button key={v} onClick={()=>setTab(v)} style={{display:'flex',alignItems:'center',gap:'0.4rem',padding:'0.5rem 0.9rem',borderRadius:'9999px',border:`1px solid ${tab===v?B.accentBorder:B.border}`,background:tab===v?B.accentSoft:B.card,color:tab===v?B.accent:B.textSub,fontWeight:'700',fontSize:'0.78rem',cursor:'pointer'}}>
+            <Ic n={ic} size={13} color={tab===v?B.accent:B.muted}/>{l}
+          </button>
+        ))}
+      </div>
+
+      {tab==='company'&&(
+        <Section title={t('sec_company')}>
+          <Field label={t('company_logo')}>
+            <div style={{display:'flex',alignItems:'center',gap:'0.9rem'}}>
+              <div style={{width:'4.5rem',height:'4.5rem',borderRadius:'1rem',background:B.inputBg,border:`1px dashed ${B.border}`,display:'grid',placeItems:'center',overflow:'hidden',flexShrink:0}}>
+                {C.logo?<img src={C.logo} alt="" style={{maxWidth:'100%',maxHeight:'100%',objectFit:'contain'}}/>
+                       :<Ic n="building" size={20} color={B.muted}/>}
+              </div>
+              <div style={{display:'flex',flexDirection:'column',gap:'0.4rem',flex:1,minWidth:0}}>
+                <label style={{padding:'0.5rem 0.9rem',borderRadius:'0.75rem',background:B.accentSoft,color:B.accent,border:`1px solid ${B.accentBorder}`,fontWeight:'700',fontSize:'0.78rem',cursor:'pointer',textAlign:'center'}}>
+                  {t('upload_logo')}
+                  <input type="file" accept="image/*" onChange={onLogo} style={{display:'none'}}/>
+                </label>
+                {C.logo&&<button onClick={()=>set('company','logo','')} style={{padding:'0.4rem',borderRadius:'0.75rem',background:'none',border:`1px solid ${B.border}`,color:B.muted,fontWeight:'600',fontSize:'0.72rem',cursor:'pointer'}}>{t('remove_logo')}</button>}
+                <span style={{fontSize:'0.65rem',color:B.muted}}>{t('logo_hint')}</span>
+              </div>
+            </div>
+          </Field>
+          <Field label={t('company_name')}><input value={C.name} onChange={e=>set('company','name',e.target.value)} style={INP}/></Field>
+          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0.75rem'}}>
+            <Field label={t('email')}><input type="email" value={C.email} onChange={e=>set('company','email',e.target.value)} style={INP}/></Field>
+            <Field label={t('phone')}><input value={C.phone} onChange={e=>set('company','phone',e.target.value)} style={INP}/></Field>
+          </div>
+          <Field label={t('address')}><textarea value={C.address} onChange={e=>set('company','address',e.target.value)} style={{...INP,height:'58px',resize:'none'}}/></Field>
+          <div style={{fontSize:'0.68rem',color:B.muted,marginTop:'-0.2rem'}}>{t('fiscal_hint')}</div>
+          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0.75rem'}}>
+            {[['nif',t('tax_id')],['nis',t('stat_id')],['rc',t('rc')],['art',t('art')]].map(([k,l])=>(
+              <Field key={k} label={l}><input value={C[k]} onChange={e=>set('company',k,e.target.value)} style={INP}/></Field>
+            ))}
+          </div>
+          <Field label={t('rip')}><input value={C.rip} onChange={e=>set('company','rip',e.target.value)} style={INP}/></Field>
+        </Section>
+      )}
+
+      {tab==='invoice'&&(
+        <Section title={t('sec_invoice')}>
+          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0.75rem'}}>
+            <Field label={t('vat_rate')}><input type="number" inputMode="decimal" value={I.vat} onChange={e=>set('invoice','vat',e.target.value)} style={INP}/></Field>
+            <Field label={t('invoice_no')}><input value={I.prefix} onChange={e=>set('invoice','prefix',e.target.value)} placeholder="F" style={INP}/></Field>
+          </div>
+          <Field label={t('payment_mode')}><input value={I.paymentMode} onChange={e=>set('invoice','paymentMode',e.target.value)} placeholder={t('payment_mode_ph')} style={INP}/></Field>
+          <Field label={t('invoice_object')}><input value={I.object} onChange={e=>set('invoice','object',e.target.value)} placeholder={t('invoice_object_ph')} style={INP}/></Field>
+        </Section>
+      )}
+
+      {tab==='currency'&&(
+        <Section title={t('sec_currency')}>
+          <Field label={t('base_currency')}>
+            <select value={st.currency.base} onChange={e=>setSt(p=>({...p,currency:{...p.currency,base:e.target.value}}))} style={INP}>
+              {st.currency.list.map(c=><option key={c.code} value={c.code}>{c.code}</option>)}
+            </select>
+          </Field>
+          <div style={{display:'flex',flexDirection:'column',gap:'0.5rem'}}>
+            {st.currency.list.map(c=>{
+              const isBase=c.code===st.currency.base;
+              return(
+                <div key={c.code} style={{display:'flex',alignItems:'center',gap:'0.6rem',padding:'0.6rem 0.75rem',borderRadius:'0.875rem',background:B.inputBg,border:`1px solid ${isBase?B.accentBorder:B.border}`}}>
+                  <span style={{fontWeight:'800',color:isBase?B.accent:B.text,width:'3rem',fontSize:'0.82rem'}}>{c.code}</span>
+                  <span style={{fontSize:'0.65rem',color:B.muted,flex:1}}>{isBase?t('base_currency'):t('rate_to_base',st.currency.base)}</span>
+                  <input type="number" inputMode="decimal" value={c.rate} disabled={isBase}
+                    onChange={e=>setRate(c.code,e.target.value)}
+                    style={{...INP,width:'6.5rem',padding:'0.4rem 0.6rem',textAlign:'center',opacity:isBase?0.5:1}}/>
+                  {!isBase&&<button onClick={()=>delCur(c.code)} style={{padding:'0.3rem',border:'none',background:'none',cursor:'pointer',display:'flex'}}><Ic n="trash" size={13} color={B.danger}/></button>}
+                </div>
+              );
+            })}
+          </div>
+          <Field label={t('add_currency')}>
+            <select value="" onChange={e=>addCur(e.target.value)} style={INP}>
+              <option value="">—</option>
+              {Object.keys(CUR_META).filter(c=>!st.currency.list.some(x=>x.code===c)).map(c=><option key={c} value={c}>{c}</option>)}
+            </select>
+          </Field>
+        </Section>
+      )}
+
+      {tab==='appearance'&&(
+        <Section title={t('sec_appearance')}>
+          <Field label={t('accent_color')}>
+            <div style={{display:'flex',gap:'0.5rem',flexWrap:'wrap'}}>
+              {PALETTE.map(c=>{
+                const on=(st.theme.accent||'')===c;
+                return(
+                  <button key={c||'def'} onClick={()=>set('theme','accent',c)} title={c||t('reset_color')}
+                    style={{width:'2.4rem',height:'2.4rem',borderRadius:'0.75rem',cursor:'pointer',
+                      border:on?`3px solid ${B.text}`:`1px solid ${B.border}`,
+                      background:c||`linear-gradient(135deg,${BRAND.blue},${BRAND.electric})`,
+                      display:'grid',placeItems:'center'}}>
+                    {!c&&<span style={{fontSize:'0.55rem',fontWeight:'900',color:'#fff'}}>★</span>}
+                  </button>
+                );
+              })}
+            </div>
+          </Field>
+          <div style={{fontSize:'0.68rem',color:B.muted}}>★ = {t('reset_color')}</div>
+        </Section>
+      )}
+
+      {dirty&&(
+        <div style={{position:'fixed',bottom:'5.5rem',left:'50%',transform:'translateX(-50%)',zIndex:38,width:'min(24rem,calc(100vw - 2rem))'}}>
+          <button onClick={apply} style={{width:'100%',padding:'0.9rem',borderRadius:'9999px',background:`linear-gradient(135deg,${B.accent},${ACC2})`,color:'white',fontWeight:'800',border:'none',cursor:'pointer',boxShadow:`0 10px 30px ${B.accent}66`}}>
+            {t('save_changes')}
+          </button>
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -1923,7 +2116,7 @@ function InvoiceSheet({inv,data,agency,onClose}){
   return(
     <div className="inv-sheet" style={{position:'fixed',inset:0,zIndex:60,background:_theme==='dark'?'rgba(0,0,6,0.8)':'rgba(20,22,40,0.5)',backdropFilter:'blur(6px)',overflowY:'auto',padding:'1.25rem 1rem 4rem'}}>
       <div className="no-print" style={{display:'flex',gap:'0.5rem',justifyContent:'center',marginBottom:'1rem',position:'sticky',top:0,zIndex:2}}>
-        <button onClick={()=>window.print()} style={{display:'flex',alignItems:'center',gap:'0.45rem',padding:'0.7rem 1.3rem',borderRadius:'9999px',background:`linear-gradient(135deg,${B.accent},#1652A2)`,color:'white',fontWeight:'800',border:'none',cursor:'pointer',fontSize:'0.82rem',boxShadow:`0 6px 22px ${B.accent}55`}}>
+        <button onClick={()=>window.print()} style={{display:'flex',alignItems:'center',gap:'0.45rem',padding:'0.7rem 1.3rem',borderRadius:'9999px',background:`linear-gradient(135deg,${B.accent},${ACC2})`,color:'white',fontWeight:'800',border:'none',cursor:'pointer',fontSize:'0.82rem',boxShadow:`0 6px 22px ${B.accent}55`}}>
           <Ic n="printer" size={15} color="white"/>{t('print_inv')}
         </button>
         <button onClick={onClose} style={{padding:'0.7rem 1.1rem',borderRadius:'9999px',background:B.card,color:B.text,fontWeight:'700',border:`1px solid ${B.border}`,cursor:'pointer',fontSize:'0.82rem'}}>{t('cancel')}</button>
@@ -2060,7 +2253,7 @@ function InvoiceForm({data,initial,onClose,onSave}){
           </div>
         </div>
         {err&&<div style={{fontSize:'0.75rem',color:B.danger,fontWeight:'700',padding:'0.5rem 0.75rem',background:B.dangerSoft,borderRadius:'0.5rem'}}>{err}</div>}
-        <button onClick={submit} style={{width:'100%',padding:'0.9rem',borderRadius:'0.875rem',background:`linear-gradient(135deg,${B.accent},#1652A2)`,color:'white',fontWeight:'800',border:'none',cursor:'pointer',boxShadow:`0 4px 16px ${B.accent}44`}}>{initial?t('save'):t('new_invoice')}</button>
+        <button onClick={submit} style={{width:'100%',padding:'0.9rem',borderRadius:'0.875rem',background:`linear-gradient(135deg,${B.accent},${ACC2})`,color:'white',fontWeight:'800',border:'none',cursor:'pointer',boxShadow:`0 4px 16px ${B.accent}44`}}>{initial?t('save'):t('new_invoice')}</button>
       </div>
     </Modal>
   );
@@ -2093,7 +2286,7 @@ function InvoicesTab({data,agency,addInvoice,updInvoice,delInvoice,payInvoice}){
           <h2 style={{fontSize:'1.75rem',fontWeight:'900',color:B.text}}>{t('invoices')}</h2>
           <p style={{fontSize:'0.75rem',color:B.textSub,fontVariantNumeric:'tabular-nums'}}>{data.invoices.length} · {fmt(totals.all)} {CUR}</p>
         </div>
-        <button onClick={()=>{setEditing(null);setShowForm(true);}} style={{display:'flex',alignItems:'center',gap:'0.4rem',padding:'0.65rem 1.1rem',borderRadius:'9999px',background:`linear-gradient(135deg,${B.accent},#1652A2)`,color:'white',fontWeight:'700',border:'none',cursor:'pointer',fontSize:'0.8rem',whiteSpace:'nowrap',boxShadow:`0 4px 16px ${B.accent}44`}}>
+        <button onClick={()=>{setEditing(null);setShowForm(true);}} style={{display:'flex',alignItems:'center',gap:'0.4rem',padding:'0.65rem 1.1rem',borderRadius:'9999px',background:`linear-gradient(135deg,${B.accent},${ACC2})`,color:'white',fontWeight:'700',border:'none',cursor:'pointer',fontSize:'0.8rem',whiteSpace:'nowrap',boxShadow:`0 4px 16px ${B.accent}44`}}>
           <Ic n="plus" size={15} color="white"/>{t('new_invoice')}
         </button>
       </div>
@@ -2210,7 +2403,7 @@ function TaskForm({editors,clients,initial,solo,onClose,onSave}){
           <textarea value={f.notes} onChange={e=>setF({...f,notes:e.target.value})} style={{...INP,height:'64px',resize:'none'}}/>
         </Field>
         {err&&<div style={{fontSize:'0.75rem',color:B.danger,fontWeight:'700'}}>{err}</div>}
-        <button onClick={submit} style={{width:'100%',padding:'0.9rem',borderRadius:'0.875rem',background:`linear-gradient(135deg,${B.accent},#1652A2)`,color:'white',fontWeight:'800',border:'none',cursor:'pointer',boxShadow:`0 4px 16px ${B.accent}44`}}>{initial?t('save'):t('add')}</button>
+        <button onClick={submit} style={{width:'100%',padding:'0.9rem',borderRadius:'0.875rem',background:`linear-gradient(135deg,${B.accent},${ACC2})`,color:'white',fontWeight:'800',border:'none',cursor:'pointer',boxShadow:`0 4px 16px ${B.accent}44`}}>{initial?t('save'):t('add')}</button>
       </div>
     </Modal>
   );
@@ -2241,7 +2434,7 @@ function TasksTab({data,addTask,updTask,delTask,solo,readOnlyFor}){
           <h2 style={{fontSize:'1.75rem',fontWeight:'900',color:B.text}}>{readOnlyFor?t('my_tasks'):t('tasks')}</h2>
           <p style={{fontSize:'0.75rem',color:B.textSub,fontVariantNumeric:'tabular-nums'}}>{counts.open} {t('open_tasks')}</p>
         </div>
-        <button onClick={()=>{setEditing(null);setShowForm(true);}} style={{display:'flex',alignItems:'center',gap:'0.4rem',padding:'0.65rem 1.1rem',borderRadius:'9999px',background:`linear-gradient(135deg,${B.accent},#1652A2)`,color:'white',fontWeight:'700',border:'none',cursor:'pointer',fontSize:'0.8rem',whiteSpace:'nowrap',boxShadow:`0 4px 16px ${B.accent}44`}}>
+        <button onClick={()=>{setEditing(null);setShowForm(true);}} style={{display:'flex',alignItems:'center',gap:'0.4rem',padding:'0.65rem 1.1rem',borderRadius:'9999px',background:`linear-gradient(135deg,${B.accent},${ACC2})`,color:'white',fontWeight:'700',border:'none',cursor:'pointer',fontSize:'0.8rem',whiteSpace:'nowrap',boxShadow:`0 4px 16px ${B.accent}44`}}>
           <Ic n="plus" size={15} color="white"/>{t('new_task')}
         </button>
       </div>
@@ -2361,7 +2554,7 @@ function ClientsTab({data,addClient,updClient,delClient,canAdd,limit,plan}){
       </div>
       <div style={{background:B.card,borderRadius:'1.25rem',border:`1px solid ${B.border}`,padding:'0.75rem',display:'flex',gap:'0.5rem'}}>
         <input value={name} onChange={e=>setName(e.target.value)} onKeyDown={e=>e.key==='Enter'&&doAdd()} placeholder="اسم الزبون..." style={{...INP,flex:1}}/>
-        <button onClick={doAdd} style={{display:'flex',alignItems:'center',gap:'0.4rem',padding:'0.75rem 1rem',borderRadius:'0.875rem',background:canAdd?`linear-gradient(135deg,${B.accent},#1652A2)`:'#333',color:'white',fontWeight:'700',border:'none',cursor:'pointer',flexShrink:0,boxShadow:canAdd?`0 4px 12px ${B.accent}44`:'none'}}>
+        <button onClick={doAdd} style={{display:'flex',alignItems:'center',gap:'0.4rem',padding:'0.75rem 1rem',borderRadius:'0.875rem',background:canAdd?`linear-gradient(135deg,${B.accent},${ACC2})`:'#333',color:'white',fontWeight:'700',border:'none',cursor:'pointer',flexShrink:0,boxShadow:canAdd?`0 4px 12px ${B.accent}44`:'none'}}>
           <Ic n="plus" size={16} color="white"/>{t('add')}
         </button>
       </div>
